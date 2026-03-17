@@ -148,6 +148,25 @@ body{height:100%;background:var(--bg);color:var(--text);font-family:'Noto Serif 
   .followup-btn:hover{border-color:var(--amber);color:var(--cream);background:rgba(200,146,42,0.06);}
 }
 @keyframes fadeUp{from{opacity:0;transform:translateY(11px);}to{opacity:1;transform:translateY(0);}}
+
+.goods-page{position:fixed;inset:0;z-index:300;background:rgba(8,10,8,0.97);display:none;flex-direction:column;}
+.goods-page.open{display:flex;}
+.goods-header{display:flex;align-items:center;justify-content:space-between;padding:20px 20px 16px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.goods-title{font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--cream);}
+.goods-close{background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:4px;}
+.goods-sub{padding:12px 20px 0;font-size:12px;color:var(--muted);line-height:1.7;flex-shrink:0;}
+.goods-list{flex:1;overflow-y:auto;padding:16px 20px;-webkit-overflow-scrolling:touch;}
+.goods-section-title{font-size:10px;letter-spacing:0.4em;text-transform:uppercase;color:var(--amber-dim);margin-bottom:10px;margin-top:16px;}
+.goods-section-title:first-child{margin-top:0;}
+.goods-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);}
+.goods-item:last-child{border-bottom:none;}
+.goods-item-emoji{font-size:28px;flex-shrink:0;width:44px;text-align:center;}
+.goods-item-body{flex:1;}
+.goods-item-name{font-size:14px;color:var(--cream);margin-bottom:3px;}
+.goods-item-desc{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:8px;}
+.goods-links{display:flex;gap:7px;}
+.goods-link{background:transparent;border:1px solid var(--amber-dim);color:var(--amber);padding:5px 12px;font-family:'Noto Serif JP',serif;font-size:11px;border-radius:5px;text-decoration:none;display:inline-block;}
+.goods-link:active{background:var(--amber-dim);color:var(--cream);}
 </style>
 </head>
 <body>
@@ -201,6 +220,7 @@ body{height:100%;background:var(--bg);color:var(--text);font-family:'Noto Serif 
   <button class="menu-item" onclick="restartFromMenu()">🐼 新しいお酒を探す</button>
   <button class="menu-item" onclick="openHistoryFromMenu()">📝 飲んだお酒の履歴</button>
   <div class="menu-section-title">コンテンツ <span class="menu-badge">近日公開</span></div>
+  <button class="menu-item" onclick="openGoodsFromMenu()">🛍️ バー関連グッズ</button>
   <span class="menu-item disabled">📖 お酒の豆知識</span>
   <span class="menu-item disabled">🔍 お酒名から検索</span>
   <div class="menu-section-title">プレミアム <span class="menu-badge">準備中</span></div>
@@ -507,5 +527,108 @@ function restartFromMenu(){toggleMenu();setTimeout(()=>{expandPanda();history=[]
 if(window.innerWidth>=700)document.querySelector('.pc-header').style.display='block';
 startChat();
 </script>
-</body>
+
+<div class="goods-page" id="goodsPage">
+  <div class="goods-header">
+    <div class="goods-title">🍸 バー関連グッズ</div>
+    <button class="goods-close" onclick="closeGoods()">✕</button>
+  </div>
+  <div class="goods-sub">バーをもっと楽しむためのアイテムを集めました。<br>グラスや道具で、自宅でもバー気分を。</div>
+  <div class="goods-list"><div class="goods-section-title">🥃 グラス・器</div><div class="goods-item">
+  <div class="goods-item-emoji">🥃</div>
+  <div class="goods-item-body">
+    <div class="goods-item-name">ウイスキーグラス（オールドファッション）</div>
+    <div class="goods-item-desc">ロック・ストレートに最適。重厚感のあるタンブラー。</div>
+    <div class="goods-links">
+      <a class="goods-link" href="https://www.amazon.co.jp/s?k=ウイスキーグラス+オールドファッション" target="_blank" rel="noopener">Amazon</a>
+      <a class="goods-link" href="https://search.rakuten.co.jp/search/mall/ウイスキーグラス+オールドファッション/" target="_blank" rel="noopener">楽天市場</a>
+    </div>
+  </div>
+</div><div class="goods-item">
+  <div class="goods-item-emoji">🍸</div>
+  <div class="goods-item-body">
+    <div class="goods-item-name">カクテルグラス（マティーニ型）</div>
+    <div class="goods-item-desc">クラシックカクテルをスタイリッシュに楽しむ脚付きグラス。</div>
+    <div class="goods-links">
+      <a class="goods-link" href="https://www.amazon.co.jp/s?k=マティーニグラス+カクテル" target="_blank" rel="noopener">Amazon</a>
+      <a class="goods-link" href="https://search.rakuten.co.jp/search/mall/マティーニグラス+カクテル/" target="_blank" rel="noopener">楽天市場</a>
+    </div>
+  </div>
+</div><div class="goods-item">
+  <div class="goods-item-emoji">🍷</div>
+  <div class="goods-item-body">
+    <div class="goods-item-name">ワイングラス ペアセット</div>
+    <div class="goods-item-desc">バル気分を自宅で。薄口で香りが立ちやすいタイプ。</div>
+    <div class="goods-links">
+      <a class="goods-link" href="https://www.amazon.co.jp/s?k=ワイングラス+ペア+セット" target="_blank" rel="noopener">Amazon</a>
+      <a class="goods-link" href="https://search.rakuten.co.jp/search/mall/ワイングラス+ペア+セット/" target="_blank" rel="noopener">楽天市場</a>
+    </div>
+  </div>
+</div><div class="goods-section-title">🔧 カクテルツール</div><div class="goods-item">
+  <div class="goods-item-emoji">🔧</div>
+  <div class="goods-item-body">
+    <div class="goods-item-name">カクテルシェイカーセット</div>
+    <div class="goods-item-desc">シェイカー・メジャーカップ・バースプーン等セット。初心者向け。</div>
+    <div class="goods-links">
+      <a class="goods-link" href="https://www.amazon.co.jp/s?k=カクテルシェイカー+セット+初心者" target="_blank" rel="noopener">Amazon</a>
+      <a class="goods-link" href="https://search.rakuten.co.jp/search/mall/カクテルシェイカー+セット+初心者/" target="_blank" rel="noopener">楽天市場</a>
+    </div>
+  </div>
+</div><div class="goods-item">
+  <div class="goods-item-emoji">🧊</div>
+  <div class="goods-item-body">
+    <div class="goods-item-name">大型アイスキューブトレー</div>
+    <div class="goods-item-desc">大きな氷はゆっくり溶けてお酒が薄まりにくい。プロの一工夫。</div>
+    <div class="goods-links">
+      <a class="goods-link" href="https://www.amazon.co.jp/s?k=大型+丸氷+製氷トレー" target="_blank" rel="noopener">Amazon</a>
+      <a class="goods-link" href="https://search.rakuten.co.jp/search/mall/大型+丸氷+製氷トレー/" target="_blank" rel="noopener">楽天市場</a>
+    </div>
+  </div>
+</div><div class="goods-section-title">📖 本・知識</div><div class="goods-item">
+  <div class="goods-item-emoji">📖</div>
+  <div class="goods-item-body">
+    <div class="goods-item-name">バーテンダーズバイブル（カクテルレシピ本）</div>
+    <div class="goods-item-desc">200種以上のレシピ収録。バー初心者から上級者まで。</div>
+    <div class="goods-links">
+      <a class="goods-link" href="https://www.amazon.co.jp/s?k=カクテル+レシピ本+バーテンダー" target="_blank" rel="noopener">Amazon</a>
+      <a class="goods-link" href="https://search.rakuten.co.jp/search/mall/カクテル+レシピ本+バーテンダー/" target="_blank" rel="noopener">楽天市場</a>
+    </div>
+  </div>
+</div><div class="goods-item">
+  <div class="goods-item-emoji">📚</div>
+  <div class="goods-item-body">
+    <div class="goods-item-name">ウイスキー大全</div>
+    <div class="goods-item-desc">産地別・蒸留所別の詳細解説。ウイスキー沼への入口。</div>
+    <div class="goods-links">
+      <a class="goods-link" href="https://www.amazon.co.jp/s?k=ウイスキー+本+図鑑+入門" target="_blank" rel="noopener">Amazon</a>
+      <a class="goods-link" href="https://search.rakuten.co.jp/search/mall/ウイスキー+本+図鑑+入門/" target="_blank" rel="noopener">楽天市場</a>
+    </div>
+  </div>
+</div><div class="goods-section-title">👔 バーテンダースタイル</div><div class="goods-item">
+  <div class="goods-item-emoji">👔</div>
+  <div class="goods-item-body">
+    <div class="goods-item-name">バーテンダー風ベスト・蝶ネクタイセット</div>
+    <div class="goods-item-desc">ホームパーティやコスプレにも。バーの雰囲気を自宅で演出。</div>
+    <div class="goods-links">
+      <a class="goods-link" href="https://www.amazon.co.jp/s?k=バーテンダー+衣装+ベスト+蝶ネクタイ" target="_blank" rel="noopener">Amazon</a>
+      <a class="goods-link" href="https://search.rakuten.co.jp/search/mall/バーテンダー+衣装+ベスト+蝶ネクタイ/" target="_blank" rel="noopener">楽天市場</a>
+    </div>
+  </div>
+</div><div class="goods-item">
+  <div class="goods-item-emoji">🖤</div>
+  <div class="goods-item-body">
+    <div class="goods-item-name">黒シャツ（バーテンダースタイル）</div>
+    <div class="goods-item-desc">どんなシーンにも映える。バーに行く前の一着として。</div>
+    <div class="goods-links">
+      <a class="goods-link" href="https://www.amazon.co.jp/s?k=黒シャツ+メンズ+バーテンダー" target="_blank" rel="noopener">Amazon</a>
+      <a class="goods-link" href="https://search.rakuten.co.jp/search/mall/黒シャツ+メンズ+バーテンダー/" target="_blank" rel="noopener">楽天市場</a>
+    </div>
+  </div>
+</div></div>
+</div>
+<script>
+function openGoods(){document.getElementById('goodsPage').classList.add('open');}
+function closeGoods(){document.getElementById('goodsPage').classList.remove('open');}
+function openGoodsFromMenu(){toggleMenu();setTimeout(openGoods,300);}
+</script></body>
 </html>
