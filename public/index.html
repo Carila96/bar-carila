@@ -94,7 +94,7 @@ body{height:100%;background:var(--bg);color:var(--text);font-family:'Noto Serif 
 .share-wrap{display:flex;gap:7px;margin-bottom:12px;}
 .share-btn{flex:1;background:transparent;border:1px solid var(--border);color:var(--muted);padding:9px 8px;font-family:'Noto Serif JP',serif;font-size:12px;border-radius:6px;cursor:pointer;text-align:center;text-decoration:none;display:block;}
 .share-btn.x-btn:active{border-color:#1d9bf0;color:#1d9bf0;}
-.share-btn.line-btn:active{border-color:#06c755;color:#06c755;}
+.share-btn.copy-btn:active{border-color:var(--amber);color:var(--amber);}
 .recipe-section{border-top:1px solid var(--border);padding-top:11px;margin-bottom:11px;}
 .recipe-title{font-size:9px;letter-spacing:0.4em;text-transform:uppercase;color:var(--amber-dim);margin-bottom:7px;}
 .recipe-list{list-style:none;}
@@ -204,19 +204,19 @@ body{height:100%;background:var(--bg);color:var(--text);font-family:'Noto Serif 
 .search-suggest-btn:active{border-color:var(--amber);color:var(--cream);}
 
 .logo-btn{
-  position:fixed;bottom:max(20px,env(safe-area-inset-bottom));left:16px;
-  z-index:99;
-  width:64px;height:64px;
+  position:fixed;top:10px;left:12px;
+  z-index:100;
+  width:52px;height:52px;
   cursor:pointer;
   background:none;border:none;padding:0;
-  opacity:0.55;
+  opacity:0.6;
   transition:opacity 0.2s;
   -webkit-tap-highlight-color:transparent;
 }
-.logo-btn:active{opacity:0.9;}
+.logo-btn:active{opacity:1;}
 .logo-btn img{width:100%;height:100%;object-fit:contain;}
 @media(min-width:700px){
-  .logo-btn{bottom:28px;left:24px;width:72px;height:72px;}
+  .logo-btn{top:14px;left:16px;width:60px;height:60px;}
 }
 
 .ingr-shop-btn{
@@ -332,6 +332,8 @@ const DRINK_IMG_ARRAYS = {
     'https://images.unsplash.com/photo-1551538827-9c037cb4f32a?w=800&auto=format&fit=crop',
     'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=800&auto=format&fit=crop',
     'https://images.unsplash.com/photo-1563077764-93e534f3acaa?w=800&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1583394293214-66c49d4d8de5?w=800&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=800&auto=format&fit=crop',
   ],
   'ノンアル': [
     'https://images.unsplash.com/photo-1543362906-acfc16c67564?w=800&auto=format&fit=crop',
@@ -339,7 +341,6 @@ const DRINK_IMG_ARRAYS = {
     'https://images.unsplash.com/photo-1541614101331-1a5a3a194e92?w=800&auto=format&fit=crop',
   ],
 };
-
 const DRINK_IMG_MAP = {
   'モスコミュール': 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=800&auto=format&fit=crop',
   'モヒート': 'https://images.unsplash.com/photo-1551538827-9c037cb4f32a?w=800&auto=format&fit=crop',
@@ -361,6 +362,19 @@ const DRINK_IMG_MAP = {
   'フレンチ75': 'https://images.unsplash.com/photo-1583394293214-66c49d4d8de5?w=800&auto=format&fit=crop',
   'サイドカー': 'https://images.unsplash.com/photo-1574056741818-a9f0e7e03c71?w=800&auto=format&fit=crop',
   'スコッチ': 'https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=800&auto=format&fit=crop',
+  'コスモポリタン': 'https://images.unsplash.com/photo-1581927692308-be9e43b4d860?w=800&auto=format&fit=crop',
+  'ニューヨーク': 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=800&auto=format&fit=crop',
+  'ブルーラグーン': 'https://images.unsplash.com/photo-1551538827-9c037cb4f32a?w=800&auto=format&fit=crop',
+  'カンパリ': 'https://images.unsplash.com/photo-1590401266882-9bfa1e4d2ab3?w=800&auto=format&fit=crop',
+  'スプリッツ': 'https://images.unsplash.com/photo-1563077764-93e534f3acaa?w=800&auto=format&fit=crop',
+  'クローバークラブ': 'https://images.unsplash.com/photo-1581927692308-be9e43b4d860?w=800&auto=format&fit=crop',
+  'アビエーション': 'https://images.unsplash.com/photo-1583394293214-66c49d4d8de5?w=800&auto=format&fit=crop',
+  'ラストワード': 'https://images.unsplash.com/photo-1575023782549-62ca0d244b39?w=800&auto=format&fit=crop',
+  'パパドブレ': 'https://images.unsplash.com/photo-1541614101331-1a5a3a194e92?w=800&auto=format&fit=crop',
+  'ハリケーン': 'https://images.unsplash.com/photo-1587574293340-e0011c4e8ecf?w=800&auto=format&fit=crop',
+  'セックスオンザビーチ': 'https://images.unsplash.com/photo-1561037404-61cd46aa615b?w=800&auto=format&fit=crop',
+  'ロングアイランドアイスティー': 'https://images.unsplash.com/photo-1553361371-9b22f78e8b1d?w=800&auto=format&fit=crop',
+  'ミモザ': 'https://images.unsplash.com/photo-1583394293214-66c49d4d8de5?w=800&auto=format&fit=crop',
   'バーボン': 'https://images.unsplash.com/photo-1608270586620-248524c67de9?w=800&auto=format&fit=crop',
   'ジャパニーズウイスキー': 'https://images.unsplash.com/photo-1527281400683-1aae777175f8?w=800&auto=format&fit=crop',
   'ブランデー': 'https://images.unsplash.com/photo-1574056741818-a9f0e7e03c71?w=800&auto=format&fit=crop',
@@ -377,6 +391,15 @@ const FALLBACK_IMGS=[
   'https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=800&auto=format&fit=crop',
   'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=800&auto=format&fit=crop',
   'https://images.unsplash.com/photo-1527281400683-1aae777175f8?w=800&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1575023782549-62ca0d244b39?w=800&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1590401266882-9bfa1e4d2ab3?w=800&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=800&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1551538827-9c037cb4f32a?w=800&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1583394293214-66c49d4d8de5?w=800&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1563077764-93e534f3acaa?w=800&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=800&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=800&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1608270586620-248524c67de9?w=800&auto=format&fit=crop',
 ];
 function pickRandom(arr){return arr[Math.floor(Math.random()*arr.length)];}
 function getDrinkImg(name,cat){
@@ -397,7 +420,12 @@ const ALL_PANDAS=['counter','bartender','relax','normal','think','smile','approv
 function getHistory(){try{return JSON.parse(localStorage.getItem('bar_carila_history')||'[]')}catch{return[]}}
 function saveToHistory(drink){
   const h=getHistory();
-  h.unshift({date:new Date().toLocaleString('ja-JP',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}),name:drink.name,category:drink.category,tags:drink.tags||[]});
+  h.unshift({
+    date:new Date().toLocaleString('ja-JP',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}),
+    name:drink.name,category:drink.category,tags:drink.tags||[],
+    description:drink.description?drink.description.substring(0,80)+'…':'',
+    trivia:drink.trivia||''
+  });
   if(h.length>50)h.pop();
   localStorage.setItem('bar_carila_history',JSON.stringify(h));
 }
@@ -456,6 +484,38 @@ function buildLogHTML(){
   if(!convLog.length)return'<div style="color:var(--muted);font-size:11px;">記録がありません</div>';
   return convLog.map(l=>`<div class="log-q">Q: ${l.q}</div><div class="log-a">→ ${l.a}</div>`).join('');
 }
+function buildAffiliateSection(drink){
+  const cat=(drink.category||'').toLowerCase();
+  const isCocktail=cat.includes('カクテル')||cat.includes('モクテル')||cat.includes('ノンアル');
+  
+  if(isCocktail){
+    // カクテルはレシピ欄の「材料をまとめて探す」に誘導するだけ
+    return `<div class="affiliate-wrap">
+      <div class="affiliate-label">🍸 このカクテルを作ってみたい方へ</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.7;">下のレシピ欄から材料ごとに購入できます。</div>
+    </div>`;
+  }
+  
+  // 洋酒・スピリッツ等はそのまま直接検索
+  const q=getSearchQuery(drink.name,drink.category);
+  return `<div class="affiliate-wrap">
+    <div class="affiliate-label">🛒 このお酒を探す</div>
+    <div class="affiliate-links">
+      <a class="affiliate-btn" href="https://www.amazon.co.jp/s?k=${q}&tag=carila-22" target="_blank" rel="noopener">Amazon</a>
+      <a class="affiliate-btn" href="https://search.rakuten.co.jp/search/mall/${q}/?l2-id=1000&a_id=51ff76f6.9c656021.51ff76f7.1d6ddd8e" target="_blank" rel="noopener">楽天市場</a>
+    </div>
+  </div>`;
+}
+function getSearchQuery(name,cat){
+  const c=(cat||'').toLowerCase();
+  if(c.includes('カクテル')||c.includes('モクテル')||c.includes('ノンアル'))
+    return encodeURIComponent(name+' カクテル レシピ');
+  if(c.includes('ウイスキー')||c.includes('スコッチ')||c.includes('バーボン'))
+    return encodeURIComponent(name+' ウイスキー');
+  if(c.includes('ブランデー')||c.includes('コニャック'))
+    return encodeURIComponent(name+' ブランデー');
+  return encodeURIComponent(name+' お酒');
+}
 function showRec(data){
   collapsePanda();
   const cat=(data.drink.category||'').toLowerCase();
@@ -473,7 +533,7 @@ function showRec(data){
   const card=document.createElement('div');card.className='rec-card';
   card.innerHTML=`
     <div class="rec-img-wrap">
-      <img src="${getDrinkImg(data.drink.name,data.drink.category)}" alt="${data.drink.name}" onload="this.classList.add('loaded')" onerror="this.parentNode.innerHTML='<div class=\"rec-no-img\">🍸</div>'">
+      <img src="${getDrinkImg(data.drink.name,data.drink.category)}" alt="${data.drink.name}" onload="this.classList.add('loaded')" onerror="const fi=FALLBACK_IMGS[Math.floor(Math.random()*FALLBACK_IMGS.length)];if(this.src!==fi){this.src=fi;}else{this.parentNode.innerHTML='<div class=\"rec-no-img\" style=\"display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;\"><div style=\"font-size:36px;\">🍸</div><div style=\"font-size:11px;letter-spacing:0.2em;color:rgba(200,146,42,0.5)\">NO IMAGE</div></div>';}" >
       <div class="rec-img-credit">Photo: Unsplash</div>
     </div>
     <div class="rec-body">
@@ -608,6 +668,36 @@ async function startChat(){
   }
   isLoading=false;
 }
+
+
+function nativeShare(name,text,url){
+  if(navigator.share){
+    navigator.share({title:'Bar Carila — '+name,text:text,url:url})
+    .catch(()=>{});
+  }else{
+    // fallback: copy to clipboard
+    navigator.clipboard.writeText(text+' '+url).then(()=>{
+      const btns=document.querySelectorAll('.copy-btn');
+      btns.forEach(b=>{const orig=b.textContent;b.textContent='コピーしました！';setTimeout(()=>b.textContent=orig,2000);});
+    }).catch(()=>{
+      const ta=document.createElement('textarea');
+      ta.value=text+' '+url;document.body.appendChild(ta);ta.select();
+      document.execCommand('copy');document.body.removeChild(ta);
+    });
+  }
+}
+function copyShareText(text){
+  navigator.clipboard.writeText(text).then(()=>{
+    const btns=document.querySelectorAll('.copy-btn');
+    btns.forEach(b=>{b.textContent='コピーしました！';b.classList.add('copied');});
+    setTimeout(()=>btns.forEach(b=>{b.textContent='URLをコピー';b.classList.remove('copied');}),2000);
+  }).catch(()=>{
+    // fallback
+    const ta=document.createElement('textarea');
+    ta.value=text;document.body.appendChild(ta);ta.select();
+    document.execCommand('copy');document.body.removeChild(ta);
+  });
+}
 function toggleMenu(){document.getElementById('menuDrawer').classList.toggle('open');document.getElementById('menuOverlay').classList.toggle('open');}
 function restartFromMenu(){toggleMenu();setTimeout(()=>{expandPanda();history=[];convLog=[];setPanda('counter');startChat();},300);}
 if(window.innerWidth>=700)document.querySelector('.pc-header').style.display='block';
@@ -663,7 +753,7 @@ startChat();
 </div><div class="goods-item">
   <div class="goods-item-emoji">🔷</div>
   <div class="goods-item-body">
-    <div class="goods-item-name">長方形・スティック型製氷トレー</div>
+    <div class="goods-item-name">角型製氷トレー</div>
     <div class="goods-item-desc">ハイボールやロングカクテルに使われる細長い氷。グラスにすっぽり入って溶けにくく、見た目もスタイリッシュです。ウイスキーのハイボールには特に相性が良いと言われています。</div>
     <div class="goods-links">
       <a class="goods-link" href="https://www.amazon.co.jp/s?k=スティック氷+製氷トレー+棒氷&tag=carila-22" target="_blank" rel="noopener">Amazon</a>
@@ -693,7 +783,7 @@ startChat();
 </div><div class="goods-item">
   <div class="goods-item-emoji">👨‍🍳</div>
   <div class="goods-item-body">
-    <div class="goods-item-name">バーエプロン（レザー・帆布）</div>
+    <div class="goods-item-name">バーテンダー風エプロン（デニム・帆布）</div>
     <div class="goods-item-desc">バーテンダーがつけているエプロンは、グラスの水滴や液体からを守るためのものです。デニムや帆布、レザータイプが人気で、ホームバーや料理の際にも活躍します。つけるだけでバーテンダー気分が上がります。</div>
     <div class="goods-links">
       <a class="goods-link" href="https://www.amazon.co.jp/s?k=バーテンダー+エプロン+帆布+レザー&tag=carila-22" target="_blank" rel="noopener">Amazon</a>
@@ -713,7 +803,7 @@ startChat();
 </div><div class="goods-item">
   <div class="goods-item-emoji">📚</div>
   <div class="goods-item-body">
-    <div class="goods-item-name">「バーの流儀」城アラキ</div>
+    <div class="goods-item-name">「バーテンダーの流儀」城アラキ</div>
     <div class="goods-item-desc">バーテンダー漫画の原作者・城アラキによるバー文化の入門書。バーへの入り方・注文の仕方・マナーから、お酒の楽しみ方まで丁寧に解説されています。バー初心者が読むと一気に敷居が下がります。</div>
     <div class="goods-links">
       <a class="goods-link" href="https://www.amazon.co.jp/s?k=バーの流儀+城アラキ&tag=carila-22" target="_blank" rel="noopener">Amazon</a>
@@ -818,6 +908,19 @@ const DRINK_IMG_MAP = {
   'フレンチ75': 'https://images.unsplash.com/photo-1583394293214-66c49d4d8de5?w=800&auto=format&fit=crop',
   'サイドカー': 'https://images.unsplash.com/photo-1574056741818-a9f0e7e03c71?w=800&auto=format&fit=crop',
   'スコッチ': 'https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=800&auto=format&fit=crop',
+  'コスモポリタン': 'https://images.unsplash.com/photo-1581927692308-be9e43b4d860?w=800&auto=format&fit=crop',
+  'ニューヨーク': 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=800&auto=format&fit=crop',
+  'ブルーラグーン': 'https://images.unsplash.com/photo-1551538827-9c037cb4f32a?w=800&auto=format&fit=crop',
+  'カンパリ': 'https://images.unsplash.com/photo-1590401266882-9bfa1e4d2ab3?w=800&auto=format&fit=crop',
+  'スプリッツ': 'https://images.unsplash.com/photo-1563077764-93e534f3acaa?w=800&auto=format&fit=crop',
+  'クローバークラブ': 'https://images.unsplash.com/photo-1581927692308-be9e43b4d860?w=800&auto=format&fit=crop',
+  'アビエーション': 'https://images.unsplash.com/photo-1583394293214-66c49d4d8de5?w=800&auto=format&fit=crop',
+  'ラストワード': 'https://images.unsplash.com/photo-1575023782549-62ca0d244b39?w=800&auto=format&fit=crop',
+  'パパドブレ': 'https://images.unsplash.com/photo-1541614101331-1a5a3a194e92?w=800&auto=format&fit=crop',
+  'ハリケーン': 'https://images.unsplash.com/photo-1587574293340-e0011c4e8ecf?w=800&auto=format&fit=crop',
+  'セックスオンザビーチ': 'https://images.unsplash.com/photo-1561037404-61cd46aa615b?w=800&auto=format&fit=crop',
+  'ロングアイランドアイスティー': 'https://images.unsplash.com/photo-1553361371-9b22f78e8b1d?w=800&auto=format&fit=crop',
+  'ミモザ': 'https://images.unsplash.com/photo-1583394293214-66c49d4d8de5?w=800&auto=format&fit=crop',
   'バーボン': 'https://images.unsplash.com/photo-1608270586620-248524c67de9?w=800&auto=format&fit=crop',
   'ジャパニーズウイスキー': 'https://images.unsplash.com/photo-1527281400683-1aae777175f8?w=800&auto=format&fit=crop',
   'ブランデー': 'https://images.unsplash.com/photo-1574056741818-a9f0e7e03c71?w=800&auto=format&fit=crop',
@@ -834,6 +937,15 @@ const FALLBACK_IMGS=[
   'https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=800&auto=format&fit=crop',
   'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=800&auto=format&fit=crop',
   'https://images.unsplash.com/photo-1527281400683-1aae777175f8?w=800&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1575023782549-62ca0d244b39?w=800&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1590401266882-9bfa1e4d2ab3?w=800&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=800&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1551538827-9c037cb4f32a?w=800&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1583394293214-66c49d4d8de5?w=800&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1563077764-93e534f3acaa?w=800&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=800&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=800&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1608270586620-248524c67de9?w=800&auto=format&fit=crop',
 ];
 function pickRandom(arr){return arr[Math.floor(Math.random()*arr.length)];}
 function getDrinkImg(name,cat){
@@ -854,7 +966,12 @@ const ALL_PANDAS=['counter','bartender','relax','normal','think','smile','approv
 function getHistory(){try{return JSON.parse(localStorage.getItem('bar_carila_history')||'[]')}catch{return[]}}
 function saveToHistory(drink){
   const h=getHistory();
-  h.unshift({date:new Date().toLocaleString('ja-JP',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}),name:drink.name,category:drink.category,tags:drink.tags||[]});
+  h.unshift({
+    date:new Date().toLocaleString('ja-JP',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}),
+    name:drink.name,category:drink.category,tags:drink.tags||[],
+    description:drink.description?drink.description.substring(0,80)+'…':'',
+    trivia:drink.trivia||''
+  });
   if(h.length>50)h.pop();
   localStorage.setItem('bar_carila_history',JSON.stringify(h));
 }
@@ -913,6 +1030,38 @@ function buildLogHTML(){
   if(!convLog.length)return'<div style="color:var(--muted);font-size:11px;">記録がありません</div>';
   return convLog.map(l=>`<div class="log-q">Q: ${l.q}</div><div class="log-a">→ ${l.a}</div>`).join('');
 }
+function buildAffiliateSection(drink){
+  const cat=(drink.category||'').toLowerCase();
+  const isCocktail=cat.includes('カクテル')||cat.includes('モクテル')||cat.includes('ノンアル');
+  
+  if(isCocktail){
+    // カクテルはレシピ欄の「材料をまとめて探す」に誘導するだけ
+    return `<div class="affiliate-wrap">
+      <div class="affiliate-label">🍸 このカクテルを作ってみたい方へ</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.7;">下のレシピ欄から材料ごとに購入できます。</div>
+    </div>`;
+  }
+  
+  // 洋酒・スピリッツ等はそのまま直接検索
+  const q=getSearchQuery(drink.name,drink.category);
+  return `<div class="affiliate-wrap">
+    <div class="affiliate-label">🛒 このお酒を探す</div>
+    <div class="affiliate-links">
+      <a class="affiliate-btn" href="https://www.amazon.co.jp/s?k=${q}&tag=carila-22" target="_blank" rel="noopener">Amazon</a>
+      <a class="affiliate-btn" href="https://search.rakuten.co.jp/search/mall/${q}/?l2-id=1000&a_id=51ff76f6.9c656021.51ff76f7.1d6ddd8e" target="_blank" rel="noopener">楽天市場</a>
+    </div>
+  </div>`;
+}
+function getSearchQuery(name,cat){
+  const c=(cat||'').toLowerCase();
+  if(c.includes('カクテル')||c.includes('モクテル')||c.includes('ノンアル'))
+    return encodeURIComponent(name+' カクテル レシピ');
+  if(c.includes('ウイスキー')||c.includes('スコッチ')||c.includes('バーボン'))
+    return encodeURIComponent(name+' ウイスキー');
+  if(c.includes('ブランデー')||c.includes('コニャック'))
+    return encodeURIComponent(name+' ブランデー');
+  return encodeURIComponent(name+' お酒');
+}
 function showRec(data){
   collapsePanda();
   const cat=(data.drink.category||'').toLowerCase();
@@ -930,7 +1079,7 @@ function showRec(data){
   const card=document.createElement('div');card.className='rec-card';
   card.innerHTML=`
     <div class="rec-img-wrap">
-      <img src="${getDrinkImg(data.drink.name,data.drink.category)}" alt="${data.drink.name}" onload="this.classList.add('loaded')" onerror="this.parentNode.innerHTML='<div class=\"rec-no-img\">🍸</div>'">
+      <img src="${getDrinkImg(data.drink.name,data.drink.category)}" alt="${data.drink.name}" onload="this.classList.add('loaded')" onerror="const fi=FALLBACK_IMGS[Math.floor(Math.random()*FALLBACK_IMGS.length)];if(this.src!==fi){this.src=fi;}else{this.parentNode.innerHTML='<div class=\"rec-no-img\" style=\"display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;\"><div style=\"font-size:36px;\">🍸</div><div style=\"font-size:11px;letter-spacing:0.2em;color:rgba(200,146,42,0.5)\">NO IMAGE</div></div>';}" >
       <div class="rec-img-credit">Photo: Unsplash</div>
     </div>
     <div class="rec-body">
@@ -1064,6 +1213,36 @@ async function startChat(){
     console.error(e);
   }
   isLoading=false;
+}
+
+
+function nativeShare(name,text,url){
+  if(navigator.share){
+    navigator.share({title:'Bar Carila — '+name,text:text,url:url})
+    .catch(()=>{});
+  }else{
+    // fallback: copy to clipboard
+    navigator.clipboard.writeText(text+' '+url).then(()=>{
+      const btns=document.querySelectorAll('.copy-btn');
+      btns.forEach(b=>{const orig=b.textContent;b.textContent='コピーしました！';setTimeout(()=>b.textContent=orig,2000);});
+    }).catch(()=>{
+      const ta=document.createElement('textarea');
+      ta.value=text+' '+url;document.body.appendChild(ta);ta.select();
+      document.execCommand('copy');document.body.removeChild(ta);
+    });
+  }
+}
+function copyShareText(text){
+  navigator.clipboard.writeText(text).then(()=>{
+    const btns=document.querySelectorAll('.copy-btn');
+    btns.forEach(b=>{b.textContent='コピーしました！';b.classList.add('copied');});
+    setTimeout(()=>btns.forEach(b=>{b.textContent='URLをコピー';b.classList.remove('copied');}),2000);
+  }).catch(()=>{
+    // fallback
+    const ta=document.createElement('textarea');
+    ta.value=text;document.body.appendChild(ta);ta.select();
+    document.execCommand('copy');document.body.removeChild(ta);
+  });
 }
 function toggleMenu(){document.getElementById('menuDrawer').classList.toggle('open');document.getElementById('menuOverlay').classList.toggle('open');}
 function restartFromMenu(){toggleMenu();setTimeout(()=>{expandPanda();history=[];convLog=[];setPanda('counter');startChat();},300);}
@@ -1238,8 +1417,10 @@ async function doSearch(){
       const rakutenUrl=`https://search.rakuten.co.jp/search/mall/${encodeURIComponent(r.search_ja||r.name)}/?l2-id=1000&a_id=${RAKUTEN_ID}`;
       const similarHTML=r.similar&&r.similar.length
         ?`<div class="search-suggest" style="margin-top:12px;"><div class="search-suggest-label">似たお酒</div><div class="search-suggest-btns">${r.similar.map(s=>`<button class="search-suggest-btn" onclick="searchFor('${s}')">${s}</button>`).join('')}</div></div>`:'';
+      const searchImg=getDrinkImg(r.name,r.category);
+      const imgHTML=`<div style="width:calc(100% + 32px);height:130px;overflow:hidden;border-radius:8px 8px 0 0;margin:-16px -16px 14px;"><img src="${searchImg}" style="width:100%;height:100%;object-fit:cover;opacity:0.8;" onload="this.style.opacity=0.85" onerror="this.parentNode.style.display='none'"></div>`;
       results.innerHTML=`
-        <div class="search-result-card">
+        <div class="search-result-card">${imgHTML}
           <div class="search-result-name">${r.name}</div>
           <div class="search-result-cat">${r.category}</div>
           <div class="search-result-desc">${r.description}</div>
