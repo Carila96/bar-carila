@@ -168,9 +168,10 @@ body{height:100%;background:var(--bg);color:var(--text);font-family:'Noto Serif 
 .menu-item:active{color:var(--cream);border-left-color:var(--amber);background:rgba(200,146,42,0.05);}
 .menu-item.disabled{color:var(--muted);cursor:default;opacity:0.5;pointer-events:none;}
 .menu-badge{font-size:9px;color:var(--amber-dim);margin-left:6px;border:1px solid var(--amber-dim);padding:1px 5px;border-radius:10px;}
-.logo-btn{position:fixed;top:10px;left:12px;z-index:100;width:52px;height:52px;cursor:pointer;background:none;border:none;padding:0;opacity:0.6;transition:opacity 0.2s;-webkit-tap-highlight-color:transparent;}
+.logo-btn{position:fixed;top:10px;left:12px;z-index:100;display:flex;align-items:center;gap:8px;cursor:pointer;background:none;border:none;padding:4px;opacity:0.75;transition:opacity 0.2s;-webkit-tap-highlight-color:transparent;}
 .logo-btn:active{opacity:1;}
-.logo-btn img{width:100%;height:100%;object-fit:contain;}
+.logo-btn img{width:40px;height:40px;object-fit:contain;flex-shrink:0;}
+.logo-btn .logo-text{font-family:'Cormorant Garamond',serif;font-size:15px;letter-spacing:0.08em;color:var(--cream);white-space:nowrap;}
 .tutorial-overlay{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.88);display:flex;align-items:center;justify-content:center;animation:fadeIn 0.4s ease;}
 .tutorial-overlay.hidden{display:none;}
 @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
@@ -209,7 +210,6 @@ body{height:100%;background:var(--bg);color:var(--text);font-family:'Noto Serif 
 <div class="bg-overlay"></div>
 <div class="app">
   <div class="panda-stage" id="pandaStage">
-    <div class="bar-eyebrow">✦ Bar Carila ✦</div>
     <img class="panda-img active" id="p-counter"    src="/pandas/p-counter.png"    alt="" style="mix-blend-mode:multiply;">
     <img class="panda-img"        id="p-loading"    src="/pandas/p-loading.png"    alt="" style="mix-blend-mode:multiply;">
     <img class="panda-img"        id="p-think"      src="/pandas/p-think.png"      alt="" style="mix-blend-mode:multiply;">
@@ -226,7 +226,7 @@ body{height:100%;background:var(--bg);color:var(--text);font-family:'Noto Serif 
       <div style="font-size:12px;color:var(--muted);line-height:1.75;margin-bottom:20px;">AIバーテンダーがあなたにぴったりのお酒を探します。</div>
     </div>
     <div class="current-msg">
-      <div class="msg-label">🐼 Bar Carila</div>
+      <div class="msg-label">Bar Carila</div>
       <div class="msg-text" id="msgText"><div class="loading-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>
     </div>
     <div class="choices-area" id="choicesArea"></div>
@@ -396,7 +396,7 @@ body{height:100%;background:var(--bg);color:var(--text);font-family:'Noto Serif 
 </div>
 
 <!-- Logo -->
-<button class="logo-btn" onclick="goHome()"><img src="/pandas/logo.png" alt="Bar Carila"></button>
+<button class="logo-btn" onclick="goHome()"><img src="/pandas/logo.png" alt=""><span class="logo-text">Bar Carila</span></button>
 
 <!-- Tutorial -->
 <div class="tutorial-overlay" id="tutorialOverlay">
@@ -527,12 +527,16 @@ function buildAffiliateSection(drink){
 }
 
 // ===== Recipe HTML =====
+// 通販不要な基本食材（バーや家庭で入手、通販で買う必要がないもの）
+const NO_SHOP_RE=/^(氷|砂糖|グラニュー糖|角砂糖|塩|こしょう|胡椒|水|炭酸水|ソーダ水|ソーダ|トニックウォーター|レモン|ライム|オレンジ|グレープフルーツ|レモン果汁|ライム果汁|フレッシュ|ミント|バジル|卵|卵白|卵黄|生クリーム|クリーム|牛乳|ミルク|蜂蜜|はちみつ|ハチミツ)/i;
 function buildRecipeHTML(recipe){
   if(!recipe||!recipe.ingredients||!recipe.ingredients.length)return'';
   const items=recipe.ingredients.map(i=>`<li class="recipe-item"><span class="recipe-ingredient">${i.name}</span><span class="recipe-amount">${i.amount}</span></li>`).join('');
   const method=recipe.method?`<div class="recipe-method">作り方：${recipe.method}</div>`:'';
   const uid='ingr_'+Math.random().toString(36).substr(2,6);
-  const shopItems=recipe.ingredients.map(ing=>{
+  const shopIngr=recipe.ingredients.filter(ing=>!NO_SHOP_RE.test(ing.name));
+  if(!shopIngr.length)return`<div class="recipe-section"><div class="recipe-title">✦ Recipe</div><ul class="recipe-list">${items}</ul>${method}</div>`;
+  const shopItems=shopIngr.map(ing=>{
     const q=encodeURIComponent(ing.name);
     return`<div class="ingr-shop-item"><span class="ingr-shop-name">${ing.name}</span><div class="ingr-shop-links"><a class="ingr-shop-link" href="https://www.amazon.co.jp/s?k=${q}&tag=${AMAZON_TAG}" target="_blank" rel="noopener">Amazon</a><a class="ingr-shop-link" href="https://search.rakuten.co.jp/search/mall/${encodeURIComponent(ing.name)}/?l2-id=1000&a_id=${RAKUTEN_ID}" target="_blank" rel="noopener">楽天</a></div></div>`;
   }).join('');
@@ -749,7 +753,7 @@ function openFeedback(){toggleMenu();setTimeout(()=>{if(FEEDBACK_URL)window.open
 function goHome(){if(confirm('ホームに戻りますか？（会話がリセットされます）')){expandPanda();chatHistory=[];convLog=[];setPanda('counter');startChat();}}
 
 // ===== Tutorial =====
-const COUNTER_PANDA_IMG="/pandas/p-counter.png";
+const COUNTER_PANDA_IMG=document.getElementById('p-counter').src;
 const TUTORIAL_STEPS=[
   {imgSrc:COUNTER_PANDA_IMG,title:'Bar Carilaへようこそ',text:'パンダのAIバーテンダーがあなたにぴったりのお酒を探します。バー初心者からお酒好きまで、どなたでも歓迎です。'},
   {icon:'🍸',title:'こんなことができます',text:'カクテル・ウイスキー・ノンアルを提案。レシピや材料リンクも表示されます。バーに行く前の予習にも最適です。'},
