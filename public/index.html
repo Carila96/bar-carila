@@ -404,7 +404,7 @@ body{height:100%;background:var(--bg);color:var(--text);font-family:'Noto Serif 
 <button class="logo-btn" onclick="goHome()"><img src="/pandas/logo.png" alt=""><span class="logo-text">Bar Carila</span></button>
 
 <!-- Tutorial -->
-<div class="tutorial-overlay" id="tutorialOverlay">
+<div class="tutorial-overlay hidden" id="tutorialOverlay">
   <div class="tutorial-card">
     <div class="tutorial-body">
       <div class="tutorial-dots"><div class="tutorial-dot active" id="td0"></div><div class="tutorial-dot" id="td1"></div><div class="tutorial-dot" id="td2"></div></div>
@@ -764,7 +764,7 @@ function openFeedback(){toggleMenu();setTimeout(()=>{if(FEEDBACK_URL)window.open
 function goHome(){if(confirm('ホームに戻りますか？（会話がリセットされます）')){expandPanda();chatHistory=[];convLog=[];setPanda('counter');startChat();}}
 
 // ===== Tutorial =====
-const COUNTER_PANDA_IMG=document.getElementById('p-counter').src;
+const COUNTER_PANDA_IMG=(document.getElementById('p-counter')||{getAttribute:()=>'/pandas/p-counter.png'}).getAttribute('src');
 const TUTORIAL_STEPS=[
   {imgSrc:COUNTER_PANDA_IMG,title:'Bar Carilaへようこそ',text:'パンダのAIバーテンダーがあなたにぴったりのお酒を探します。バー初心者からお酒好きまで、どなたでも歓迎です。'},
   {icon:'🍸',title:'こんなことができます',text:'カクテル・ウイスキー・ノンアルを提案。レシピや材料リンクも表示されます。バーに行く前の予習にも最適です。'},
@@ -775,14 +775,14 @@ let tutorialStep=0;
 function renderTutorialStep(step){
   const s=TUTORIAL_STEPS[step];
   const iconEl=document.getElementById('tIcon');
-  if(s.imgSrc){
-    iconEl.innerHTML=`<img src="${s.imgSrc}" style="width:80px;height:80px;object-fit:contain;" alt="">`;
-  }else{
-    iconEl.innerHTML=`<span style="font-size:40px;">${s.icon}</span>`;
-  }
-  document.getElementById('tTitle').textContent=s.title;
-  document.getElementById('tText').innerHTML=s.text;
-  document.getElementById('tNextBtn').textContent=step<TUTORIAL_STEPS.length-1?'次へ →':'はじめる 🍸';
+  const titleEl=document.getElementById('tTitle');
+  const textEl=document.getElementById('tText');
+  const nextBtn=document.getElementById('tNextBtn');
+  if(!iconEl||!titleEl||!textEl||!nextBtn)return;
+  iconEl.innerHTML=s.imgSrc?`<img src="${s.imgSrc}" style="width:80px;height:80px;object-fit:contain;" alt="">`:`<span style="font-size:40px;">${s.icon}</span>`;
+  titleEl.textContent=s.title;
+  textEl.innerHTML=s.text;
+  nextBtn.textContent=step<TUTORIAL_STEPS.length-1?'次へ →':'はじめる 🍸';
   TUTORIAL_STEPS.forEach((_,i)=>document.getElementById('td'+i).classList.toggle('active',i===step));
 }
 function tutorialNext(){
@@ -791,7 +791,10 @@ function tutorialNext(){
 }
 function closeTutorial(){localStorage.setItem('bar_carila_tutorial_done','1');document.getElementById('tutorialOverlay').classList.add('hidden');}
 function initTutorial(){
-  if(localStorage.getItem('bar_carila_tutorial_done')){document.getElementById('tutorialOverlay').classList.add('hidden');return;}
+  const overlay=document.getElementById('tutorialOverlay');
+  if(!overlay)return;
+  if(localStorage.getItem('bar_carila_tutorial_done')){overlay.classList.add('hidden');return;}
+  overlay.classList.remove('hidden');
   renderTutorialStep(0);
 }
 
