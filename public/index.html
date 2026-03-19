@@ -745,7 +745,7 @@ async function startChat(){
 // ===== Menu =====
 function toggleMenu(){document.getElementById('menuDrawer').classList.toggle('open');document.getElementById('menuOverlay').classList.toggle('open');}
 function restartFromMenu(){toggleMenu();setTimeout(()=>{expandPanda();chatHistory=[];convLog=[];setPanda('counter');startChat();},300);}
-function openFeedback(){toggleMenu();setTimeout(()=>{if(FEEDBACK_URL)window.open(FEEDBACK_URL,'_blank');else alert('準備中です。');}),300);}
+function openFeedback(){toggleMenu();setTimeout(()=>{if(FEEDBACK_URL)window.open(FEEDBACK_URL,'_blank');else alert('準備中です。');},300);}
 function goHome(){if(confirm('ホームに戻りますか？（会話がリセットされます）')){expandPanda();chatHistory=[];convLog=[];setPanda('counter');startChat();}}
 
 // ===== Tutorial =====
