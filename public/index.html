@@ -528,7 +528,8 @@ function buildAffiliateSection(drink){
 
 // ===== Recipe HTML =====
 // 通販不要な基本食材（バーや家庭で入手、通販で買う必要がないもの）
-const NO_SHOP_RE=/^(氷|砂糖|グラニュー糖|角砂糖|塩|こしょう|胡椒|水|炭酸水|ソーダ水|ソーダ|トニックウォーター|レモン|ライム|オレンジ|グレープフルーツ|レモン果汁|ライム果汁|フレッシュ|ミント|バジル|卵|卵白|卵黄|生クリーム|クリーム|牛乳|ミルク|蜂蜜|はちみつ|ハチミツ)/i;
+// 酒・リキュール・シロップ・ジュース以外の調味料・生鮮素材はリンクなし
+const NO_SHOP_RE=/^(氷|砂糖|グラニュー糖|角砂糖|塩|こしょう|胡椒|水|炭酸水|ソーダ水|ソーダ|トニックウォーター|レモン|ライム|オレンジ|グレープフルーツ|ミント|バジル|卵|卵白|卵黄|生クリーム|牛乳|ミルク|蜂蜜|はちみつ|ハチミツ)$/i;
 function buildRecipeHTML(recipe){
   if(!recipe||!recipe.ingredients||!recipe.ingredients.length)return'';
   const items=recipe.ingredients.map(i=>`<li class="recipe-item"><span class="recipe-ingredient">${i.name}</span><span class="recipe-amount">${i.amount}</span></li>`).join('');
@@ -620,7 +621,7 @@ function showRec(data){
 
   const nudge=document.createElement('div');
   nudge.className='social-nudge';
-  nudge.innerHTML=`友達にも試してもらおう👇<br><a href="https://twitter.com/intent/tweet?text=${encodeURIComponent('🐼 AIバーテンダーに診断してもらったら私にぴったりのお酒を見つけてくれた！バーに行く前にぜひ試してみて🍸 #BarCarila bar-carila.vercel.app')}" target="_blank" rel="noopener" style="color:var(--amber);font-size:12px;text-decoration:none;">X でシェアして友達を招待</a>`;
+  nudge.innerHTML=`友達にも試してもらおう👇<br><a href="https://twitter.com/intent/tweet?text=${encodeURIComponent('🐼 AIバーテンダーに診断してもらったら私にぴったりのお酒を見つけてくれた！バーに行く前にぜひ試してみて🍸 #BarCarila bar-carila.vercel.app')}" target="_blank" rel="noopener" style="color:var(--amber);font-size:12px;text-decoration:none;">あなたに提案されたお酒をみんなに教えよう</a>`;
   area.appendChild(nudge);
 
   const rb=document.createElement('button');rb.className='restart-btn';
@@ -665,14 +666,14 @@ const SYSTEM=`あなたは「Bar Carila」の世界最高レベルのAIバーテ
 実在が100%確実なお酒のみ提案。不確かな場合はスタイル名で提案しバーテンダーに委ねる。
 
 【絶対ルール2：アルコール度数を厳守する】
-「アルコールはごく少なめで」→ 度数5〜8%以下のみ。
-  ✅ モヒート(5%)、カシスソーダ(3-5%)、アペロールスプリッツ(8%)、モクテル各種
-  ❌ マティーニ(30%)、ニコラシカ(30%)、ネグローニ(25%)など高度数は絶対禁止
-  ⚠️ 例外：ユーザーが「変わったものを」と強く希望した場合のみ、「度数は少し高くなりますが……」と前置きした上で提案可。triviaに必ず「アルコール度数が高めです。少量ずつゆっくり」を入れる。
+「ほぼ飲めない・ノンアルがいい」→ ノンアルコール/モクテル優先。アルコール入りを提案する場合は度数3%以下のみ。
+  ✅ モクテル各種、ノンアルコールカクテル、ジンジャーエール系
+  ❌ ビール・チューハイ含め全アルコール飲料は原則禁止
 
-「ビール・チューハイくらい」→ 度数5〜9%。ロングカクテル中心。
-「ワイン・カクテルくらい」→ 度数10〜15%。
-「ウイスキーのストレートも平気」→ 制限なし。
+「ビール・チューハイくらい（5%前後）」→ 度数5〜9%。ロングカクテル中心。
+「ワインくらい（12%前後）」→ 度数10〜15%。
+「ウイスキーのストレートも平気（40%前後）」→ 制限なし。
+  ⚠️ 例外：ユーザーが「変わったものを」と強く希望した場合のみ、「度数は少し高くなりますが……」と前置きした上で提案可。triviaに必ず「アルコール度数が高めです。少量ずつゆっくり」を入れる。
 
 【絶対ルール3：カテゴリ名は以下から選ぶ】
 カクテル / ノンアルコールカクテル / モクテル / スコッチウイスキー / バーボンウイスキー / ジャパニーズウイスキー / アイリッシュウイスキー / コニャック / ブランデー / ジン / ラム / テキーラ / メスカル / ウォッカ / リキュール / スパークリングワイン / 赤ワイン / 白ワイン / ロゼワイン / ポートワイン / シェリー / 日本酒 / 焼酎 / 梅酒
@@ -691,7 +692,7 @@ const SYSTEM=`あなたは「Bar Carila」の世界最高レベルのAIバーテ
 - 横断提案は自由入力で強い個性が見えた時のみ、必ず選択権を渡す
 - ウイスキーは方向性→代表例の順で提案
 
-【アルコール量の確認】必ず確認：「ビール・チューハイくらい」「ワイン・カクテルくらい」「ウイスキーのストレートも平気」「アルコールはごく少なめで」
+【アルコール量の確認】必ず確認：「ほぼ飲めない・ノンアルがいい」「ビール・チューハイくらい（5%前後）」「ワインくらい（12%前後）」「ウイスキーのストレートも平気（40%前後）」
 
 【感情タグ必須】[counter]=初期・通常 [bartender]=カクテル・モクテル提案時 [relax]=洋酒提案時 [loading]=考え中 [think]=質問中 [smile]=共感 [approve]=良い回答 [sad]=迷い [curious]=珍しい提案時
 
