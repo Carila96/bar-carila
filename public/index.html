@@ -59,7 +59,12 @@ body{height:100%;background:var(--bg);color:var(--text);font-family:'Noto Serif 
 .rec-body{padding:16px 16px 18px;}
 .rec-ornament{font-size:9px;letter-spacing:0.5em;text-transform:uppercase;color:var(--amber);margin-bottom:8px;}
 .rec-name{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:400;color:var(--cream);line-height:1.1;margin-bottom:2px;}
-.rec-cat{font-size:10px;letter-spacing:0.25em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+.rec-cat{font-size:10px;letter-spacing:0.25em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;flex-wrap:wrap;gap:10px;}
+.rarity-wrap{display:flex;align-items:center;gap:5px;flex-shrink:0;}
+.rarity-bar{width:60px;height:4px;background:var(--amber-dim);border-radius:2px;overflow:hidden;flex-shrink:0;}
+.rarity-fill{height:100%;background:var(--amber);border-radius:2px;}
+.rarity-label{font-size:9px;letter-spacing:0.15em;color:var(--muted);white-space:nowrap;}
+.rarity-val{font-size:10px;color:var(--amber);white-space:nowrap;}
 .rec-desc{font-size:13px;line-height:1.9;color:var(--text);margin-bottom:12px;}
 .trivia-box{background:rgba(200,146,42,0.05);border-left:2px solid var(--amber-dim);padding:9px 12px;margin-bottom:12px;border-radius:0 4px 4px 0;}
 .trivia-label{font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:var(--amber-dim);margin-bottom:3px;}
@@ -587,7 +592,10 @@ function showRec(data){
     <div class="rec-body">
       <div class="rec-ornament">✦ あなたへの診断結果 ✦</div>
       <div class="rec-name">${data.drink.name}</div>
-      <div class="rec-cat">${data.drink.category}${data.drink.abv?` <span style="color:var(--amber);font-size:10px;margin-left:8px;border:1px solid var(--amber-dim);padding:1px 7px;border-radius:10px;">${data.drink.abv}</span>`:''}</div>
+      <div class="rec-cat">
+        <span>${data.drink.category}${data.drink.abv?` <span style="color:var(--amber);font-size:10px;margin-left:8px;border:1px solid var(--amber-dim);padding:1px 7px;border-radius:10px;">${data.drink.abv}</span>`:''}</span>
+        ${data.drink.rarity!=null?`<span class="rarity-wrap"><span class="rarity-label">希少度</span><span class="rarity-bar"><span class="rarity-fill" style="width:${data.drink.rarity}%"></span></span><span class="rarity-val">${data.drink.rarity}%</span></span>`:''}
+      </div>
       <div class="rec-desc">${data.drink.description}</div>
       ${triviaHTML}
       ${recipeHTML}
@@ -698,8 +706,10 @@ const SYSTEM=`あなたは「Bar Carila」の世界最高レベルのAIバーテ
 
 【JSONのみ返答】
 質問: {"type":"question","emotion":"think","message":"セリフ","choices":["A","B","C","D"]}
-提案: {"type":"recommendation","emotion":"bartender or relax or counter or curious","message":"セリフ","drink":{"name":"正式名称","category":"上記カテゴリ名から選ぶ","abv":"推定アルコール度数（例：約5%）","description":"説明2〜3文。飲み方含む","trivia":"豆知識・バーでの楽しみ方","recipe":{"ingredients":[{"name":"材料","amount":"分量"}],"method":"作り方1文"},"tags":["タグ1","タグ2","タグ3"]}}
-カクテルはrecipe必須。単体酒のみrecipe:null可。trivia・abvは必ず含める。`;
+提案: {"type":"recommendation","emotion":"bartender or relax or counter or curious","message":"セリフ","drink":{"name":"正式名称","category":"上記カテゴリ名から選ぶ","abv":"推定アルコール度数（例：約5%）","rarity":62,"description":"説明2〜3文。飲み方含む","trivia":"豆知識・バーでの楽しみ方","recipe":{"ingredients":[{"name":"材料","amount":"分量"}],"method":"作り方1文"},"tags":["タグ1","タグ2","タグ3"]}}
+カクテルはrecipe必須。単体酒のみrecipe:null可。trivia・abv・rarityは必ず含める。
+rarityは0〜100の整数。算出基準：一般的な日本のバーにある確率の逆数。知名度・材料入手しやすさ・技術難度・日本のバーへの普及度で総合判断。
+例：モヒート=8, マティーニ=15, アペロールスプリッツ=22, ニコラシカ=62, ラフロイグ25年=85`;
 
 async function callAPI(userMsg){
   if(userMsg)chatHistory.push({role:'user',content:userMsg});
