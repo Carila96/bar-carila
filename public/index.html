@@ -686,25 +686,18 @@ function buildLogHTML(){
   return convLog.map(l=>`<div class="log-q">Q: ${l.q}</div><div class="log-a">→ ${l.a}</div>`).join('');
 }
 function buildAffiliateSection(drink){
-  const cat=(drink.category||'').toLowerCase();
-  const name=(drink.name||'').toLowerCase();
+  // 判定: レシピ材料が1つでもある = カクテル・混合飲料 → 材料まとめ購入へ
+  // レシピなし = ウイスキー・ジン等の単体販売 → Amazon/楽天直リンク
+  const hasRecipe = drink.recipe && drink.recipe.ingredients && drink.recipe.ingredients.length >= 1;
   
-  // カクテル判定: カテゴリ名 OR レシピが存在する（材料がある）= カクテル・混合飲料
-  const hasMixRecipe = drink.recipe && drink.recipe.ingredients && drink.recipe.ingredients.length >= 2;
-  const isCocktailCat = cat.includes('カクテル')||cat.includes('モクテル')||cat.includes('ノンアル')||
-    cat.includes('演出')||cat.includes('フィズ')||cat.includes('サワー')||
-    cat.includes('コリンズ')||cat.includes('スプリッツ')||cat.includes('混合')||
-    cat.includes('ミックス')||cat.includes('ホット')||cat.includes('ロング')||cat.includes('ショート')||cat.includes('スパークリング')||cat.includes('シャンパン')||cat.includes('プロセッコ');
-  const isCocktail = isCocktailCat || hasMixRecipe;
-  
-  if(isCocktail){
+  if(hasRecipe){
     return `<div class="affiliate-wrap">
-      <div class="affiliate-label">🍸 このカクテルを作ってみたい方へ</div>
-      <div style="font-size:12px;color:var(--muted);line-height:1.7;">下の「材料をまとめて探す」ボタンから各材料を購入できます。</div>
+      <div class="affiliate-label">🍸 このカクテルを作りたい方へ</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.7;">下の「材料をまとめて探す」から各材料を購入できます。</div>
     </div>`;
   }
   
-  // 単体販売されるお酒（ウイスキー・ジン・ラム・ウォッカ・ワイン等）→ 直接検索
+  // 単体販売のお酒
   const q=getSearchQuery(drink.name,drink.category);
   return `<div class="affiliate-wrap">
     <div class="affiliate-label">🛒 このお酒を探す</div>
@@ -785,8 +778,7 @@ function showRec(data){
   const recImgEl = card.querySelector('.rec-img-wrap img');
   if(recImgEl) fetchDrinkImg(data.drink.name, data.drink.category, recImgEl);
   const rb=document.createElement('button');rb.className='restart-btn';rb.textContent='🐼 もう一度、別のお酒を探す';
-  rb.onclick=()=>{expandPanda();history=[];convLog=[];setPanda('counter');startChat();
-initTutorial();};
+  rb.onclick=()=>{expandPanda();history=[];convLog=[];setPanda('counter');startChat();};
   area.appendChild(rb);
   area.scrollTop=0;
 }
@@ -858,7 +850,7 @@ categoryフィールドには必ず以下のいずれかを使う：
 【JSONのみ返答】
 質問: {"type":"question","emotion":"think","message":"セリフ","choices":["A","B","C","D"]}
 提案: {"type":"recommendation","emotion":"bartender or relax or counter or curious","message":"セリフ","drink":{"name":"正式名称","category":"上記カテゴリ名から選ぶ","abv":"推定アルコール度数（例：約5%・約40%）","description":"説明2〜3文。飲み方含む","trivia":"豆知識・バーでの楽しみ方","recipe":{"ingredients":[{"name":"材料","amount":"分量"}],"method":"作り方1文"},"tags":["タグ1","タグ2","タグ3"]}}
-単体酒はrecipe:null可。trivia・abvは必ず含める。`;
+カクテル・混合飲料は必ずrecipeを含める（材料が1つでも）。単体で売られるお酒（ウイスキー・ジン等）のみrecipe:null可。trivia・abvは必ず含める。`;
 async function callAPI(msg){
   if(msg)history.push({role:'user',content:msg});
   const res=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1100,system:SYSTEM,messages:history})});
@@ -943,8 +935,7 @@ function openFeedback(){
   }
 }
 function toggleMenu(){document.getElementById('menuDrawer').classList.toggle('open');document.getElementById('menuOverlay').classList.toggle('open');}
-function restartFromMenu(){toggleMenu();setTimeout(()=>{expandPanda();history=[];convLog=[];setPanda('counter');startChat();
-initTutorial();},300);}
+function restartFromMenu(){toggleMenu();setTimeout(()=>{expandPanda();history=[];convLog=[];setPanda('counter');startChat();},300);}
 if(window.innerWidth>=700)document.querySelector('.pc-header').style.display='block';
 startChat();
 initTutorial();
@@ -1428,35 +1419,7 @@ function buildLogHTML(){
   if(!convLog.length)return'<div style="color:var(--muted);font-size:11px;">記録がありません</div>';
   return convLog.map(l=>`<div class="log-q">Q: ${l.q}</div><div class="log-a">→ ${l.a}</div>`).join('');
 }
-function buildAffiliateSection(drink){
-  const cat=(drink.category||'').toLowerCase();
-  const name=(drink.name||'').toLowerCase();
-  
-  // カクテル判定: カテゴリ名 OR レシピが存在する（材料がある）= カクテル・混合飲料
-  const hasMixRecipe = drink.recipe && drink.recipe.ingredients && drink.recipe.ingredients.length >= 2;
-  const isCocktailCat = cat.includes('カクテル')||cat.includes('モクテル')||cat.includes('ノンアル')||
-    cat.includes('演出')||cat.includes('フィズ')||cat.includes('サワー')||
-    cat.includes('コリンズ')||cat.includes('スプリッツ')||cat.includes('混合')||
-    cat.includes('ミックス')||cat.includes('ホット')||cat.includes('ロング')||cat.includes('ショート');
-  const isCocktail = isCocktailCat || hasMixRecipe;
-  
-  if(isCocktail){
-    return `<div class="affiliate-wrap">
-      <div class="affiliate-label">🍸 このカクテルを作ってみたい方へ</div>
-      <div style="font-size:12px;color:var(--muted);line-height:1.7;">下の「材料をまとめて探す」ボタンから各材料を購入できます。</div>
-    </div>`;
-  }
-  
-  // 単体販売されるお酒（ウイスキー・ジン・ラム・ウォッカ・ワイン等）→ 直接検索
-  const q=getSearchQuery(drink.name,drink.category);
-  return `<div class="affiliate-wrap">
-    <div class="affiliate-label">🛒 このお酒を探す</div>
-    <div class="affiliate-links">
-      <a class="affiliate-btn" href="https://www.amazon.co.jp/s?k=${q}&tag=carila-22" target="_blank" rel="noopener">Amazon</a>
-      <a class="affiliate-btn" href="https://search.rakuten.co.jp/search/mall/${q}/?l2-id=1000&a_id=51ff76f6.9c656021.51ff76f7.1d6ddd8e" target="_blank" rel="noopener">楽天市場</a>
-    </div>
-  </div>`;
-}
+
 function getSearchQuery(name,cat){
   const c=(cat||'').toLowerCase();
   if(c.includes('カクテル')||c.includes('モクテル')||c.includes('ノンアル'))
@@ -1528,8 +1491,7 @@ function showRec(data){
   const recImgEl = card.querySelector('.rec-img-wrap img');
   if(recImgEl) fetchDrinkImg(data.drink.name, data.drink.category, recImgEl);
   const rb=document.createElement('button');rb.className='restart-btn';rb.textContent='🐼 もう一度、別のお酒を探す';
-  rb.onclick=()=>{expandPanda();history=[];convLog=[];setPanda('counter');startChat();
-initTutorial();};
+  rb.onclick=()=>{expandPanda();history=[];convLog=[];setPanda('counter');startChat();};
   area.appendChild(rb);
   area.scrollTop=0;
 }
@@ -1666,8 +1628,7 @@ function openFeedback(){
   }
 }
 function toggleMenu(){document.getElementById('menuDrawer').classList.toggle('open');document.getElementById('menuOverlay').classList.toggle('open');}
-function restartFromMenu(){toggleMenu();setTimeout(()=>{expandPanda();history=[];convLog=[];setPanda('counter');startChat();
-initTutorial();},300);}
+function restartFromMenu(){toggleMenu();setTimeout(()=>{expandPanda();history=[];convLog=[];setPanda('counter');startChat();},300);}
 if(window.innerWidth>=700)document.querySelector('.pc-header').style.display='block';
 startChat();
 initTutorial();
@@ -1880,7 +1841,6 @@ function goHome(){
     history=[];convLog=[];
     setPanda('counter');
     startChat();
-initTutorial();
   }
 }
 </script>
@@ -1892,7 +1852,7 @@ initTutorial();
         <div class="tutorial-dot" id="tdot1"></div>
         <div class="tutorial-dot" id="tdot2"></div>
       </div>
-      <div class="tutorial-icon" id="tIcon">🐼</div>
+      <div class="tutorial-icon" id="tIcon"></div>
       <div class="tutorial-title" id="tTitle">Bar Carilaへようこそ</div>
       <div class="tutorial-text" id="tText">パンダのAIバーテンダーがあなたにぴったりのお酒を探します。<br>バー初心者からお酒好きまで、どなたでも歓迎です。</div>
       <div class="tutorial-btns">
