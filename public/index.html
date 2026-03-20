@@ -218,7 +218,7 @@ body{height:100%;background:var(--bg);color:var(--text);font-family:'Noto Serif 
     <img class="panda-img active" id="p-counter"    src="/pandas/p-counter.png"    alt="" style="mix-blend-mode:multiply;">
     <img class="panda-img"        id="p-loading"    src="/pandas/p-loading.png"    alt="" style="mix-blend-mode:multiply;">
     <img class="panda-img"        id="p-think"      src="/pandas/p-think.png"      alt="" style="mix-blend-mode:multiply;">
-    <img class="panda-img"        id="p-smile"      src="/pandas/p-smile.png"      alt="" style="mix-blend-mode:multiply;">
+    <img class="panda-img"        id="p-smile"      src="/pandas/p-approve.png"    alt="" style="mix-blend-mode:multiply;"><!-- p-smile.png未存在のためp-approveで代替 -->
     <img class="panda-img"        id="p-approve"    src="/pandas/p-approve.png"    alt="" style="mix-blend-mode:multiply;">
     <img class="panda-img"        id="p-sad"        src="/pandas/p-sad.png"        alt="" style="mix-blend-mode:multiply;">
     <img class="panda-img"        id="p-curious"    src="/pandas/p-curious.png"    alt="" style="mix-blend-mode:multiply;">
@@ -429,6 +429,11 @@ const FALLBACK_IMGS=["https://images.unsplash.com/photo-1470337458703-46ad1756a1
 
 // ===== Image =====
 function pickRandom(arr){return arr[Math.floor(Math.random()*arr.length)];}
+function handleDrinkImgError(img){
+  const fi=pickRandom(FALLBACK_IMGS);
+  if(img.src!==fi){img.src=fi;}
+  else{img.parentNode.innerHTML='<div class="rec-no-img"><div style="font-size:36px;">🍸</div><div style="font-size:11px;letter-spacing:0.2em;color:rgba(200,146,42,0.5);">NO IMAGE</div></div>';}
+}
 function getDrinkImg(name,cat){
   const s=(name+' '+(cat||'')).toLowerCase();
   const keys=Object.keys(DRINK_IMGS).sort((a,b)=>b.length-a.length);
@@ -586,7 +591,7 @@ function showRec(data){
   const imgUrl=getDrinkImg(data.drink.name,data.drink.category);
   card.innerHTML=`
     <div class="rec-img-wrap">
-      <img src="${imgUrl}" alt="${data.drink.name}" onload="this.classList.add('loaded')" onerror="const fi=FALLBACK_IMGS[Math.floor(Math.random()*FALLBACK_IMGS.length)];if(this.src!==fi){this.src=fi;}else{this.parentNode.innerHTML='<div class=\"rec-no-img\"><div style=\"font-size:36px;\">🍸</div><div style=\"font-size:11px;letter-spacing:0.2em;color:rgba(200,146,42,0.5);\">NO IMAGE</div></div>';}">
+      <img src="${imgUrl}" alt="${data.drink.name}" onload="this.classList.add('loaded')" onerror="handleDrinkImgError(this)">
       <div class="rec-img-credit">Photo: Unsplash</div>
     </div>
     <div class="rec-body">
