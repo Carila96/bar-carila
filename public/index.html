@@ -604,7 +604,7 @@ function showRec(data){
       <div class="rec-name">${data.drink.name}</div>
       <div class="rec-cat">
         <span>${data.drink.category}${data.drink.abv?` <span style="color:var(--amber);font-size:10px;margin-left:8px;border:1px solid var(--amber-dim);padding:1px 7px;border-radius:10px;">${data.drink.abv}</span>`:''}</span>
-        ${data.drink.rarity!=null?`<span class="rarity-wrap"><span class="rarity-label">希少度</span><span class="rarity-bar"><span class="rarity-fill" style="width:${data.drink.rarity}%"></span></span><span class="rarity-val">${data.drink.rarity}%</span></span>`:''}
+        ${data.drink.rarity!=null?`<span class="rarity-wrap"><span class="rarity-label">希少度</span><span class="rarity-bar"><span class="rarity-fill" style="width:${data.drink.rarity}%"></span></span><span class="rarity-val">${data.drink.rarity}%</span><span style="font-size:10px;white-space:nowrap;">${data.drink.rarity<=30?'🟢 定番':data.drink.rarity<=60?'🟡 要確認':data.drink.rarity<=80?'🟠 バーによる':'🔴 希少'}</span></span>`:''}
       </div>
       <div class="rec-desc">${data.drink.description}</div>
       ${triviaHTML}
@@ -760,7 +760,9 @@ trivia:「バーテンダーに『旬のフルーツを使ったカクテルは�
 提案: {"type":"recommendation","emotion":"bartender or relax or counter or curious","message":"セリフ","drink":{"name":"正式名称","category":"上記カテゴリ名から選ぶ","abv":"推定アルコール度数（例：約5%）","rarity":62,"description":"説明2〜3文。飲み方含む","trivia":"豆知識・バーでの楽しみ方","recipe":{"ingredients":[{"name":"材料","amount":"分量"}],"method":"作り方1文"},"tags":["タグ1","タグ2","タグ3"]}}
 カクテルはrecipe必須。単体酒のみrecipe:null可。trivia・abv・rarityは必ず含める。
 rarityは0〜100の整数。算出基準：一般的な日本のバーにある確率の逆数。知名度・材料入手しやすさ・技術難度・日本のバーへの普及度で総合判断。
-例：モヒート=8, マティーニ=15, アペロールスプリッツ=22, ニコラシカ=62, ラフロイグ25年=85`;
+例：モヒート=8, マティーニ=15, アペロールスプリッツ=22, ニコラシカ=62, ラフロイグ25年=85
+rarity 61〜80の場合はtriviaの末尾に「バーによっては置いていない場合も。『○○はありますか？』と確認を」を追加。
+rarity 81〜100の場合はtriviaの末尾に「希少なお酒です。『○○か、近い系統のものはありますか？』と伝えると代わりの一杯を提案してもらえます」を追加。`;
 
 async function callAPI(userMsg){
   if(userMsg)chatHistory.push({role:'user',content:userMsg});
