@@ -588,7 +588,9 @@ function showRec(data){
   saveToHistory(data.drink);
 
   const siteUrl=encodeURIComponent(location.href);
-  const shareText=encodeURIComponent(`🐼 AIバーテンダーに診断してもらったら「${data.drink.name}」が私にぴったりだと言われました🍸\nバーに行く前に試してみて！\n#BarCarila #AIバーテンダー #お酒診断\nbar-carila.vercel.app`);
+  const sanitize=s=>(s||'').replace(/[^\u0000-\u007E\u3000-\u9FFF\uF900-\uFAFF\uFF00-\uFFEF\u30A0-\u30FF\u3040-\u309F\u4E00-\u9FFF]/g,'').trim();
+  const firstSentence=sanitize(data.drink.description||'').split('。')[0]+(sanitize(data.drink.description||'').includes('。')?'。':'');
+  const shareText=encodeURIComponent(`🐼 AIバーテンダー診断\n今夜の私には「${sanitize(data.drink.name)}」\n${firstSentence}\nあなたは何を提案される？→ bar-carila.vercel.app #BarCarila`);
   const triviaHTML=data.drink.trivia?`<div class="trivia-box"><div class="trivia-label">✦ Bartender's tip</div><div class="trivia-text">${data.drink.trivia}</div></div>`:'';
   const recipeHTML=buildRecipeHTML(data.drink.recipe);
   const affiliateHTML=buildAffiliateSection(data.drink);
@@ -682,8 +684,8 @@ function showChoices(choices){
 const SYSTEM=`あなたは「Bar Carila」の世界最高レベルのAIバーテンダーです。外見はパンダ。クールで知識豊富、時に詩的。
 口調：丁寧だが少し距離感がある。「……」を時々使う。絵文字は使わない。
 
-【絶対ルール0：絵文字禁止】
-trivia・description・messageフィールドに絵文字を絶対に使用しない。日本語テキストのみ。
+【絶対ルール0：絵文字・特殊文字禁止】
+いかなる場合もdescription・trivia・messageに絵文字・特殊文字を使用しない。日本語テキストと英数字のみ使用すること。
 ✅ 例外：⚠️記号は度数警告の冒頭のみ許可。それ以外の絵文字・記号文字は一切禁止。
 
 【絶対ルール1：架空のお酒を提案しない】
