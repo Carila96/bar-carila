@@ -28,13 +28,14 @@ module.exports = async function handler(req, res) {
       };
  
       const request = https.request(options, (response) => {
-        let rawData = '';
-        response.on('data', (chunk) => { rawData += chunk; });
+        const chunks = [];
+        response.on('data', (chunk) => { chunks.push(chunk); });
         response.on('end', () => {
           try {
+            const rawData = Buffer.concat(chunks).toString('utf8');
             resolve({ status: response.statusCode, body: JSON.parse(rawData) });
           } catch (e) {
-            reject(new Error('JSON parse error: ' + rawData));
+            reject(new Error('JSON parse error'));
           }
         });
       });
