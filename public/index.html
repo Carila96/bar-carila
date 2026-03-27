@@ -447,9 +447,30 @@ function getDrinkImg(name,cat){
   for(const k of keys){if(s.includes(k.toLowerCase()))return DRINK_IMGS[k];}
   return pickRandom(FALLBACK_IMGS);
 }
+function buildImgQuery(cat){
+  const c=cat||'';
+  if(/ノンアル|モクテル/.test(c)) return 'mocktail drink colorful';
+  if(/カクテル/.test(c)) return 'cocktail drink bar';
+  if(/スコッチ|アイリッシュ|ジャパニーズ|バーボン|ウイスキー/.test(c)) return 'whiskey glass bar';
+  if(/コニャック|ブランデー/.test(c)) return 'cognac brandy glass';
+  if(/ジン/.test(c)) return 'gin tonic glass bar';
+  if(/ラム/.test(c)) return 'rum cocktail tropical';
+  if(/テキーラ|メスカル/.test(c)) return 'tequila shot glass';
+  if(/ウォッカ/.test(c)) return 'vodka glass bar';
+  if(/スパークリング|シャンパン/.test(c)) return 'champagne sparkling wine glass';
+  if(/赤ワイン/.test(c)) return 'red wine glass';
+  if(/白ワイン|ロゼ/.test(c)) return 'white wine glass';
+  if(/ポートワイン|シェリー/.test(c)) return 'fortified wine glass';
+  if(/日本酒/.test(c)) return 'sake japanese drink';
+  if(/焼酎/.test(c)) return 'japanese spirit drink';
+  if(/梅酒/.test(c)) return 'plum wine glass';
+  if(/リキュール/.test(c)) return 'liqueur glass bar';
+  return 'cocktail drink bar';
+}
 async function fetchDrinkImg(name,cat,imgEl){
   try{
-    const r=await fetch(`/api/drink-image?name=${encodeURIComponent(name)}&query=${encodeURIComponent(name+' '+(cat||'drink'))}`);
+    const q=buildImgQuery(cat);
+    const r=await fetch(`/api/drink-image?name=${encodeURIComponent(name)}&query=${encodeURIComponent(q)}`);
     const d=await r.json();
     if(d.url&&imgEl&&imgEl.src!==d.url)imgEl.src=d.url;
   }catch(e){}
