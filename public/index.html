@@ -58,6 +58,7 @@ body{height:100%;background:var(--bg);color:var(--text);font-family:'Noto Serif 
 .rec-no-img{width:100%;height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;}
 .rec-body{padding:16px 16px 18px;}
 .rec-ornament{font-size:9px;letter-spacing:0.5em;text-transform:uppercase;color:var(--amber);margin-bottom:8px;}
+.rec-analysis{font-size:12px;line-height:2;color:var(--muted);margin-bottom:16px;letter-spacing:0.04em;padding-left:10px;border-left:2px solid var(--amber-dim);}
 .rec-name{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:400;color:var(--cream);line-height:1.1;margin-bottom:2px;}
 .rec-cat{font-size:10px;letter-spacing:0.25em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;flex-wrap:wrap;gap:10px;}
 .rarity-wrap{display:flex;align-items:center;gap:5px;flex-shrink:0;}
@@ -646,8 +647,8 @@ function showRec(data){
 
   const siteUrl=encodeURIComponent(location.href);
   const sanitize=s=>(s||'').replace(/[^\u0000-\u007E\u3000-\u9FFF\uF900-\uFAFF\uFF00-\uFFEF\u30A0-\u30FF\u3040-\u309F\u4E00-\u9FFF]/g,'').trim();
-  const firstSentence=sanitize(data.drink.description||'').split('。')[0]+(sanitize(data.drink.description||'').includes('。')?'。':'');
-  const shareText=encodeURIComponent(`🐼 AIバーテンダー診断\n今夜の私には「${sanitize(data.drink.name)}」\n${firstSentence}\nあなたは何を提案される？→ bar-carila.vercel.app #BarCarila`);
+  const analysisLine=data.analysis?sanitize(data.analysis.split('\n')[0]):'';
+  const shareText=encodeURIComponent(`🐼 AIバーテンダー診断\n${analysisLine?analysisLine+'\n':''}今夜の一杯は「${sanitize(data.drink.name)}」\nあなたは何を提案される？→ bar-carila.vercel.app #BarCarila`);
   const triviaHTML=data.drink.trivia?`<div class="trivia-box"><div class="trivia-label">✦ Bartender's tip</div><div class="trivia-text">${data.drink.trivia}</div></div>`:'';
   const recipeHTML=buildRecipeHTML(data.drink.recipe);
   const affiliateHTML=buildAffiliateSection(data.drink);
@@ -662,6 +663,7 @@ function showRec(data){
     </div>
     <div class="rec-body">
       <div class="rec-ornament">✦ あなたへの診断結果 ✦</div>
+      ${data.analysis?`<div class="rec-analysis">${data.analysis.replace(/\n/g,'<br>')}</div>`:''}
       <div class="rec-name">${data.drink.name}</div>
       <div class="rec-cat">
         <span>${data.drink.category}</span>${data.drink.abv?`<span style="color:var(--amber);font-size:10px;border:1px solid var(--amber-dim);padding:1px 7px;border-radius:10px;">🍺 推定アルコール度数：${data.drink.abv}</span>`:''}
@@ -862,7 +864,7 @@ Q5「今夜はどんな夜ですか？」
 
 【JSONのみ返答】
 質問: {"type":"question","emotion":"think","message":"セリフ","choices":["A","B","C","D"]}
-提案: {"type":"recommendation","emotion":"bartender or relax or counter or curious","message":"セリフ","drink":{"name":"正式名称","category":"上記カテゴリ名から選ぶ","abv":"推定アルコール度数（例：約5%）","rarity":62,"description":"説明2〜3文。飲み方含む","trivia":"豆知識・バーでの楽しみ方","recipe":{"ingredients":[{"name":"材料","amount":"分量"}],"method":"作り方1文"},"tags":["タグ1","タグ2","タグ3"]}}
+提案: {"type":"recommendation","emotion":"bartender or relax or counter or curious","message":"セリフ","analysis":"今夜の気分を2〜3行で表現する詩的テキスト。改行は\nで区切る。選択肢の言葉はそのまま使わず、その裏にある心情・情景を表現する。絵文字禁止。","drink":{"name":"正式名称","category":"上記カテゴリ名から選ぶ","abv":"推定アルコール度数（例：約5%）","rarity":62,"description":"説明2〜3文。飲み方含む","trivia":"豆知識・バーでの楽しみ方","recipe":{"ingredients":[{"name":"材料","amount":"分量"}],"method":"作り方1文"},"tags":["タグ1","タグ2","タグ3"]}}
 カクテルはrecipe必須。単体酒のみrecipe:null可。abv・rarityは必ず含める。triviaはカクテル・モクテル・ノンアルはカクテルtriviaルール参照（省略可）。単体酒のtriviaには飲み方を必ず含める。
 rarityは0〜100の整数。算出基準：日本国内の一般的なバーに置いてある確率の逆数。欧米・海外での普及度は関係なく、日本のバーでの実態を基準にすること。海外では定番でも日本のバーでは珍しいものは高めに設定する。
 日本のバーでの希少度目安：
