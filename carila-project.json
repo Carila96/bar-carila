@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1.0",
+  "id": "bar-carila",
+  "title": "BarCarila",
+  "description": "",
+  "briefPath": "PROJECT_BRIEF.md",
+  "category": "",
+  "repositoryUrl": "https://github.com/Carila96/bar-carila",
+  "previewUrl": "",
+  "productionUrl": "",
+  "subdomain": "bar.carilaworks.com",
+  "status": "WORKING",
+  "releaseAdapterType": "cloudflare-worker-app",
+  "createdAt": "2026-03-15T22:37:04Z",
+  "updatedAt": "2026-08-25T23:59:15Z"
+}

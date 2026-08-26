@@ -1,7 +1,7 @@
 // Vercel Serverless Function: drink-image.js
 // Fetches drink images from Unsplash API on-demand and caches results
 
-const UNSPLASH_KEY = 'PvuIbcA8fbAJQHGdYpPoYIHkTBaxtUmwH2jKiFTmjlo';
+const UNSPLASH_KEY = process.env.UNSPLASH_ACCESS_KEY;
 
 // Simple in-memory cache (persists within same serverless instance)
 const cache = {};
@@ -10,6 +10,8 @@ module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 'public, max-age=86400'); // 24h browser cache
   
+  if (!UNSPLASH_KEY) return res.status(503).json({ error: 'Service is not configured' });
+
   const { name, query } = req.query;
   if (!name && !query) return res.status(400).json({ error: 'name or query required' });
   
