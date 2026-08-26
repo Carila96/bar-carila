@@ -915,6 +915,7 @@ const I18N={
     initialMsg:'いらっしゃいませ。……今夜は、どんなお酒をお探しですか？',
     startMsg:'こんばんは。今夜のお酒を選んでほしいです。',
     chatError:'……少し調子が悪いようです。もう一度お試しください。',
+    chatDiagnostic:'診断',
     langBtn:'🌐 English',
     shareTemplate:(a,n)=>`🐼 AIバーテンダー診断\n${a?a+'\n':''}今夜の一杯は「${n}」\nあなたは何を提案される？→ bar-carila.vercel.app #BarCarila`,
     langRule:'',
@@ -935,6 +936,7 @@ const I18N={
     initialMsg:'Welcome. What kind of drink are you looking for tonight?',
     startMsg:'Good evening. Please help me find a drink for tonight.',
     chatError:'…Something seems to be wrong right now. Please try again.',
+    chatDiagnostic:'Diagnostic',
     langBtn:'🌐 日本語',
     shareTemplate:(a,n)=>`🐼 AI Bartender Pick\n${a?a+'\n':''}Tonight\'s drink: "${n}"\nWhat will you get? → bar-carila.vercel.app #BarCarila`,
     langRule:'\n\n【Language Mode】Respond entirely in English. All JSON fields (message, analysis, description, trivia, choices) must be in English. Maintain the same bartender character and style.',
@@ -978,6 +980,25 @@ function reportChatError(error){
   console.error('Chat request failed',{status:error&&error.status,code:error&&error.code,requestId:error&&error.requestId,error});
 }
 
+function previewChatDiagnostic(error){
+  if(!location.hostname.endsWith('.workers.dev'))return null;
+  const status=Number.isInteger(error&&error.status)&&error.status>=100&&error.status<=599?error.status:null;
+  const code=typeof(error&&error.code)==='string'&&/^[A-Z0-9_]+$/.test(error.code)?error.code:null;
+  const requestId=typeof(error&&error.requestId)==='string'&&/^[A-Za-z0-9_-]+$/.test(error.requestId)?error.requestId:null;
+  if(status===null&&!code&&!requestId)return null;
+  return [status===null?null:`HTTP ${status}`,code,requestId].filter(Boolean).join(' / ');
+}
+
+function showChatError(error,pandaState='sad'){
+  setPanda(pandaState);showMsg(t().chatError);reportChatError(error);
+  const diagnostic=previewChatDiagnostic(error);
+  if(!diagnostic)return;
+  const line=document.createElement('div');
+  line.style.cssText='margin-top:10px;font-size:11px;color:var(--muted);word-break:break-all;';
+  line.textContent=`${t().chatDiagnostic}: ${diagnostic}`;
+  document.getElementById('msgText').appendChild(line);
+}
+
 async function handleInput(text){
   if(isLoading)return;isLoading=true;
   const lastMsg=document.getElementById('msgText').innerText||'';
@@ -991,7 +1012,7 @@ async function handleInput(text){
       showMsg(r.message);showChoices(r.choices);
     }else{showRec(r);}
   }catch(e){
-    setPanda('sad');showMsg(t().chatError);reportChatError(e);
+    showChatError(e);
   }
   isLoading=false;
 }
@@ -1007,8 +1028,7 @@ async function startChat(){
     const r=JSON.parse(text.replace(/```json|```/g,'').trim());
     setPanda(r.emotion||'counter');showMsg(r.message);showChoices(r.choices);
   }catch(e){
-    reportChatError(e);
-    setPanda('counter');showMsg(t().initialMsg);
+    showChatError(e,'counter');
     showChoices(t().initialChoices);
   }
   isLoading=false;

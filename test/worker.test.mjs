@@ -101,6 +101,11 @@ test('frontend localizes chat errors and reports safe diagnostics', async () => 
   assert.match(html, /chatError:'…Something seems to be wrong right now. Please try again.'/);
   assert.match(html, /showMsg\(t\(\)\.chatError\)/);
   assert.match(html, /requestId=data&&data\.requestId/);
+  assert.match(html, /location\.hostname\.endsWith\('\.workers\.dev'\)/);
+  assert.match(html, /line\.textContent=`\$\{t\(\)\.chatDiagnostic\}: \$\{diagnostic\}`/);
+  assert.match(html, /function showChatError\(error,pandaState='sad'\)/);
+  assert.equal((html.match(/showChatError\(e(?:,'counter')?\)/g)||[]).length, 2);
+  assert.doesNotMatch(html, /line\.innerHTML/);
 });
 
 test('drink image fails safely when its secret is missing', async () => {
