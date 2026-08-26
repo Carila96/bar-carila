@@ -27,7 +27,7 @@ test('chat fails safely when its secret is missing', async () => {
 test('chat forwards a valid Messages API request with required headers', async () => {
   const originalFetch = globalThis.fetch;
   const requestBody = {
-    model: 'claude-sonnet-4-20250514',
+    model: 'claude-sonnet-4-6',
     max_tokens: 1100,
     system: 'You are a bartender.',
     messages: [{ role: 'user', content: 'Recommend a drink.' }],
@@ -57,9 +57,27 @@ test('chat rejects requests missing required Messages API fields', async () => {
   const response = await worker.fetch(new Request('https://preview.example/api/chat', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ model: 'claude-sonnet-4-20250514', messages: [] }),
+    body: JSON.stringify({ model: 'claude-sonnet-4-6', messages: [] }),
   }), { ...env, ANTHROPIC_API_KEY: 'bound-secret' }, context);
   assert.equal(response.status, 400);
+});
+
+test('chat rejects the retired dated Sonnet model before calling Anthropic', async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = () => { throw new Error('invalid model reached Anthropic'); };
+  try {
+    const response = await worker.fetch(new Request('https://preview.example/api/chat', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514', max_tokens: 1100, system: 'test',
+        messages: [{ role: 'user', content: 'test' }],
+      }),
+    }), { ...env, ANTHROPIC_API_KEY: 'bound-secret' }, context);
+    assert.equal(response.status, 400);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
 test('chat sanitizes Anthropic errors while retaining safe diagnostics', async () => {
@@ -75,7 +93,7 @@ test('chat sanitizes Anthropic errors while retaining safe diagnostics', async (
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514', max_tokens: 10, system: 'test',
+        model: 'claude-sonnet-4-6', max_tokens: 10, system: 'test',
         messages: [{ role: 'user', content: 'test' }],
       }),
     }), { ...env, ANTHROPIC_API_KEY: 'bound-secret' }, context);
@@ -106,6 +124,13 @@ test('frontend localizes chat errors and reports safe diagnostics', async () => 
   assert.match(html, /function showChatError\(error,pandaState='sad'\)/);
   assert.equal((html.match(/showChatError\(e(?:,'counter')?\)/g)||[]).length, 2);
   assert.doesNotMatch(html, /line\.innerHTML/);
+});
+
+test('frontend uses the current Sonnet alias for every chat request', async () => {
+  const html = await readFile(new URL('../public/index.html', import.meta.url), 'utf8');
+  assert.match(html, /const CHAT_MODEL='claude-sonnet-4-6'/);
+  assert.equal((html.match(/model:CHAT_MODEL/g) || []).length, 3);
+  assert.doesNotMatch(html, /claude-sonnet-4-20250514/);
 });
 
 test('drink image fails safely when its secret is missing', async () => {

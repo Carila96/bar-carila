@@ -11,8 +11,8 @@ domain route nor DNS configuration.
 - Wrangler serves `public/` through the `ASSETS` binding and executes
   `src/worker.mjs` for `/api/*` and `/health` on the same origin.
 - `POST /api/chat` proxies the existing Anthropic Messages request, using the
-  server-only `ANTHROPIC_API_KEY` secret. The UI currently requests
-  `claude-sonnet-4-20250514`.
+  server-only `ANTHROPIC_API_KEY` secret. The UI requests Anthropic's stable
+  `claude-sonnet-4-6` alias.
 - `GET /api/drink-image` searches Unsplash using the server-only
   `UNSPLASH_ACCESS_KEY` secret and caches successful results at the edge.
 - `GET /health` performs no upstream request and does not disclose secret values.
