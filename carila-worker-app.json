@@ -1,0 +1,6 @@
+{
+  "requiredSecrets": [
+    "ANTHROPIC_API_KEY",
+    "UNSPLASH_ACCESS_KEY"
+  ]
+}
