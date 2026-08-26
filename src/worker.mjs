@@ -1,6 +1,6 @@
 const ANTHROPIC_ENDPOINT = 'https://api.anthropic.com/v1/messages';
 const UNSPLASH_ENDPOINT = 'https://api.unsplash.com/search/photos';
-const ALLOWED_MODELS = new Set(['claude-sonnet-4-20250514']);
+const ALLOWED_MODELS = new Set(['claude-sonnet-4-6']);
 
 const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), {
   status,
