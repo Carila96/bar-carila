@@ -11,6 +11,24 @@ function missingSecret(name) {
   return json({ error: 'Service is not configured', code: `MISSING_${name}` }, 503);
 }
 
+function diagnosticId() {
+  return crypto.randomUUID();
+}
+
+function safeUpstreamError(body) {
+  try {
+    const parsed = JSON.parse(body);
+    return {
+      type: typeof parsed?.error?.type === 'string' ? parsed.error.type : 'unknown_error',
+      message: typeof parsed?.error?.message === 'string'
+        ? parsed.error.message.slice(0, 500)
+        : 'No upstream error message',
+    };
+  } catch {
+    return { type: 'invalid_response', message: 'Upstream returned a non-JSON error response' };
+  }
+}
+
 async function chat(request, env) {
   if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405, { allow: 'POST' });
   if (!env.ANTHROPIC_API_KEY) return missingSecret('ANTHROPIC_API_KEY');
@@ -21,7 +39,9 @@ async function chat(request, env) {
   } catch {
     return json({ error: 'Invalid JSON body' }, 400);
   }
-  if (!body || !ALLOWED_MODELS.has(body.model) || !Array.isArray(body.messages)) {
+  if (!body || !ALLOWED_MODELS.has(body.model) || !Number.isInteger(body.max_tokens)
+    || body.max_tokens < 1 || !Array.isArray(body.messages) || body.messages.length === 0
+    || (body.system !== undefined && typeof body.system !== 'string')) {
     return json({ error: 'Invalid Anthropic Messages request' }, 400);
   }
 
@@ -34,6 +54,23 @@ async function chat(request, env) {
     },
     body: JSON.stringify(body),
   });
+  if (!upstream.ok) {
+    const requestId = diagnosticId();
+    const error = safeUpstreamError(await upstream.text());
+    console.error('Anthropic Messages API failed', {
+      requestId,
+      status: upstream.status,
+      type: error.type,
+      message: error.message,
+      upstreamRequestId: upstream.headers.get('request-id'),
+    });
+    return json({
+      error: 'Chat service unavailable',
+      code: `ANTHROPIC_${error.type.toUpperCase()}`,
+      requestId,
+    }, upstream.status);
+  }
+
   return new Response(upstream.body, {
     status: upstream.status,
     headers: { 'content-type': upstream.headers.get('content-type') || 'application/json' },
