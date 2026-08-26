@@ -914,6 +914,8 @@ const I18N={
     initialChoices:['おすすめを聞かせて','カクテルを探したい','ウイスキー・洋酒を探したい','ノンアルでも楽しみたい'],
     initialMsg:'いらっしゃいませ。……今夜は、どんなお酒をお探しですか？',
     startMsg:'こんばんは。今夜のお酒を選んでほしいです。',
+    chatError:'……少し調子が悪いようです。もう一度お試しください。',
+    chatDiagnostic:'診断',
     langBtn:'🌐 English',
     shareTemplate:(a,n)=>`🐼 AIバーテンダー診断\n${a?a+'\n':''}今夜の一杯は「${n}」\nあなたは何を提案される？→ bar-carila.vercel.app #BarCarila`,
     langRule:'',
@@ -933,6 +935,8 @@ const I18N={
     initialChoices:['Recommend something','Looking for cocktails','Whisky & spirits','Non-alcoholic options'],
     initialMsg:'Welcome. What kind of drink are you looking for tonight?',
     startMsg:'Good evening. Please help me find a drink for tonight.',
+    chatError:'…Something seems to be wrong right now. Please try again.',
+    chatDiagnostic:'Diagnostic',
     langBtn:'🌐 日本語',
     shareTemplate:(a,n)=>`🐼 AI Bartender Pick\n${a?a+'\n':''}Tonight\'s drink: "${n}"\nWhat will you get? → bar-carila.vercel.app #BarCarila`,
     langRule:'\n\n【Language Mode】Respond entirely in English. All JSON fields (message, analysis, description, trivia, choices) must be in English. Maintain the same bartender character and style.',
@@ -953,11 +957,46 @@ function toggleLang(){
 async function callAPI(userMsg){
   if(userMsg)chatHistory.push({role:'user',content:userMsg});
   const res=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1100,system:getSystem(),messages:chatHistory})});
-  if(!res.ok)throw new Error(res.status);
-  const data=await res.json();
+  const data=await readAPIResponse(res);
   const text=data.content[0].text;
   chatHistory.push({role:'assistant',content:text});
   return JSON.parse(text.replace(/```json|```/g,'').trim());
+}
+
+async function readAPIResponse(res){
+  let data;
+  try{data=await res.json();}catch(cause){
+    const error=new Error('Chat API returned invalid JSON',{cause});
+    error.status=res.status;throw error;
+  }
+  if(!res.ok){
+    const error=new Error(`Chat API failed (${res.status})`);
+    error.status=res.status;error.code=data&&data.code;error.requestId=data&&data.requestId;throw error;
+  }
+  return data;
+}
+
+function reportChatError(error){
+  console.error('Chat request failed',{status:error&&error.status,code:error&&error.code,requestId:error&&error.requestId,error});
+}
+
+function previewChatDiagnostic(error){
+  if(!location.hostname.endsWith('.workers.dev'))return null;
+  const status=Number.isInteger(error&&error.status)&&error.status>=100&&error.status<=599?error.status:null;
+  const code=typeof(error&&error.code)==='string'&&/^[A-Z0-9_]+$/.test(error.code)?error.code:null;
+  const requestId=typeof(error&&error.requestId)==='string'&&/^[A-Za-z0-9_-]+$/.test(error.requestId)?error.requestId:null;
+  if(status===null&&!code&&!requestId)return null;
+  return [status===null?null:`HTTP ${status}`,code,requestId].filter(Boolean).join(' / ');
+}
+
+function showChatError(error,pandaState='sad'){
+  setPanda(pandaState);showMsg(t().chatError);reportChatError(error);
+  const diagnostic=previewChatDiagnostic(error);
+  if(!diagnostic)return;
+  const line=document.createElement('div');
+  line.style.cssText='margin-top:10px;font-size:11px;color:var(--muted);word-break:break-all;';
+  line.textContent=`${t().chatDiagnostic}: ${diagnostic}`;
+  document.getElementById('msgText').appendChild(line);
 }
 
 async function handleInput(text){
@@ -973,7 +1012,7 @@ async function handleInput(text){
       showMsg(r.message);showChoices(r.choices);
     }else{showRec(r);}
   }catch(e){
-    setPanda('sad');showMsg('……少し調子が悪いようです。もう一度お試しください。');console.error(e);
+    showChatError(e);
   }
   isLoading=false;
 }
@@ -983,15 +1022,14 @@ async function startChat(){
   chatHistory=[{role:'user',content:t().startMsg}];
   try{
     const res=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1100,system:SYSTEM,messages:chatHistory})});
-    const data=await res.json();
+    const data=await readAPIResponse(res);
     const text=data.content[0].text;
     chatHistory.push({role:'assistant',content:text});
     const r=JSON.parse(text.replace(/```json|```/g,'').trim());
     setPanda(r.emotion||'counter');showMsg(r.message);showChoices(r.choices);
   }catch(e){
-    setPanda('counter');showMsg(t().initialMsg);
+    showChatError(e,'counter');
     showChoices(t().initialChoices);
-    console.error(e);
   }
   isLoading=false;
 }
