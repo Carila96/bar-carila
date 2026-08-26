@@ -1,0 +1,13 @@
+{
+  "name": "bar-carila",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "node --test",
+    "dev": "wrangler dev",
+    "deploy:preview": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.33.1"
+  }
+}
