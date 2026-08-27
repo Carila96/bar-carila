@@ -10,12 +10,12 @@
 <meta property="og:title" content="Bar Carila — AIバーテンダー">
 <meta property="og:description" content="どこにもないけど、いつでも開いているバー。気分と好みを聞いて、あなたの一杯を一緒に考えます。バーに行く前に、ぜひ一度。">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://bar-carila.vercel.app">
-<meta property="og:image" content="https://bar-carila.vercel.app/ogp.png">
+<meta property="og:url" content="https://bar.carilaworks.com/">
+<meta property="og:image" content="https://bar.carilaworks.com/ogp.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Bar Carila — AIバーテンダー🐼🍸">
 <meta name="twitter:description" content="どこにもないけど、いつでも開いているバー。気分と好みを聞いて、あなたの一杯を一緒に考えます。バーに行く前に、ぜひ一度。">
-<meta name="twitter:image" content="https://bar-carila.vercel.app/ogp.png">
+<meta name="twitter:image" content="https://bar.carilaworks.com/ogp.png">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,400&family=Noto+Serif+JP:wght@200;300;400&display=swap');
 :root{--bg:#0a0c0a;--amber:#c8922a;--amber-dim:#5a4010;--amber-light:#e8b84b;--cream:#f0ead8;--text:#c0b898;--muted:#6a5e48;--card:rgba(8,10,8,0.93);--border:rgba(200,146,42,0.18);}
@@ -395,7 +395,7 @@ body{height:100%;background:var(--bg);color:var(--text);font-family:'Noto Serif 
   <button class="menu-item" onclick="openSearchFromMenu()">🔍 お酒名から検索</button>
   <button class="menu-item" onclick="openGoodsFromMenu()">🛍️ バー関連グッズ</button>
   <div class="menu-section-title">シェア・フィードバック</div>
-  <a class="menu-item" href="https://twitter.com/intent/tweet?text=%23BarCarila%20bar-carila.vercel.app" target="_blank" rel="noopener">𝕏 #BarCarila でポスト</a>
+  <a class="menu-item" href="https://twitter.com/intent/tweet?text=%23BarCarila%20bar.carilaworks.com" target="_blank" rel="noopener">𝕏 #BarCarila でポスト</a>
   <a class="menu-item" href="https://www.instagram.com/carila_96" target="_blank" rel="noopener">📷 Instagramをフォローする</a>
   <a class="menu-item" href="https://www.threads.net/@carila_96" target="_blank" rel="noopener">🧵 Threadsをフォローする</a>
   <button class="menu-item" onclick="openFeedback()">📝 不具合・ご意見を送る</button>
@@ -911,14 +911,14 @@ const I18N={
     followupPlaceholder:'その他、自由に質問…',shareBtnX:'X でシェア',shareNative:'共有する',
     logToggleOpen:'今回の会話の流れを見る ▼',logToggleClose:'会話の流れを閉じる ▲',
     restartBtn:'🐼 もう一度診断する',
-    socialNudge:`友達にも試してもらおう👇<br><a href="https://twitter.com/intent/tweet?text=${encodeURIComponent('🐼 AIバーテンダーに診断してもらったら私にぴったりのお酒を見つけてくれた！バーに行く前にぜひ試してみて🍸 #BarCarila bar-carila.vercel.app')}" target="_blank" rel="noopener" style="color:var(--amber);font-size:12px;text-decoration:none;">あなたに提案されたお酒をみんなに教えよう</a>`,
+    socialNudge:`友達にも試してもらおう👇<br><a href="https://twitter.com/intent/tweet?text=${encodeURIComponent('🐼 AIバーテンダーに診断してもらったら私にぴったりのお酒を見つけてくれた！バーに行く前にぜひ試してみて🍸 #BarCarila bar.carilaworks.com')}" target="_blank" rel="noopener" style="color:var(--amber);font-size:12px;text-decoration:none;">あなたに提案されたお酒をみんなに教えよう</a>`,
     initialChoices:['おすすめを聞かせて','カクテルを探したい','ウイスキー・洋酒を探したい','ノンアルでも楽しみたい'],
     initialMsg:'いらっしゃいませ。……今夜は、どんなお酒をお探しですか？',
     startMsg:'こんばんは。今夜のお酒を選んでほしいです。',
     chatError:'……少し調子が悪いようです。もう一度お試しください。',
     chatDiagnostic:'診断',
     langBtn:'🌐 English',
-    shareTemplate:(a,n)=>`🐼 AIバーテンダー診断\n${a?a+'\n':''}今夜の一杯は「${n}」\nあなたは何を提案される？→ bar-carila.vercel.app #BarCarila`,
+    shareTemplate:(a,n)=>`🐼 AIバーテンダー診断\n${a?a+'\n':''}今夜の一杯は「${n}」\nあなたは何を提案される？→ bar.carilaworks.com #BarCarila`,
     langRule:'',
   },
   en:{
@@ -932,14 +932,14 @@ const I18N={
     followupPlaceholder:'Ask anything…',shareBtnX:'Share on X',shareNative:'Share',
     logToggleOpen:'See conversation ▼',logToggleClose:'Hide conversation ▲',
     restartBtn:'🐼 Try again',
-    socialNudge:`Share with friends 👇<br><a href="https://twitter.com/intent/tweet?text=${encodeURIComponent('🐼 An AI bartender just found my perfect drink! Try it before going to a bar 🍸 #BarCarila bar-carila.vercel.app')}" target="_blank" rel="noopener" style="color:var(--amber);font-size:12px;text-decoration:none;">Tell everyone what you got</a>`,
+    socialNudge:`Share with friends 👇<br><a href="https://twitter.com/intent/tweet?text=${encodeURIComponent('🐼 An AI bartender just found my perfect drink! Try it before going to a bar 🍸 #BarCarila bar.carilaworks.com')}" target="_blank" rel="noopener" style="color:var(--amber);font-size:12px;text-decoration:none;">Tell everyone what you got</a>`,
     initialChoices:['Recommend something','Looking for cocktails','Whisky & spirits','Non-alcoholic options'],
     initialMsg:'Welcome. What kind of drink are you looking for tonight?',
     startMsg:'Good evening. Please help me find a drink for tonight.',
     chatError:'…Something seems to be wrong right now. Please try again.',
     chatDiagnostic:'Diagnostic',
     langBtn:'🌐 日本語',
-    shareTemplate:(a,n)=>`🐼 AI Bartender Pick\n${a?a+'\n':''}Tonight\'s drink: "${n}"\nWhat will you get? → bar-carila.vercel.app #BarCarila`,
+    shareTemplate:(a,n)=>`🐼 AI Bartender Pick\n${a?a+'\n':''}Tonight\'s drink: "${n}"\nWhat will you get? → bar.carilaworks.com #BarCarila`,
     langRule:'\n\n【Language Mode】Respond entirely in English. All JSON fields (message, analysis, description, trivia, choices) must be in English. Maintain the same bartender character and style.',
   }
 };
