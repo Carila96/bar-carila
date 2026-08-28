@@ -16,6 +16,15 @@ npm run dev
 `public/` と `/api/*` は同一Cloudflare Worker・同一originで配信されます。
 `GET /health` は外部APIを呼ばない無料の死活確認です。
 
+## バーテンダーCarila Phase 1
+
+`/carila/` は既存のお酒提案画面から分離した、テキスト会話検証用ページです。
+専用の `POST /api/carila-chat` がサーバー側の人格設定とセッション中の会話履歴を
+Anthropic Messages APIへ渡します。音声、認証、永続的な顧客記憶はPhase 1には
+含まれません。Carilaの仮画像は
+`public/carila/assets/images/carila-main.png` を差し替え、表示パスを
+`public/carila/assets/js/config/ui-config.js` で変更できます。
+
 ## 正式なデプロイ経路
 
 正式運用はCloudflareのみです。デプロイと昇格はCARILA WORKS Controlが管理し、
