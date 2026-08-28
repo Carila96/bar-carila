@@ -1,3 +1,4 @@
+import { CARILA_MAX_TOKENS, CARILA_MODEL, CARILA_SYSTEM_PROMPT } from './carila-personality.mjs';
 const ANTHROPIC_ENDPOINT = 'https://api.anthropic.com/v1/messages';
 const UNSPLASH_ENDPOINT = 'https://api.unsplash.com/search/photos';
 const ALLOWED_MODELS = new Set(['claude-sonnet-4-6']);
@@ -77,6 +78,43 @@ async function chat(request, env) {
   });
 }
 
+async function carilaChat(request, env) {
+  if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405, { allow: 'POST' });
+  if (!env.ANTHROPIC_API_KEY) return missingSecret('ANTHROPIC_API_KEY');
+
+  let body;
+  try { body = await request.json(); } catch { return json({ error: 'Invalid JSON body' }, 400); }
+  const messages = body?.messages;
+  const valid = Array.isArray(messages) && messages.length > 0 && messages.length <= 40
+    && messages.every((message) => ['user', 'assistant'].includes(message?.role)
+      && typeof message.content === 'string' && message.content.trim().length > 0
+      && message.content.length <= 4000)
+    && messages[0].role === 'user'
+    && messages.every((message, index) => index === 0 || message.role !== messages[index - 1].role);
+  if (!valid || messages.at(-1).role !== 'user') return json({ error: 'Invalid conversation' }, 400);
+
+  const upstream = await fetch(ANTHROPIC_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json', 'x-api-key': env.ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model: CARILA_MODEL, max_tokens: CARILA_MAX_TOKENS,
+      system: CARILA_SYSTEM_PROMPT, messages,
+    }),
+  });
+  if (!upstream.ok) {
+    const requestId = diagnosticId();
+    const error = safeUpstreamError(await upstream.text());
+    console.error('Carila chat API failed', { requestId, status: upstream.status, type: error.type });
+    return json({ error: 'Chat service unavailable', code: `ANTHROPIC_${error.type.toUpperCase()}`, requestId }, upstream.status);
+  }
+  const data = await upstream.json();
+  const reply = data?.content?.find((item) => item.type === 'text')?.text?.trim();
+  return reply ? json({ reply }) : json({ error: 'Invalid chat response' }, 502);
+}
+
 async function drinkImage(request, env, context) {
   if (request.method !== 'GET') return json({ error: 'Method not allowed' }, 405, { allow: 'GET' });
   if (!env.UNSPLASH_ACCESS_KEY) return missingSecret('UNSPLASH_ACCESS_KEY');
@@ -117,8 +155,10 @@ export default {
         return json({ status: 'ok', service: 'bar-carila' }, 200, { 'cache-control': 'no-store' });
       }
       if (pathname === '/api/chat') return await chat(request, env);
+      if (pathname === '/api/carila-chat') return await carilaChat(request, env);
       if (pathname === '/api/drink-image') return await drinkImage(request, env, context);
       if (pathname.startsWith('/api/')) return json({ error: 'Not found' }, 404);
+      if (pathname === '/carila') return Response.redirect(`${new URL(request.url).origin}/carila/`, 308);
       return env.ASSETS.fetch(request);
     } catch (error) {
       console.error('Worker request failed', error);
