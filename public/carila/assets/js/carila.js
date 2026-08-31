@@ -1,5 +1,6 @@
 import { UI_CONFIG } from './config/ui-config.js';
 import { SessionMemory } from './memory/session-memory.js';
+import { formatCarilaText } from './text-format.js';
 
 const memory = new SessionMemory();
 const byId = (id) => document.getElementById(id);
@@ -8,7 +9,7 @@ const elements = Object.fromEntries(['barBackground','carilaImage','carilaWindow
 elements.carilaImage.src = UI_CONFIG.imagePath;
 elements.carilaImage.addEventListener('error', () => elements.carilaImage.classList.add('is-missing'));
 elements.barBackground.style.backgroundImage = `url("${UI_CONFIG.backgroundPath}")`;
-elements.carilaTurn.textContent = UI_CONFIG.greeting;
+elements.carilaTurn.textContent = formatCarilaText(UI_CONFIG.greeting);
 memory.add('assistant', UI_CONFIG.greeting);
 
 for (const label of UI_CONFIG.starters) {
@@ -25,7 +26,7 @@ function showLatest() {
     elements.userTurn.querySelector('p').textContent = guest.content;
   }
   if (carila?.role === 'assistant') {
-    elements.carilaTurn.textContent = carila.content;
+    elements.carilaTurn.textContent = formatCarilaText(carila.content);
     elements.carilaWindow.classList.remove('is-entering');
     requestAnimationFrame(() => elements.carilaWindow.classList.add('is-entering'));
   }
@@ -82,7 +83,7 @@ elements.menuOverlay.addEventListener('click', () => toggleMenu(false));
 elements.historyButton.addEventListener('click', () => {
   toggleMenu(false);
   elements.historyList.replaceChildren();
-  memory.history().forEach((message) => { const item = document.createElement('li'); const speaker = document.createElement('strong'); speaker.textContent = message.role === 'assistant' ? 'CARILA' : 'あなた'; const text = document.createTextNode(message.content); item.append(speaker, text); elements.historyList.append(item); });
+  memory.history().forEach((message) => { const item = document.createElement('li'); const speaker = document.createElement('strong'); speaker.textContent = message.role === 'assistant' ? 'CARILA' : 'あなた'; const content = message.role === 'assistant' ? formatCarilaText(message.content) : message.content; const text = document.createTextNode(content); item.append(speaker, text); elements.historyList.append(item); });
   elements.historyDialog.showModal();
 });
 elements.closeHistory.addEventListener('click', () => elements.historyDialog.close());
