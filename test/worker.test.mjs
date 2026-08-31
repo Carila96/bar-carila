@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import worker from '../src/worker.mjs';
+import { CARILA_SYSTEM_PROMPT } from '../src/carila-personality.mjs';
 
 const context = { waitUntil() {} };
 const env = { ASSETS: { fetch: () => new Response('asset') } };
@@ -68,7 +69,7 @@ test('Carila chat owns its server-side personality and returns only the reply', 
     const body = JSON.parse(init.body);
     assert.equal(url, 'https://api.anthropic.com/v1/messages');
     assert.equal(body.model, 'claude-sonnet-4-6');
-    assert.match(body.system, /スタッフと客/);
+    assert.match(body.system, /バーテンダーと客/);
     assert.match(body.system, /質問攻め/);
     assert.deepEqual(body.messages, [{ role: 'user', content: '少し話したくて' }]);
     return Response.json({ content: [{ type: 'text', text: 'ええ、どうぞ。今夜はゆっくりしていってください。' }] });
@@ -81,6 +82,34 @@ test('Carila chat owns its server-side personality and returns only the reply', 
     assert.equal(response.status, 200);
     assert.deepEqual(await response.json(), { reply: 'ええ、どうぞ。今夜はゆっくりしていってください。' });
   } finally { globalThis.fetch = originalFetch; }
+});
+
+test('Carila personality retains the confirmed conversation scenarios', () => {
+  const required = [
+    '「人」と「したこと」を分け', 'どうした方がいい', '最終判断を奪わない',
+    '月4、5回の遅刻', '次があります', '半年分の重さ', '夢は必ず叶うとは考えない',
+    'そう感じる理由を先に受け取る', '話したくない＝一人になりたい',
+    'ランボルギーニ・ムルシエラゴ', 'スカイラインGT-R R34', '意外と熱くなりやすい',
+    '謝る、聞き直す、確認する', '以前ウイスキーが苦手、最近ハマる', '変化そのものを理解する',
+  ];
+  for (const expectation of required) assert.match(CARILA_SYSTEM_PROMPT, new RegExp(expectation));
+});
+
+test('Carila personality includes all six customer-understanding categories and Phase 1 limits', () => {
+  for (const category of ['基本人物情報', '好み・日常', '人物・関係性', '継続ストーリー', '接客上の理解', 'Carilaの印象・仮説']) {
+    assert.match(CARILA_SYSTEM_PROMPT, new RegExp(category));
+  }
+  assert.match(CARILA_SYSTEM_PROMPT, /現在セッションの会話履歴だけ/);
+  assert.match(CARILA_SYSTEM_PROMPT, /長期永続記憶.*未実装/);
+  assert.match(CARILA_SYSTEM_PROMPT, /過去の来店や会話を捏造しない/);
+});
+
+test('Carila personality contains the confirmed background without inventing unresolved history', () => {
+  for (const detail of [
+    '子どもの頃はパン屋やスポーツ選手', '休日にゲームやアプリを作り',
+    '心から熱中できるものを見つけること', '悪くない人生だった、と笑える人生にしたい',
+    '恋愛・性的経験の具体的エピソードは未確定', '実在BAR勤務歴も未確定',
+  ]) assert.match(CARILA_SYSTEM_PROMPT, new RegExp(detail));
 });
 
 test('Carila chat validates bounded alternating conversation input', async () => {
