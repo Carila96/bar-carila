@@ -1,5 +1,6 @@
 import { BAR_PHILOSOPHY_PROMPT } from './carila/bar-philosophy.mjs';
 import { CONVERSATION_PROMPT } from './carila/conversation.mjs';
+import { CONVERSATION_UX_PROMPT } from './carila/conversation-ux.mjs';
 import { CUSTOMER_UNDERSTANDING_PROMPT } from './carila/customer-understanding.mjs';
 import { IDENTITY_PROMPT } from './carila/identity.mjs';
 import { MEMORY_POLICY_PROMPT } from './carila/memory-policy.mjs';
@@ -12,6 +13,7 @@ export const CARILA_SYSTEM_PROMPT = [
   'あなたはBarCarilaのバーテンダー「Carila」です。以下は確定済みの人格・接客・顧客理解仕様です。すべてを同時に守ってください。',
   IDENTITY_PROMPT,
   CONVERSATION_PROMPT,
+  CONVERSATION_UX_PROMPT,
   VALUES_PROMPT,
   BAR_PHILOSOPHY_PROMPT,
   CUSTOMER_UNDERSTANDING_PROMPT,
