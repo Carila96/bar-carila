@@ -3,9 +3,11 @@ import { SessionMemory } from './memory/session-memory.js';
 
 const memory = new SessionMemory();
 const byId = (id) => document.getElementById(id);
-const elements = Object.fromEntries(['carilaImage','carilaTurn','userTurn','starters','chatForm','messageInput','sendButton','status','historyButton','historyDialog','historyList','closeHistory','leaveButton','farewellDialog','farewellText','restartButton'].map((id) => [id, byId(id)]));
+const elements = Object.fromEntries(['barBackground','carilaImage','carilaWindow','carilaTurn','userTurn','starters','chatForm','messageInput','sendButton','status','historyButton','historyDialog','historyList','closeHistory','leaveButton','farewellDialog','farewellText','restartButton','menuButton','menuDrawer','menuOverlay','closeMenu'].map((id) => [id, byId(id)]));
 
 elements.carilaImage.src = UI_CONFIG.imagePath;
+elements.carilaImage.addEventListener('error', () => elements.carilaImage.classList.add('is-missing'));
+elements.barBackground.style.backgroundImage = `url("${UI_CONFIG.backgroundPath}")`;
 elements.carilaTurn.textContent = UI_CONFIG.greeting;
 memory.add('assistant', UI_CONFIG.greeting);
 
@@ -22,7 +24,26 @@ function showLatest() {
     elements.userTurn.hidden = false;
     elements.userTurn.querySelector('p').textContent = guest.content;
   }
-  if (carila?.role === 'assistant') elements.carilaTurn.textContent = carila.content;
+  if (carila?.role === 'assistant') {
+    elements.carilaTurn.textContent = carila.content;
+    elements.carilaWindow.classList.remove('is-entering');
+    requestAnimationFrame(() => elements.carilaWindow.classList.add('is-entering'));
+  }
+}
+
+function resizeComposer() {
+  elements.messageInput.style.height = 'auto';
+  const maxHeight = Number.parseFloat(getComputedStyle(elements.messageInput).maxHeight);
+  elements.messageInput.style.height = `${Math.min(elements.messageInput.scrollHeight, maxHeight)}px`;
+  elements.messageInput.style.overflowY = elements.messageInput.scrollHeight > maxHeight ? 'auto' : 'hidden';
+}
+
+function toggleMenu(open) {
+  elements.menuDrawer.classList.toggle('is-open', open);
+  elements.menuDrawer.setAttribute('aria-hidden', String(!open));
+  elements.menuButton.setAttribute('aria-expanded', String(open));
+  elements.menuButton.setAttribute('aria-label', open ? 'メニューを閉じる' : 'メニューを開く');
+  elements.menuOverlay.hidden = !open;
 }
 
 function setBusy(busy) {
@@ -35,7 +56,7 @@ async function send(rawMessage) {
   const message = rawMessage.trim();
   if (!message || elements.sendButton.disabled) return;
   memory.add('user', message); showLatest(); setBusy(true);
-  elements.starters.hidden = true; elements.messageInput.value = '';
+  elements.starters.hidden = true; elements.messageInput.value = ''; resizeComposer();
   let failed = false;
   try {
     const response = await fetch(UI_CONFIG.apiPath, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ messages: memory.conversation() }) });
@@ -53,12 +74,18 @@ async function send(rawMessage) {
 }
 
 elements.chatForm.addEventListener('submit', (event) => { event.preventDefault(); send(elements.messageInput.value); });
-elements.messageInput.addEventListener('keydown', (event) => { if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); elements.chatForm.requestSubmit(); } });
+elements.messageInput.addEventListener('input', resizeComposer);
+elements.messageInput.addEventListener('keydown', (event) => { if (event.key === 'Enter' && (event.ctrlKey || event.metaKey) && !event.isComposing) { event.preventDefault(); elements.chatForm.requestSubmit(); } });
+elements.menuButton.addEventListener('click', () => toggleMenu(elements.menuDrawer.getAttribute('aria-hidden') === 'true'));
+elements.closeMenu.addEventListener('click', () => toggleMenu(false));
+elements.menuOverlay.addEventListener('click', () => toggleMenu(false));
 elements.historyButton.addEventListener('click', () => {
+  toggleMenu(false);
   elements.historyList.replaceChildren();
   memory.history().forEach((message) => { const item = document.createElement('li'); const speaker = document.createElement('strong'); speaker.textContent = message.role === 'assistant' ? 'CARILA' : 'あなた'; const text = document.createTextNode(message.content); item.append(speaker, text); elements.historyList.append(item); });
   elements.historyDialog.showModal();
 });
 elements.closeHistory.addEventListener('click', () => elements.historyDialog.close());
-elements.leaveButton.addEventListener('click', () => { elements.farewellText.textContent = UI_CONFIG.farewell; elements.farewellDialog.showModal(); });
+elements.leaveButton.addEventListener('click', () => { toggleMenu(false); elements.farewellText.textContent = UI_CONFIG.farewell; elements.farewellDialog.showModal(); });
 elements.restartButton.addEventListener('click', () => location.reload());
+resizeComposer();

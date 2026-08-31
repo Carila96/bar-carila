@@ -139,6 +139,7 @@ test('Carila page keeps its greeting, image configuration, and safe text renderi
   ]);
   assert.match(config, /いらっしゃいませ。今日はどういたしますか？/);
   assert.match(config, /carila-main\.png/);
+  assert.match(config, /bar-background\.png/);
   assert.match(html, /viewport-fit=cover/);
   assert.match(app, /createTextNode\(message\.content\)/);
   assert.doesNotMatch(app, /innerHTML/);
@@ -156,6 +157,21 @@ test('Carila starters are ordinary first utterances and farewell is explicit', a
   assert.doesNotMatch(app, /mode/i);
   assert.match(config, /本日はありがとうございました。\\nまたよろしければお越しください。/);
   assert.match(app, /leaveButton\.addEventListener\('click'/);
+});
+
+test('Carila composer supports long-form input without accidental Enter submission', async () => {
+  const [html, app, css] = await Promise.all([
+    readFile(new URL('../public/carila/index.html', import.meta.url), 'utf8'),
+    readFile(new URL('../public/carila/assets/js/carila.js', import.meta.url), 'utf8'),
+    readFile(new URL('../public/carila/assets/css/carila.css', import.meta.url), 'utf8'),
+  ]);
+  assert.match(html, /<textarea[^>]+rows="3"/);
+  assert.match(html, /短い一言でも、まとまらない長い話でも大丈夫です。/);
+  assert.match(app, /event\.ctrlKey \|\| event\.metaKey/);
+  assert.doesNotMatch(app, /!event\.shiftKey/);
+  assert.match(app, /elements\.starters\.hidden = true/);
+  assert.match(app, /elements\.messageInput\.scrollHeight/);
+  assert.match(css, /max-height:174px/);
 });
 
 test('/carila redirects to the canonical trailing-slash page', async () => {
