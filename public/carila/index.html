@@ -3,29 +3,52 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#100d0c">
+  <meta name="theme-color" content="#0a0c0a">
   <meta name="description" content="バーテンダーCarilaと静かなカウンターで話す、テキスト会話の実験室。">
   <title>バーテンダー Carila | BarCarila</title>
   <link rel="stylesheet" href="/carila/assets/css/carila.css">
 </head>
 <body>
   <main class="bar" aria-labelledby="title">
-    <header class="bar__header"><div><p class="eyebrow">BAR CARILA</p><h1 id="title">Bartender Carila</h1></div><button id="leaveButton" class="quiet-button" type="button">閉じる</button></header>
-    <section class="portrait" aria-label="バーテンダーCarila">
-      <div class="portrait__glow"></div><img id="carilaImage" alt="カウンターに立つバーテンダーCarila">
-      <p class="portrait__caption">今夜も、カウンターで。</p>
-    </section>
-    <section class="counter" aria-live="polite" aria-busy="false">
-      <div class="exchange">
-        <div id="userTurn" class="turn turn--guest" hidden><span>あなた</span><p></p></div>
-        <div class="turn turn--carila"><span>Carila</span><p id="carilaTurn"></p></div>
+    <header class="bar__header">
+      <div><p class="eyebrow">BAR CARILA</p><h1 id="title">Bartender Carila</h1></div>
+      <button id="menuButton" class="menu-button" type="button" aria-label="メニューを開く" aria-expanded="false" aria-controls="menuDrawer"><span></span><span></span><span></span></button>
+    </header>
+
+    <section class="scene" aria-label="バーテンダーCarilaとの会話">
+      <div id="barBackground" class="scene__background" aria-hidden="true"></div>
+      <div class="portrait" aria-label="バーテンダーCarila">
+        <div class="portrait__glow"></div>
+        <img id="carilaImage" alt="カウンターに立つ男性バーテンダーCarila">
+        <p class="portrait__caption">今夜も、カウンターで。</p>
       </div>
+      <div class="counter-edge" aria-hidden="true"></div>
+      <div class="exchange" aria-live="polite" aria-busy="false">
+        <div id="userTurn" class="turn turn--guest" hidden><span>あなた</span><p></p></div>
+        <div id="carilaWindow" class="turn turn--carila"><span>Carila</span><p id="carilaTurn"></p></div>
+      </div>
+    </section>
+
+    <section class="counter">
       <div id="starters" class="starters" aria-label="会話を始める"></div>
-      <button id="historyButton" class="history-button" type="button">履歴を見る</button>
-      <form id="chatForm" class="composer"><label class="sr-only" for="messageInput">Carilaへのメッセージ</label><textarea id="messageInput" rows="1" maxlength="2000" placeholder="Carilaに話しかける" required></textarea><button id="sendButton" type="submit">送信</button></form>
+      <form id="chatForm" class="composer">
+        <label class="sr-only" for="messageInput">Carilaへのメッセージ</label>
+        <textarea id="messageInput" rows="3" maxlength="2000" placeholder="例：今日、仕事でちょっと嫌なことがあって。聞いてもらってもいいですか？" required></textarea>
+        <button id="sendButton" type="submit"><span>送信</span><span aria-hidden="true">→</span></button>
+      </form>
+      <p class="composer__hint">短い一言でも、まとまらない長い話でも大丈夫です。</p>
       <p id="status" class="status" role="status"></p>
     </section>
   </main>
+
+  <div id="menuOverlay" class="menu-overlay" hidden></div>
+  <aside id="menuDrawer" class="menu-drawer" aria-label="メニュー" aria-hidden="true">
+    <div class="menu-drawer__header"><p>BAR CARILA</p><button id="closeMenu" type="button" aria-label="メニューを閉じる">×</button></div>
+    <button id="historyButton" class="menu-item" type="button">今夜の会話履歴</button>
+    <button id="leaveButton" class="menu-item" type="button">会話を終える</button>
+    <a class="menu-item" href="/">BarCarila トップへ</a>
+  </aside>
+
   <dialog id="historyDialog"><div class="dialog__header"><h2>今夜の会話</h2><button id="closeHistory" class="quiet-button" type="button">戻る</button></div><ol id="historyList"></ol></dialog>
   <dialog id="farewellDialog" class="farewell"><p id="farewellText"></p><button id="restartButton" type="button">もう一度、扉を開ける</button></dialog>
   <script type="module" src="/carila/assets/js/carila.js"></script>
