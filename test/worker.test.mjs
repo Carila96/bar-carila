@@ -95,6 +95,15 @@ test('Carila personality retains the confirmed conversation scenarios', () => {
   for (const expectation of required) assert.match(CARILA_SYSTEM_PROMPT, new RegExp(expectation));
 });
 
+test('Carila personality includes the confirmed Phase 1 conversation UX', () => {
+  for (const expectation of [
+    '初期スターターは会話モードではなく', '主要な質問は原則1ターン1つ程度',
+    '毎回疑問文で終えず', '自然な2〜4文程度', '自分から話題や小話を差し出す',
+    'プロフィールを完成させるため', '自信のない具体的事実を雰囲気で捏造しない',
+    '一般的な酒の基本知識', '本日はありがとうございました',
+  ]) assert.match(CARILA_SYSTEM_PROMPT, new RegExp(expectation));
+});
+
 test('Carila personality includes all six customer-understanding categories and Phase 1 limits', () => {
   for (const category of ['基本人物情報', '好み・日常', '人物・関係性', '継続ストーリー', '接客上の理解', 'Carilaの印象・仮説']) {
     assert.match(CARILA_SYSTEM_PROMPT, new RegExp(category));
@@ -133,6 +142,20 @@ test('Carila page keeps its greeting, image configuration, and safe text renderi
   assert.match(html, /viewport-fit=cover/);
   assert.match(app, /createTextNode\(message\.content\)/);
   assert.doesNotMatch(app, /innerHTML/);
+});
+
+test('Carila starters are ordinary first utterances and farewell is explicit', async () => {
+  const [app, config] = await Promise.all([
+    readFile(new URL('../public/carila/assets/js/carila.js', import.meta.url), 'utf8'),
+    readFile(new URL('../public/carila/assets/js/config/ui-config.js', import.meta.url), 'utf8'),
+  ]);
+  for (const starter of ['お酒を注文する', '少し話したくて', '話を聞いてほしくて', '特に決めていません']) {
+    assert.match(config, new RegExp(starter));
+  }
+  assert.match(app, /button\.addEventListener\('click', \(\) => send\(label\)\)/);
+  assert.doesNotMatch(app, /mode/i);
+  assert.match(config, /本日はありがとうございました。\\nまたよろしければお越しください。/);
+  assert.match(app, /leaveButton\.addEventListener\('click'/);
 });
 
 test('/carila redirects to the canonical trailing-slash page', async () => {
