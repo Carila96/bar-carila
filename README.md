@@ -25,6 +25,13 @@ Anthropic Messages APIへ渡します。音声、認証、永続的な顧客記�
 `public/carila/assets/images/carila-main.png` を差し替え、表示パスを
 `public/carila/assets/js/config/ui-config.js` で変更できます。
 
+人格プロンプトは `src/carila-personality.mjs` で組み立てられ、`src/carila/` の
+人格・会話・価値観・BAR思想・顧客理解・記憶方針ごとのモジュールで管理します。
+ブラウザの `SessionMemory.customerUnderstanding` は顧客理解6分類のセッション内の
+器ですが、Phase 1では抽出処理やDB保存には接続していません。現在Anthropicへ渡る
+顧客理解は会話履歴と人格プロンプトに基づく文脈理解であり、ページを離れた後には
+保持されません。
+
 ## 正式なデプロイ経路
 
 正式運用はCloudflareのみです。デプロイと昇格はCARILA WORKS Controlが管理し、
