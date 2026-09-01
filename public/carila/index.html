@@ -16,13 +16,9 @@
     </header>
 
     <section class="scene" aria-label="バーテンダーCarilaとの会話">
-      <div id="barBackground" class="scene__background" aria-hidden="true"></div>
-      <div class="portrait" aria-label="バーテンダーCarila">
-        <div class="portrait__glow"></div>
-        <img id="carilaImage" alt="カウンターに立つ男性バーテンダーCarila">
-        <p class="portrait__caption">今夜も、カウンターで。</p>
+      <div class="portrait" role="img" aria-label="カウンターに立つ男性バーテンダーCarila">
+        <p id="sceneCaption" class="portrait__caption">今夜も、カウンターで。</p>
       </div>
-      <div class="counter-edge" aria-hidden="true"></div>
       <div class="exchange" aria-live="polite" aria-busy="false">
         <div id="userTurn" class="turn turn--guest" hidden><span>あなた</span><p></p></div>
         <div id="carilaWindow" class="turn turn--carila"><span>Carila</span><p id="carilaTurn"></p></div>
