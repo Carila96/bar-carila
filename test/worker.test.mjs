@@ -131,17 +131,22 @@ test('Carila chat validates bounded alternating conversation input', async () =>
   }
 });
 
-test('Carila page keeps its greeting, image configuration, and safe text rendering separate', async () => {
-  const [html, app, config] = await Promise.all([
+test('Carila page uses one continuous scene image and safe text rendering', async () => {
+  const [html, app, config, css] = await Promise.all([
     readFile(new URL('../public/carila/index.html', import.meta.url), 'utf8'),
     readFile(new URL('../public/carila/assets/js/carila.js', import.meta.url), 'utf8'),
     readFile(new URL('../public/carila/assets/js/config/ui-config.js', import.meta.url), 'utf8'),
+    readFile(new URL('../public/carila/assets/css/carila.css', import.meta.url), 'utf8'),
   ]);
   assert.match(config, /いらっしゃいませ。今日はどういたしますか？/);
-  assert.match(config, /carila-main\.png/);
-  assert.match(config, /bar-background\.png/);
+  assert.match(config, /carila-main\.jpg/);
+  assert.doesNotMatch(config, /bar-background/);
   assert.match(html, /viewport-fit=cover/);
-  assert.match(app, /createTextNode\(message\.content\)/);
+  assert.doesNotMatch(html, /counter-edge|scene__background|<img/);
+  assert.match(css, /background-image:var\(--scene-image\)/);
+  assert.match(app, /elements\.sceneCaption\.hidden = true/);
+  assert.match(app, /createTextNode\(content\)/);
+  assert.match(app, /textContent = guest\.content/);
   assert.doesNotMatch(app, /innerHTML/);
 });
 

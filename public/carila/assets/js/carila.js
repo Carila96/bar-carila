@@ -4,11 +4,9 @@ import { formatCarilaText } from './text-format.js';
 
 const memory = new SessionMemory();
 const byId = (id) => document.getElementById(id);
-const elements = Object.fromEntries(['barBackground','carilaImage','carilaWindow','carilaTurn','userTurn','starters','chatForm','messageInput','sendButton','status','historyButton','historyDialog','historyList','closeHistory','leaveButton','farewellDialog','farewellText','restartButton','menuButton','menuDrawer','menuOverlay','closeMenu'].map((id) => [id, byId(id)]));
+const elements = Object.fromEntries(['sceneCaption','carilaWindow','carilaTurn','userTurn','starters','chatForm','messageInput','sendButton','status','historyButton','historyDialog','historyList','closeHistory','leaveButton','farewellDialog','farewellText','restartButton','menuButton','menuDrawer','menuOverlay','closeMenu'].map((id) => [id, byId(id)]));
 
-elements.carilaImage.src = UI_CONFIG.imagePath;
-elements.carilaImage.addEventListener('error', () => elements.carilaImage.classList.add('is-missing'));
-elements.barBackground.style.backgroundImage = `url("${UI_CONFIG.backgroundPath}")`;
+document.querySelector('.scene').style.setProperty('--scene-image', `url("${UI_CONFIG.imagePath}")`);
 elements.carilaTurn.textContent = formatCarilaText(UI_CONFIG.greeting);
 memory.add('assistant', UI_CONFIG.greeting);
 
@@ -57,7 +55,7 @@ async function send(rawMessage) {
   const message = rawMessage.trim();
   if (!message || elements.sendButton.disabled) return;
   memory.add('user', message); showLatest(); setBusy(true);
-  elements.starters.hidden = true; elements.messageInput.value = ''; resizeComposer();
+  elements.starters.hidden = true; elements.sceneCaption.hidden = true; elements.messageInput.value = ''; resizeComposer();
   let failed = false;
   try {
     const response = await fetch(UI_CONFIG.apiPath, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ messages: memory.conversation() }) });
