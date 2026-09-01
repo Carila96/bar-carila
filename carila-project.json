@@ -6,11 +6,11 @@
   "briefPath": "PROJECT_BRIEF.md",
   "category": "",
   "repositoryUrl": "https://github.com/Carila96/bar-carila",
-  "previewUrl": "https://cw-preview-bar-carila-f48168.clockcrokk0969.workers.dev/",
+  "previewUrl": "https://cw-preview-bar-carila-ecf3a6.clockcrokk0969.workers.dev/",
   "productionUrl": "https://bar.carilaworks.com/",
   "subdomain": "bar.carilaworks.com",
   "status": "PUBLIC",
   "releaseAdapterType": "cloudflare-worker-app",
   "createdAt": "2026-03-15T22:37:04Z",
-  "updatedAt": "2026-09-01T03:42:29.790Z"
+  "updatedAt": "2026-09-01T21:48:37.816Z"
 }
