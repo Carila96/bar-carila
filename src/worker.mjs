@@ -30,6 +30,55 @@ function safeUpstreamError(body) {
   }
 }
 
+function cacheStaticAsset(response, pathname) {
+  if (!response.ok || response.status === 206) return response;
+  const isLongLivedAsset = pathname.startsWith('/pandas/')
+    || pathname.startsWith('/carila/assets/')
+    || pathname.startsWith('/assets/')
+    || /\.(?:png|jpe?g|webp|gif|svg|css|js)$/i.test(pathname);
+  const isHtml = pathname === '/' || pathname.endsWith('.html') || pathname === '/carila/';
+  if (!isLongLivedAsset && !isHtml) return response;
+
+  const cached = new Response(response.body, response);
+  cached.headers.delete('content-length');
+  if (isLongLivedAsset) {
+    cached.headers.set('cache-control', 'public, max-age=86400, stale-while-revalidate=604800');
+  } else {
+    cached.headers.set('cache-control', 'no-cache');
+  }
+  return cached;
+}
+
+function optimizeBarCarilaHtml(response) {
+  if (typeof HTMLRewriter !== 'function') return response;
+
+  const lazyPandaScript = `<script>(()=>{const load=(img)=>{if(!img||!img.dataset.src||img.getAttribute('src'))return;img.setAttribute('src',img.dataset.src);delete img.dataset.src;};document.querySelectorAll('.panda-img.active').forEach(load);const stage=document.getElementById('pandaStage');if(stage){new MutationObserver((records)=>{for(const record of records){const img=record.target;if(img.classList&&img.classList.contains('panda-img')&&img.classList.contains('active'))load(img);}}).observe(stage,{subtree:true,attributes:true,attributeFilter:['class']});}})();</script>`;
+
+  return new HTMLRewriter()
+    .on('img.panda-img', {
+      element(element) {
+        const id = element.getAttribute('id');
+        const src = element.getAttribute('src');
+        if (id === 'p-counter') {
+          element.setAttribute('fetchpriority', 'high');
+          element.setAttribute('decoding', 'async');
+          return;
+        }
+        if (src) {
+          element.setAttribute('data-src', src);
+          element.removeAttribute('src');
+          element.setAttribute('decoding', 'async');
+        }
+      },
+    })
+    .on('body', {
+      element(element) {
+        element.append(lazyPandaScript, { html: true });
+      },
+    })
+    .transform(response);
+}
+
 async function chat(request, env) {
   if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405, { allow: 'POST' });
   if (!env.ANTHROPIC_API_KEY) return missingSecret('ANTHROPIC_API_KEY');
@@ -159,7 +208,12 @@ export default {
       if (pathname === '/api/drink-image') return await drinkImage(request, env, context);
       if (pathname.startsWith('/api/')) return json({ error: 'Not found' }, 404);
       if (pathname === '/carila') return Response.redirect(`${new URL(request.url).origin}/carila/`, 308);
-      return env.ASSETS.fetch(request);
+
+      let response = await env.ASSETS.fetch(request);
+      if (request.method === 'GET' && (pathname === '/' || pathname === '/index.html')) {
+        response = optimizeBarCarilaHtml(response);
+      }
+      return cacheStaticAsset(response, pathname);
     } catch (error) {
       console.error('Worker request failed', error);
       return json({ error: 'Internal server error' }, 500);
