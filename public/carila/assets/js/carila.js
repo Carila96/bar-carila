@@ -5,6 +5,7 @@ import { formatCarilaText } from './text-format.js';
 const memory = new SessionMemory();
 const byId = (id) => document.getElementById(id);
 const elements = Object.fromEntries(['sceneCaption','carilaWindow','carilaTurn','userTurn','starters','chatForm','messageInput','sendButton','status','historyButton','historyDialog','historyList','closeHistory','leaveButton','farewellDialog','farewellText','restartButton','menuButton','menuDrawer','menuOverlay','closeMenu'].map((id) => [id, byId(id)]));
+const bar = document.querySelector('.bar');
 
 document.querySelector('.scene').style.setProperty('--scene-image', `url("${UI_CONFIG.imagePath}")`);
 elements.carilaTurn.textContent = formatCarilaText(UI_CONFIG.greeting);
@@ -55,6 +56,7 @@ async function send(rawMessage) {
   const message = rawMessage.trim();
   if (!message || elements.sendButton.disabled) return;
   memory.add('user', message); showLatest(); setBusy(true);
+  bar.classList.add('is-conversing');
   elements.starters.hidden = true; elements.sceneCaption.hidden = true; elements.messageInput.value = ''; resizeComposer();
   let failed = false;
   try {
