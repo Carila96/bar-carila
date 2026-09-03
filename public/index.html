@@ -2,8 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-124MM8RN7Z"></script>
-<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-124MM8RN7Z');</script>
+
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <title>Bar Carila — AIバーテンダー</title>
 <meta name="description" content="パンダとバーテンダーがあなたにぴったりのお酒を提案。カクテル・ウイスキー・ノンアルまで対応。">
@@ -18,7 +17,8 @@
 <meta name="twitter:image" content="https://bar.carilaworks.com/ogp.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,400&family=Noto+Serif+JP:wght@200;300;400&display=swap">
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,400&family=Noto+Serif+JP:wght@200;300;400&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,400&family=Noto+Serif+JP:wght@200;300;400&display=swap"></noscript>
 <link rel="preload" as="image" href="/assets/images/bar-background.webp" fetchpriority="high">
 <link rel="stylesheet" href="/assets/css/main.css">
 </head>
@@ -27,15 +27,15 @@
 <div class="bg-overlay"></div>
 <div class="app">
   <div class="panda-stage" id="pandaStage">
-    <img class="panda-img active" id="p-counter"    src="/pandas/p-counter.png"    alt="" style="mix-blend-mode:multiply;">
-    <img class="panda-img"        id="p-loading"    src="/pandas/p-loading.png"    alt="" style="mix-blend-mode:multiply;">
-    <img class="panda-img"        id="p-think"      src="/pandas/p-think.png"      alt="" style="mix-blend-mode:multiply;">
-    <img class="panda-img"        id="p-smile"      src="/pandas/p-approve.png"    alt="" style="mix-blend-mode:multiply;"><!-- p-smile.png未存在のためp-approveで代替 -->
-    <img class="panda-img"        id="p-approve"    src="/pandas/p-approve.png"    alt="" style="mix-blend-mode:multiply;">
-    <img class="panda-img"        id="p-sad"        src="/pandas/p-sad.png"        alt="" style="mix-blend-mode:multiply;">
-    <img class="panda-img"        id="p-curious"    src="/pandas/p-curious.png"    alt="" style="mix-blend-mode:multiply;">
-    <img class="panda-img"        id="p-relax"      src="/pandas/p-relax.png"      alt="" style="mix-blend-mode:multiply;">
-    <img class="panda-img"        id="p-bartender"  src="/pandas/p-bartender.png"  alt="" style="mix-blend-mode:multiply;">
+    <img class="panda-img active" id="p-counter"    src="/pandas/p-counter.webp" fetchpriority="high" decoding="async"    alt="" style="mix-blend-mode:multiply;">
+    <img class="panda-img"        id="p-loading"    data-src="/pandas/p-loading.webp" decoding="async"    alt="" style="mix-blend-mode:multiply;">
+    <img class="panda-img"        id="p-think"      data-src="/pandas/p-think.webp" decoding="async"      alt="" style="mix-blend-mode:multiply;">
+    <img class="panda-img"        id="p-smile"      data-src="/pandas/p-approve.webp" decoding="async"    alt="" style="mix-blend-mode:multiply;"><!-- p-smile.png未存在のためp-approveで代替 -->
+    <img class="panda-img"        id="p-approve"    data-src="/pandas/p-approve.webp" decoding="async"    alt="" style="mix-blend-mode:multiply;">
+    <img class="panda-img"        id="p-sad"        data-src="/pandas/p-sad.webp" decoding="async"        alt="" style="mix-blend-mode:multiply;">
+    <img class="panda-img"        id="p-curious"    data-src="/pandas/p-curious.webp" decoding="async"    alt="" style="mix-blend-mode:multiply;">
+    <img class="panda-img"        id="p-relax"      data-src="/pandas/p-relax.webp" decoding="async"      alt="" style="mix-blend-mode:multiply;">
+    <img class="panda-img"        id="p-bartender"  data-src="/pandas/p-bartender.webp" decoding="async"  alt="" style="mix-blend-mode:multiply;">
   </div>
   <div class="chat-bottom">
     <div class="pc-header" style="display:none">
@@ -228,7 +228,7 @@ Bar CarilaはバーテンダーCarilaが営む架空のバーです。
 </div>
 
 <!-- Logo -->
-<button class="logo-btn" onclick="goHome()"><img src="/pandas/logo.png" alt=""><span class="logo-text">Bar Carila</span></button>
+<button class="logo-btn" onclick="goHome()"><img src="/pandas/logo.webp" alt="" loading="lazy" decoding="async"><span class="logo-text">Bar Carila</span></button>
 
 <!-- Tutorial -->
 <div class="tutorial-overlay hidden" id="tutorialOverlay">
@@ -248,5 +248,6 @@ Bar CarilaはバーテンダーCarilaが営む架空のバーです。
 
 
 <script src="/assets/js/main.js" defer></script>
+<script>(()=>{const load=(img)=>{if(!img||img.src||!img.dataset.src)return;img.src=img.dataset.src;delete img.dataset.src;};document.querySelectorAll('.panda-img.active').forEach(load);const stage=document.getElementById('pandaStage');if(stage)new MutationObserver((records)=>{for(const r of records){const img=r.target;if(img.classList?.contains('panda-img')&&img.classList.contains('active'))load(img);}}).observe(stage,{subtree:true,attributes:true,attributeFilter:['class']});const startAnalytics=()=>{window.dataLayer=window.dataLayer||[];window.gtag=function(){dataLayer.push(arguments)};gtag('js',new Date());gtag('config','G-124MM8RN7Z');const s=document.createElement('script');s.async=true;s.src='https://www.googletagmanager.com/gtag/js?id=G-124MM8RN7Z';document.head.appendChild(s);};window.addEventListener('load',()=>{'requestIdleCallback'in window?requestIdleCallback(startAnalytics,{timeout:2000}):setTimeout(startAnalytics,800)},{once:true});})();</script>
 </body>
 </html>

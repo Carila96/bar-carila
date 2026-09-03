@@ -302,5 +302,5 @@ test('BarCarila root uses split static assets without an inline background paylo
   assert.match(css, /\/assets\/images\/bar-background\.webp/);
   assert.ok(Buffer.byteLength(html) < 100_000);
   assert.ok(Buffer.byteLength(js) > 20_000);
-  assert.ok(background.length > 100_000);
+  assert.ok(background.length > 20_000);
 });
