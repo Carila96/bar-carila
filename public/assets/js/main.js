@@ -1,5 +1,6 @@
 const API='/api/chat';
-const CHAT_MODEL='claude-sonnet-4-6';
+const FAST_MODEL='claude-haiku-4-5-20251001';
+const RECOMMEND_MODEL='claude-sonnet-4-6';
 const AMAZON_TAG='carila-22';
 const RAKUTEN_ID='51ff76f6.9c656021.51ff76f7.1d6ddd8e';
 const FEEDBACK_URL='https://docs.google.com/forms/d/e/1FAIpQLScUWpIEo738dwiCziMGv_P_wjeQkHD97EEmHPmFnuKeLmvPAw/viewform?usp=header';
@@ -79,11 +80,20 @@ async function fetchDrinkImg(name,cat,imgEl){
 
 // ===== Panda =====
 const ALL_PANDAS=['counter','loading','think','smile','approve','sad','curious','relax','bartender'];
+function loadPandaImage(el){
+  if(!el||el.getAttribute('src')||!el.dataset.src)return;
+  el.setAttribute('src',el.dataset.src);delete el.dataset.src;
+}
 function setPanda(state){
   ALL_PANDAS.forEach(s=>{const el=document.getElementById('p-'+s);if(el)el.classList.remove('active');});
   const target=ALL_PANDAS.includes(state)?state:'counter';
   const el=document.getElementById('p-'+target);
-  if(el)el.classList.add('active');
+  if(el){loadPandaImage(el);el.classList.add('active');}
+}
+function preloadPandas(){document.querySelectorAll('.panda-img[data-src]').forEach(loadPandaImage);}
+function schedulePandaPreload(){
+  const run=()=>setTimeout(preloadPandas,80);
+  if(document.readyState==='complete')run();else window.addEventListener('load',run,{once:true});
 }
 function collapsePanda(){if(window.innerWidth<700)document.getElementById('pandaStage').classList.add('collapsed');}
 function expandPanda(){document.getElementById('pandaStage').classList.remove('collapsed');}
@@ -130,7 +140,7 @@ async function doSearch(){
 入力がお酒として特定できる場合: {"found":true,"name":"正式名","category":"カテゴリ","description":"説明2〜3文","tip":"バーでの楽しみ方・豆知識","search_ja":"Amazon/楽天検索用ワード","similar":["似たお酒1","似たお酒2","似たお酒3"]}
 特定できない場合: {"found":false,"suggestions":["候補1","候補2","候補3"],"message":"メッセージ"}`;
   try{
-    const res=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:CHAT_MODEL,max_tokens:600,system:SEARCH_SYSTEM,messages:[{role:'user',content:`「${query}」について教えてください`}]})});
+    const res=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:FAST_MODEL,max_tokens:450,system:SEARCH_SYSTEM,messages:[{role:'user',content:`「${query}」について教えてください`}]})});
     const data=await res.json();
     const r=JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim());
     if(r.found){
@@ -508,6 +518,17 @@ const I18N={
 let lang=localStorage.getItem('bar_carila_lang')||'ja';
 function t(){return I18N[lang];}
 function getSystem(){return SYSTEM+(I18N[lang].langRule||'');}
+function getFastSystem(){return getSystem()+`
+
+【高速質問ターン】まだ最終提案に必要な情報が十分でない場合は、短く自然な質問を1つだけ返す。messageは簡潔にし、choicesは原則4個以内。情報が十分ならrecommendationを返してよい。`;}
+function initialAssistantPayload(){return {type:'question',emotion:'counter',message:t().initialMsg,choices:t().initialChoices};}
+function initialHistory(){return [{role:'user',content:t().startMsg},{role:'assistant',content:JSON.stringify(initialAssistantPayload())}];}
+let warmPromise=null;
+function prewarmFastModel(){
+  if(warmPromise)return warmPromise;
+  warmPromise=fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:FAST_MODEL,max_tokens:0,system:getFastSystem(),messages:[{role:'user',content:'cache warmup'}]})}).catch(()=>null);
+  return warmPromise;
+}
 function toggleLang(){
   lang=lang==='ja'?'en':'ja';
   localStorage.setItem('bar_carila_lang',lang);
@@ -519,7 +540,12 @@ function toggleLang(){
 
 async function callAPI(userMsg){
   if(userMsg)chatHistory.push({role:'user',content:userMsg});
-  const res=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:CHAT_MODEL,max_tokens:1100,system:getSystem(),messages:chatHistory})});
+  const userTurns=chatHistory.filter(m=>m.role==='user').length;
+  const fastTurn=userTurns<4;
+  const model=fastTurn?FAST_MODEL:RECOMMEND_MODEL;
+  const maxTokens=fastTurn?600:1100;
+  const system=fastTurn?getFastSystem():getSystem();
+  const res=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model,max_tokens:maxTokens,system,messages:chatHistory})});
   const data=await readAPIResponse(res);
   const text=data.content[0].text;
   chatHistory.push({role:'assistant',content:text});
@@ -580,21 +606,11 @@ async function handleInput(text){
   isLoading=false;
 }
 
-async function startChat(){
-  isLoading=true;showLoading();
-  chatHistory=[{role:'user',content:t().startMsg}];
-  try{
-    const res=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:CHAT_MODEL,max_tokens:1100,system:SYSTEM,messages:chatHistory})});
-    const data=await readAPIResponse(res);
-    const text=data.content[0].text;
-    chatHistory.push({role:'assistant',content:text});
-    const r=JSON.parse(text.replace(/```json|```/g,'').trim());
-    setPanda(r.emotion||'counter');showMsg(r.message);showChoices(r.choices);
-  }catch(e){
-    showChatError(e,'counter');
-    showChoices(t().initialChoices);
-  }
+function startChat(){
   isLoading=false;
+  chatHistory=initialHistory();
+  setPanda('counter');showMsg(t().initialMsg);showChoices(t().initialChoices);
+  prewarmFastModel();
 }
 
 // ===== Menu =====
@@ -641,4 +657,5 @@ function initTutorial(){
 if(window.innerWidth>=700)document.querySelector('.pc-header').style.display='block';
 const _lb=document.getElementById('langToggleBtn');if(_lb)_lb.textContent=t().langBtn;
 startChat();
+schedulePandaPreload();
 initTutorial();

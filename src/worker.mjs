@@ -1,7 +1,7 @@
 import { CARILA_MAX_TOKENS, CARILA_MODEL, CARILA_SYSTEM_PROMPT } from './carila-personality.mjs';
 const ANTHROPIC_ENDPOINT = 'https://api.anthropic.com/v1/messages';
 const UNSPLASH_ENDPOINT = 'https://api.unsplash.com/search/photos';
-const ALLOWED_MODELS = new Set(['claude-sonnet-4-6']);
+const ALLOWED_MODELS = new Set(['claude-sonnet-4-6', 'claude-haiku-4-5-20251001']);
 
 const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), {
   status,
@@ -90,7 +90,7 @@ async function chat(request, env) {
     return json({ error: 'Invalid JSON body' }, 400);
   }
   if (!body || !ALLOWED_MODELS.has(body.model) || !Number.isInteger(body.max_tokens)
-    || body.max_tokens < 1 || !Array.isArray(body.messages) || body.messages.length === 0
+    || body.max_tokens < 0 || !Array.isArray(body.messages) || body.messages.length === 0
     || (body.system !== undefined && typeof body.system !== 'string')) {
     return json({ error: 'Invalid Anthropic Messages request' }, 400);
   }
@@ -102,7 +102,7 @@ async function chat(request, env) {
       'x-api-key': env.ANTHROPIC_API_KEY,
       'anthropic-version': '2023-06-01',
     },
-    body: JSON.stringify(body),
+    body: JSON.stringify({ ...body, system: typeof body.system === 'string' && body.system ? [{ type: 'text', text: body.system, cache_control: { type: 'ephemeral' } }] : body.system }),
   });
   if (!upstream.ok) {
     const requestId = diagnosticId();
