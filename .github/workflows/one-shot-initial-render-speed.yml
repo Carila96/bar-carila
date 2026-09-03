@@ -1,3 +1,4 @@
+# One-shot migration; removed automatically after a successful run.
 name: One-shot initial render speed
 
 on:
@@ -23,7 +24,7 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          import re, json
+          import json
 
           p = Path('public/index.html')
           s = p.read_text()
@@ -69,7 +70,9 @@ jobs:
           start = s.index('function optimizeBarCarilaHtml(response) {')
           end = s.index('\nasync function chat(', start)
           s = s[:start] + s[end+1:]
-          s = s.replace("      let response = await env.ASSETS.fetch(request);\n      if (request.method === 'GET' && (pathname === '/' || pathname === '/index.html')) {\n        response = optimizeBarCarilaHtml(response);\n      }\n      return cacheStaticAsset(response, pathname);", "      const response = await env.ASSETS.fetch(request);\n      return cacheStaticAsset(response, pathname);")
+          old = "      let response = await env.ASSETS.fetch(request);\n      if (request.method === 'GET' && (pathname === '/' || pathname === '/index.html')) {\n        response = optimizeBarCarilaHtml(response);\n      }\n      return cacheStaticAsset(response, pathname);"
+          if old not in s: raise SystemExit('worker rewrite call marker not found')
+          s = s.replace(old, "      const response = await env.ASSETS.fetch(request);\n      return cacheStaticAsset(response, pathname);", 1)
           p.write_text(s)
 
           p = Path('wrangler.jsonc')
