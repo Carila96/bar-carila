@@ -39,7 +39,7 @@ test('chat forwards a valid Messages API request with required headers', async (
     assert.equal(init.headers['content-type'], 'application/json');
     assert.equal(init.headers['anthropic-version'], '2023-06-01');
     assert.equal(init.headers['x-api-key'], 'bound-secret');
-    assert.deepEqual(JSON.parse(init.body), requestBody);
+    assert.deepEqual(JSON.parse(init.body), { ...requestBody, system: [{ type: 'text', text: requestBody.system, cache_control: { type: 'ephemeral' } }] });
     return Response.json({ content: [{ type: 'text', text: '{}'}] });
   };
   try {
@@ -245,14 +245,17 @@ test('frontend localizes chat errors and reports safe diagnostics', async () => 
   assert.match(html, /location\.hostname\.endsWith\('\.workers\.dev'\)/);
   assert.match(html, /line\.textContent=`\$\{t\(\)\.chatDiagnostic\}: \$\{diagnostic\}`/);
   assert.match(html, /function showChatError\(error,pandaState='sad'\)/);
-  assert.equal((html.match(/showChatError\(e(?:,'counter')?\)/g)||[]).length, 2);
+  assert.equal((html.match(/showChatError\(e(?:,'counter')?\)/g)||[]).length, 1);
   assert.doesNotMatch(html, /line\.innerHTML/);
 });
 
-test('frontend uses the current Sonnet alias for every chat request', async () => {
+test('frontend routes quick turns to Haiku and final recommendations to Sonnet', async () => {
   const html = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');
-  assert.match(html, /const CHAT_MODEL='claude-sonnet-4-6'/);
-  assert.equal((html.match(/model:CHAT_MODEL/g) || []).length, 3);
+  assert.match(html, /const FAST_MODEL='claude-haiku-4-5-20251001'/);
+  assert.match(html, /const RECOMMEND_MODEL='claude-sonnet-4-6'/);
+  assert.match(html, /const fastTurn=userTurns<4/);
+  assert.match(html, /model=fastTurn\?FAST_MODEL:RECOMMEND_MODEL/);
+  assert.match(html, /max_tokens:0,system:getFastSystem\(\)/);
   assert.doesNotMatch(html, /claude-sonnet-4-20250514/);
 });
 
@@ -303,4 +306,31 @@ test('BarCarila root uses split static assets without an inline background paylo
   assert.ok(Buffer.byteLength(html) < 100_000);
   assert.ok(Buffer.byteLength(js) > 20_000);
   assert.ok(background.length > 20_000);
+});
+
+
+test('BarCarila startup is local-first and preloads deferred panda expressions', async () => {
+  const html = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');
+  assert.match(html, /function startChat\(\)\{[\s\S]*showMsg\(t\(\)\.initialMsg\);showChoices\(t\(\)\.initialChoices\)/);
+  assert.match(html, /function schedulePandaPreload\(\)/);
+  assert.match(html, /document\.querySelectorAll\('\.panda-img\[data-src\]'\)/);
+});
+
+test('chat API accepts Haiku and marks the system prompt cacheable', async () => {
+  const originalFetch = globalThis.fetch;
+  let forwarded;
+  globalThis.fetch = async (_url, init) => {
+    forwarded = JSON.parse(init.body);
+    return new Response(JSON.stringify({ content: [{ type: 'text', text: '{"type":"question","message":"ok","choices":[]}' }] }), { status: 200, headers: { 'content-type': 'application/json' } });
+  };
+  try {
+    const response = await worker.fetch(new Request('https://preview.example/api/chat', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 0, system: 'cache me', messages: [{ role: 'user', content: 'warm' }] }),
+    }), { ...env, ANTHROPIC_API_KEY: 'bound-secret' }, context);
+    assert.equal(response.status, 200);
+    assert.equal(forwarded.model, 'claude-haiku-4-5-20251001');
+    assert.equal(forwarded.max_tokens, 0);
+    assert.deepEqual(forwarded.system, [{ type: 'text', text: 'cache me', cache_control: { type: 'ephemeral' } }]);
+  } finally { globalThis.fetch = originalFetch; }
 });
