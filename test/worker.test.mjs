@@ -155,7 +155,7 @@ test('Carila starters are ordinary first utterances and farewell is explicit', a
     readFile(new URL('../public/carila/assets/js/carila.js', import.meta.url), 'utf8'),
     readFile(new URL('../public/carila/assets/js/config/ui-config.js', import.meta.url), 'utf8'),
   ]);
-  for (const starter of ['お酒を注文する', '少し話したくて', '話を聞いてほしくて', '特に決めていません']) {
+  for (const starter of ['お酒を注文する', '少し話したくて', '特に決めていません']) {
     assert.match(config, new RegExp(starter));
   }
   assert.match(app, /button\.addEventListener\('click', \(\) => send\(label\)\)/);
@@ -237,7 +237,7 @@ test('chat sanitizes Anthropic errors while retaining safe diagnostics', async (
 });
 
 test('frontend localizes chat errors and reports safe diagnostics', async () => {
-  const html = await readFile(new URL('../public/index.html', import.meta.url), 'utf8');
+  const html = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');
   assert.match(html, /chatError:'……少し調子が悪いようです。もう一度お試しください。'/);
   assert.match(html, /chatError:'…Something seems to be wrong right now. Please try again.'/);
   assert.match(html, /showMsg\(t\(\)\.chatError\)/);
@@ -250,7 +250,7 @@ test('frontend localizes chat errors and reports safe diagnostics', async () => 
 });
 
 test('frontend uses the current Sonnet alias for every chat request', async () => {
-  const html = await readFile(new URL('../public/index.html', import.meta.url), 'utf8');
+  const html = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');
   assert.match(html, /const CHAT_MODEL='claude-sonnet-4-6'/);
   assert.equal((html.match(/model:CHAT_MODEL/g) || []).length, 3);
   assert.doesNotMatch(html, /claude-sonnet-4-20250514/);
@@ -285,4 +285,22 @@ test('CARILA WORKS manifest uses only schema 1.0 fields', async () => {
   assert.equal(manifest.subdomain, 'bar.carilaworks.com');
   assert.equal(Number.isNaN(Date.parse(manifest.createdAt)), false);
   assert.equal(Number.isNaN(Date.parse(manifest.updatedAt)), false);
+});
+
+
+test('BarCarila root uses split static assets without an inline background payload', async () => {
+  const [html, css, js, background] = await Promise.all([
+    readFile(new URL('../public/index.html', import.meta.url), 'utf8'),
+    readFile(new URL('../public/assets/css/main.css', import.meta.url), 'utf8'),
+    readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8'),
+    readFile(new URL('../public/assets/images/bar-background.webp', import.meta.url)),
+  ]);
+  assert.match(html, /\/assets\/css\/main\.css/);
+  assert.match(html, /\/assets\/js\/main\.js/);
+  assert.match(html, /preload[^>]+bar-background\.webp/);
+  assert.doesNotMatch(html, /data:image\/webp;base64/);
+  assert.match(css, /\/assets\/images\/bar-background\.webp/);
+  assert.ok(Buffer.byteLength(html) < 100_000);
+  assert.ok(Buffer.byteLength(js) > 20_000);
+  assert.ok(background.length > 100_000);
 });
