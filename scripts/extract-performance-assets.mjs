@@ -63,6 +63,10 @@ await writeFile(backgroundPath, background);
 await writeFile(indexPath, html);
 
 let tests = await readFile(testPath, 'utf8');
+const staleStarter = "['お酒を注文する', '少し話したくて', '話を聞いてほしくて', '特に決めていません']";
+const currentStarters = "['お酒を注文する', '少し話したくて', '特に決めていません']";
+if (tests.includes(staleStarter)) tests = tests.replace(staleStarter, currentStarters);
+
 for (const name of [
   'frontend localizes chat errors and reports safe diagnostics',
   'frontend uses the current Sonnet alias for every chat request',
