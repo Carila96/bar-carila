@@ -15,13 +15,15 @@ jobs:
           node-version: 24
       - run: npm install
       - name: Patch files
-        run: python scripts/patch-conversation-speed.py
+        run: |
+          python scripts/patch-conversation-speed.py
+          python scripts/fix-conversation-speed-tests.py
       - run: npm test
       - run: node --check public/assets/js/main.js
       - run: node --check src/worker.mjs
       - name: Commit generated optimization
         run: |
-          rm -f .github/workflows/inspect-conversation-speed.yml .github/workflows/one-shot-conversation-speed.yml scripts/patch-conversation-speed.py
+          rm -f .github/workflows/inspect-conversation-speed.yml .github/workflows/one-shot-conversation-speed.yml scripts/patch-conversation-speed.py scripts/fix-conversation-speed-tests.py
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
