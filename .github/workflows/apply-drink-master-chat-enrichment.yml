@@ -17,43 +17,77 @@ jobs:
           node-version: 24
       - name: Patch worker and frontend
         run: |
-          node <<'NODE'
-          const fs=require('fs');
+          python3 <<'PY'
+          from pathlib import Path
 
-          const wp='src/worker.mjs';
-          let w=fs.readFileSync(wp,'utf8');
-          const marker=`function cacheStaticAsset(response, pathname) {`;
-          if(!w.includes('async function enrichBarCarilaRecommendation')){
-            const helper=`async function enrichBarCarilaRecommendation(data, env) {\n  const textItem = data?.content?.find((item) => item?.type === 'text' && typeof item.text === 'string');\n  if (!textItem || !env.DRINK_DB) return data;\n  let parsed;\n  try { parsed = JSON.parse(textItem.text.replace(/\\`\\`\\`json|\\`\\`\\`/g, '').trim()); } catch { return data; }\n  if (parsed?.type !== 'recommendation' || !parsed?.drink?.name) return data;\n  let row;\n  try { row = await readDrinkMaster(env, parsed.drink.name); } catch (error) {\n    console.error('D1 drink master enrichment failed', error);\n    return data;\n  }\n  if (!row) return data;\n  if (Number.isFinite(row.japan_rarity_score)) parsed.drink.rarity = row.japan_rarity_score;\n  parsed.drink.rarityLabel = row.japan_rarity_label || '';\n  parsed.drink.rarityConfidence = row.japan_rarity_confidence ?? null;\n  parsed.drink.rarityReason = row.rarity_reason || '';\n  if (row.short_description) parsed.drink.description = row.short_description;\n  if (row.order_hint) parsed.drink.trivia = row.order_hint;\n  parsed.drink.masterSource = 'd1';\n  parsed.drink.evidenceVersion = row.evidence_version || '';\n  textItem.text = JSON.stringify(parsed);\n  return data;\n}\n\n`;
-            if(!w.includes(marker)) throw new Error('worker helper insertion marker not found');
-            w=w.replace(marker,helper+marker);
+          wp=Path('src/worker.mjs')
+          w=wp.read_text()
+          marker='function cacheStaticAsset(response, pathname) {'
+          if 'async function enrichBarCarilaRecommendation' not in w:
+              helper='''async function enrichBarCarilaRecommendation(data, env) {
+            const textItem = data?.content?.find((item) => item?.type === 'text' && typeof item.text === 'string');
+            if (!textItem || !env.DRINK_DB) return data;
+            let parsed;
+            try { parsed = JSON.parse(textItem.text.replace(/```json|```/g, '').trim()); } catch { return data; }
+            if (parsed?.type !== 'recommendation' || !parsed?.drink?.name) return data;
+            let row;
+            try { row = await readDrinkMaster(env, parsed.drink.name); } catch (error) {
+              console.error('D1 drink master enrichment failed', error);
+              return data;
+            }
+            if (!row) return data;
+            if (Number.isFinite(row.japan_rarity_score)) parsed.drink.rarity = row.japan_rarity_score;
+            parsed.drink.rarityLabel = row.japan_rarity_label || '';
+            parsed.drink.rarityConfidence = row.japan_rarity_confidence ?? null;
+            parsed.drink.rarityReason = row.rarity_reason || '';
+            if (row.short_description) parsed.drink.description = row.short_description;
+            if (row.order_hint) parsed.drink.trivia = row.order_hint;
+            parsed.drink.masterSource = 'd1';
+            parsed.drink.evidenceVersion = row.evidence_version || '';
+            textItem.text = JSON.stringify(parsed);
+            return data;
           }
-          const oldReturn=`  return new Response(upstream.body, {\n    status: upstream.status,\n    headers: { 'content-type': upstream.headers.get('content-type') || 'application/json' },\n  });`;
-          const newReturn=`  const data = await upstream.json();\n  await enrichBarCarilaRecommendation(data, env);\n  return json(data, upstream.status);`;
-          if(w.includes(oldReturn)) w=w.replace(oldReturn,newReturn);
-          else if(!w.includes('await enrichBarCarilaRecommendation(data, env)')) throw new Error('chat return block not found');
-          fs.writeFileSync(wp,w);
 
-          const jp='public/assets/js/main.js';
-          let j=fs.readFileSync(jp,'utf8');
-          j=j.replace('const maxTokens=fastTurn?600:1100;','const maxTokens=fastTurn?600:1000;');
-          j=j.replace('"description":"説明2〜3文。飲み方含む"','"description":"フォールバック用の短い説明1文（60字以内）"');
-          const promptNeedle='カクテルはrecipe必須。単体酒のみrecipe:null可。abv・rarityは必ず含める。triviaはカクテル・モクテル・ノンアルはカクテルtriviaルール参照（省略可）。単体酒のtriviaには飲み方を必ず含める。';
-          const promptReplacement=promptNeedle+'\n固定情報は簡潔にする。descriptionは1文60字以内、triviaは必要な場合のみ1文80字以内。酒の一般説明や注文上の注意はD1酒マスターで補完されるため長文にしない。';
-          if(j.includes(promptNeedle)&&!j.includes('固定情報は簡潔にする。descriptionは1文60字以内')) j=j.replace(promptNeedle,promptReplacement);
-          const applyNeedle=`  const cached=getCachedDrinkMeta(data?.drink?.name);if(cached)apply(cached);\n  fetch(DRINK_META_API+'?name='+encodeURIComponent(data.drink.name))`;
-          const applyReplacement=`  if(data?.drink?.masterSource==='d1'){apply(data.drink);return;}\n  const cached=getCachedDrinkMeta(data?.drink?.name);if(cached)apply(cached);\n  fetch(DRINK_META_API+'?name='+encodeURIComponent(data.drink.name))`;
-          if(j.includes(applyNeedle)) j=j.replace(applyNeedle,applyReplacement);
-          else if(!j.includes("masterSource==='d1'")) throw new Error('frontend drink meta apply block not found');
-          fs.writeFileSync(jp,j);
+          '''
+              if marker not in w:
+                  raise SystemExit('worker helper insertion marker not found')
+              w=w.replace(marker,helper+marker,1)
 
-          const tp='test/drink-copy.test.mjs';
-          let t=fs.readFileSync(tp,'utf8');
-          if(!t.includes('masterSource')){
-            t=t.replace('assert.match(j,/meta.description/);',"assert.match(j,/meta.description/);assert.match(w,/enrichBarCarilaRecommendation/);assert.match(w,/masterSource = 'd1'/);assert.match(j,/masterSource==='d1'/);assert.match(j,/const maxTokens=fastTurn\\?600:1000/);");
-          }
-          fs.writeFileSync(tp,t);
-          NODE
+          old="""  return new Response(upstream.body, {
+            status: upstream.status,
+            headers: { 'content-type': upstream.headers.get('content-type') || 'application/json' },
+          });"""
+          new="""  const data = await upstream.json();
+            await enrichBarCarilaRecommendation(data, env);
+            return json(data, upstream.status);"""
+          if old in w:
+              w=w.replace(old,new,1)
+          elif 'await enrichBarCarilaRecommendation(data, env)' not in w:
+              raise SystemExit('chat return block not found')
+          wp.write_text(w)
+
+          jp=Path('public/assets/js/main.js')
+          j=jp.read_text()
+          j=j.replace('const maxTokens=fastTurn?600:1100;','const maxTokens=fastTurn?600:1000;',1)
+          j=j.replace('"description":"説明2〜3文。飲み方含む"','"description":"フォールバック用の短い説明1文（60字以内）"',1)
+          needle='カクテルはrecipe必須。単体酒のみrecipe:null可。abv・rarityは必ず含める。triviaはカクテル・モクテル・ノンアルはカクテルtriviaルール参照（省略可）。単体酒のtriviaには飲み方を必ず含める。'
+          extra=needle+'\n固定情報は簡潔にする。descriptionは1文60字以内、triviaは必要な場合のみ1文80字以内。酒の一般説明や注文上の注意はD1酒マスターで補完されるため長文にしない。'
+          if needle in j and '固定情報は簡潔にする。descriptionは1文60字以内' not in j:
+              j=j.replace(needle,extra,1)
+          apply="  const cached=getCachedDrinkMeta(data?.drink?.name);if(cached)apply(cached);\n  fetch(DRINK_META_API+'?name='+encodeURIComponent(data.drink.name))"
+          replacement="  if(data?.drink?.masterSource==='d1'){apply(data.drink);return;}\n  const cached=getCachedDrinkMeta(data?.drink?.name);if(cached)apply(cached);\n  fetch(DRINK_META_API+'?name='+encodeURIComponent(data.drink.name))"
+          if apply in j:
+              j=j.replace(apply,replacement,1)
+          elif "masterSource==='d1'" not in j:
+              raise SystemExit('frontend drink meta apply block not found')
+          jp.write_text(j)
+
+          tp=Path('test/drink-copy.test.mjs')
+          t=tp.read_text()
+          if 'masterSource' not in t:
+              t=t.replace('assert.match(j,/meta.description/);',"assert.match(j,/meta.description/);assert.match(w,/enrichBarCarilaRecommendation/);assert.match(w,/masterSource = 'd1'/);assert.match(j,/masterSource==='d1'/);assert.match(j,/const maxTokens=fastTurn\\?600:1000/);",1)
+          tp.write_text(t)
+          PY
       - name: Validate
         run: |
           node --check src/worker.mjs
