@@ -24,14 +24,29 @@ jobs:
           const chatMarker='async function chat(request, env) {';
           if(!s.includes(chatMarker)) throw new Error('chat marker not found');
           if(!s.includes('function barCarilaLeanOutputInstruction()')){
-            const helper=`function barCarilaLeanOutputInstruction() {\n  const names = DRINK_COPY_SEED.map(([name]) => name).join('、');\n  return \`【BarCarila酒マスター省トークン出力】\\n以下の酒名を推薦する場合、drink.rarity・drink.description・drink.trivia は出力しないでください。これらはサーバー側の調査済みD1酒マスターから補完します。name・category・abv・recipe・tags、および推薦message/analysisは従来どおり出力してください。対象外の酒を推薦する場合は、従来の完全なJSON仕様どおり rarity・description・trivia も出力してください。この指示は固定情報の出力要件に優先します。\\n対象: \\${names}\`;\n}\n\n`;
-            s=s.replace(chatMarker,helper+chatMarker);
+            const helper=[
+              "function barCarilaLeanOutputInstruction() {",
+              "  const names = DRINK_COPY_SEED.map(([name]) => name).join('、');",
+              "  return '【BarCarila酒マスター省トークン出力】\\n' +",
+              "    '以下の酒名を推薦する場合、drink.rarity・drink.description・drink.trivia は出力しないでください。これらはサーバー側の調査済みD1酒マスターから補完します。name・category・abv・recipe・tags、および推薦message/analysisは従来どおり出力してください。対象外の酒を推薦する場合は、従来の完全なJSON仕様どおり rarity・description・trivia も出力してください。この指示は固定情報の出力要件に優先します。\\n対象: ' + names;",
+              "}",
+              ""
+            ].join('\n');
+            s=s.replace(chatMarker,helper+'\n'+chatMarker);
           }
 
           const validation=`  if (!body || !ALLOWED_MODELS.has(body.model) || !Number.isInteger(body.max_tokens)\n    || body.max_tokens < 0 || !Array.isArray(body.messages) || body.messages.length === 0\n    || (body.system !== undefined && typeof body.system !== 'string')) {\n    return json({ error: 'Invalid Anthropic Messages request' }, 400);\n  }\n\n`;
           if(!s.includes(validation)) throw new Error('validation block not found');
           if(!s.includes('let useDrinkMasterLeanOutput = false;')){
-            const replacement=validation+`  let useDrinkMasterLeanOutput = false;\n  if (body.model === 'claude-sonnet-4-6' && env.DRINK_DB) {\n    try { useDrinkMasterLeanOutput = await ensureDrinkMasterTables(env); }\n    catch (error) { console.error('D1 drink master preflight failed', error); }\n  }\n  const effectiveSystem = useDrinkMasterLeanOutput && typeof body.system === 'string'\n    ? \`\\${body.system}\\n\\n\\${barCarilaLeanOutputInstruction()}\`\n    : body.system;\n\n`;
+            const replacement=validation+
+              "  let useDrinkMasterLeanOutput = false;\n"+
+              "  if (body.model === 'claude-sonnet-4-6' && env.DRINK_DB) {\n"+
+              "    try { useDrinkMasterLeanOutput = await ensureDrinkMasterTables(env); }\n"+
+              "    catch (error) { console.error('D1 drink master preflight failed', error); }\n"+
+              "  }\n"+
+              "  const effectiveSystem = useDrinkMasterLeanOutput && typeof body.system === 'string'\n"+
+              "    ? body.system + '\\n\\n' + barCarilaLeanOutputInstruction()\n"+
+              "    : body.system;\n\n";
             s=s.replace(validation,replacement);
           }
 
