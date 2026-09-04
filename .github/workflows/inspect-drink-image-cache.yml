@@ -1,0 +1,19 @@
+name: Inspect drink image cache paths
+on:
+  push:
+    branches: [chatgpt/drink-image-cache]
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show drink image call sites
+        run: |
+          echo '--- getDrinkImg ---'
+          grep -n -B 12 -A 50 "getDrinkImg" public/assets/js/main.js || true
+          echo '--- showRec ---'
+          grep -n -B 20 -A 120 "function showRec" public/assets/js/main.js || true
+          echo '--- drink-image endpoint ---'
+          grep -n -B 10 -A 100 "async function drinkImage" src/worker.mjs || true
