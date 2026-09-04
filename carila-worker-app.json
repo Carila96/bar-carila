@@ -2,5 +2,11 @@
   "requiredSecrets": [
     "ANTHROPIC_API_KEY",
     "UNSPLASH_ACCESS_KEY"
+  ],
+  "d1Databases": [
+    {
+      "binding": "DRINK_DB",
+      "name": "bar-carila-drink-images"
+    }
   ]
 }
