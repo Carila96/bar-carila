@@ -1,4 +1,6 @@
 const API='/api/chat';
+const DRINK_META_API='/api/drink-meta';
+const DRINK_META_CACHE_KEY='bar_carila_drink_meta_cache_v1';
 const FAST_MODEL='claude-haiku-4-5-20251001';
 const RECOMMEND_MODEL='claude-sonnet-4-6';
 const AMAZON_TAG='carila-22';
@@ -233,6 +235,38 @@ function buildLogHTML(){
 }
 
 // ===== Rec card =====
+
+function readDrinkMetaCache(){
+  try{return JSON.parse(localStorage.getItem(DRINK_META_CACHE_KEY)||'{}')||{};}catch{return {};}
+}
+function getCachedDrinkMeta(name){
+  const key=normDrinkName(name);return readDrinkMetaCache()[key]||null;
+}
+function saveDrinkMetaCache(name,meta){
+  try{
+    const key=normDrinkName(name);if(!key||!meta)return;
+    const cache=readDrinkMetaCache();cache[key]={...meta,savedAt:Date.now()};
+    const entries=Object.entries(cache).sort((a,b)=>(b[1]?.savedAt||0)-(a[1]?.savedAt||0)).slice(0,250);
+    localStorage.setItem(DRINK_META_CACHE_KEY,JSON.stringify(Object.fromEntries(entries)));
+  }catch{}
+}
+function applyDrinkMetaToCard(data,card){
+  const apply=(meta)=>{
+    if(!meta||!card)return;
+    if(Number.isFinite(meta.rarity)){
+      data.drink.rarity=meta.rarity;
+      const fill=card.querySelector('.rarity-fill');if(fill)fill.style.width=meta.rarity+'%';
+      const val=card.querySelector('.rarity-val');if(val)val.textContent=meta.rarity+'%';
+    }
+    const tag=card.querySelector('.rarity-tag');if(tag&&meta.rarityLabel)tag.textContent=meta.rarityLabel;
+  };
+  const cached=getCachedDrinkMeta(data?.drink?.name);if(cached)apply(cached);
+  fetch(DRINK_META_API+'?name='+encodeURIComponent(data.drink.name))
+    .then(r=>r.ok?r.json():null)
+    .then(body=>{if(body?.found&&body.drink){saveDrinkMetaCache(data.drink.name,body.drink);apply(body.drink);}})
+    .catch(()=>{});
+}
+
 function showRec(data){
   collapsePanda();
   const cat=(data.drink.category||'').toLowerCase();
@@ -269,7 +303,7 @@ function showRec(data){
       <div class="rec-name">${data.drink.name}</div>
       <div class="rec-cat">
         <span>${data.drink.category}</span>${data.drink.abv?`<span style="color:var(--amber);font-size:10px;border:1px solid var(--amber-dim);padding:1px 7px;border-radius:10px;">${t().abvLabel}${data.drink.abv}</span>`:''}
-        ${data.drink.rarity!=null?`<span class="rarity-wrap"><span class="rarity-label">${t().rarityLabel}</span><span class="rarity-bar"><span class="rarity-fill" style="width:${data.drink.rarity}%"></span></span><span class="rarity-val">${data.drink.rarity}%</span><span style="font-size:10px;white-space:nowrap;">${rarityTagLabel}</span></span>`:''}
+        ${data.drink.rarity!=null?`<span class="rarity-wrap"><span class="rarity-label">${t().rarityLabel}</span><span class="rarity-bar"><span class="rarity-fill" style="width:${data.drink.rarity}%"></span></span><span class="rarity-val">${data.drink.rarity}%</span><span class="rarity-tag" style="font-size:10px;white-space:nowrap;">${rarityTagLabel}</span></span>`:''}
       </div>
       <div class="rec-desc">${data.drink.description}</div>
       ${triviaHTML}
@@ -293,6 +327,7 @@ function showRec(data){
       <div class="log-panel">${buildLogHTML()}</div>
     </div>`;
   area.appendChild(card);
+  applyDrinkMetaToCard(data,card);
 
   const recImgEl=card.querySelector('.rec-img-wrap img');
   if(recImgEl)fetchDrinkImg(data.drink.name,data.drink.category,recImgEl);
@@ -346,6 +381,14 @@ const SYSTEM=`あなたは「Bar Carila」の世界最高レベルのAIバーテ
 
 【絶対ルール1：架空のお酒を提案しない】
 実在が100%確実なお酒のみ提案。不確かな場合はスタイル名で提案しバーテンダーに委ねる。
+
+【絶対ルール1.5：希少度は日本のBAR基準】
+rarityは「世界的に珍しいか」ではなく、「日本国内の一般的なBARでその一杯を実際に注文できる可能性の低さ」を0〜100で表す。
+0に近いほど日本のBARで定番、100に近いほど日本では扱いがかなり限られる。
+海外で定番でも日本の一般BARでは普遍的でない場合は希少度を高めにする。例：アペロールスプリッツなど。
+逆に古典的・有名という理由だけで希少度を低くしない。材料の国内流通、一般BARでの常備、技法・仕込み、日本での実提供可能性を重視する。
+通常のおすすめでは日本のBARで現実に注文しやすい一杯を優先するが、ユーザーが「珍しいもの」「変わったもの」を希望した場合は高希少度の一杯も提案してよい。
+特定銘柄・限定品・特殊バリアントは、そのカテゴリ全体ではなく具体的な商品の日本での入手性で希少度を判断する。
 
 【絶対ルール2：アルコール度数を厳守する】
 「ほぼ飲めない・ノンアルがいい」→ 度数0%のみ。ノンアル・モクテルだけを提案。アルコール入りは絶対に提案しない。
