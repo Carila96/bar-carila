@@ -10,10 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-      - run: npm install
       - run: python scripts/patch-drink-image-cache.py
       - run: npm test
       - run: node --check public/assets/js/main.js
