@@ -351,3 +351,18 @@ test('drink image API uses normalized long-lived cache keys', async () => {
   assert.match(source, /photoId: photo\?\.id \|\| ''/);
   assert.match(source, /photographer: photo\?\.user\?\.name \|\| ''/);
 });
+
+
+test('drink image worker uses D1 as durable shared cache before Unsplash', async () => {
+  const source = await readFile(new URL('../src/worker.mjs', import.meta.url), 'utf8');
+  assert.match(source, /CREATE TABLE IF NOT EXISTS drink_images/);
+  assert.match(source, /readDrinkImageFromD1\(env, cacheIdentity, context\)/);
+  assert.match(source, /saveDrinkImageToD1\(env, \{/);
+  assert.match(source, /ON CONFLICT\(cache_key\) DO UPDATE SET/);
+  assert.match(source, /use_count = drink_images\.use_count \+ 1/);
+});
+
+test('Worker App contract declares the managed D1 drink image database', async () => {
+  const contract = JSON.parse(await readFile(new URL('../carila-worker-app.json', import.meta.url), 'utf8'));
+  assert.deepEqual(contract.d1Databases, [{ binding: 'DRINK_DB', name: 'bar-carila-drink-images' }]);
+});
