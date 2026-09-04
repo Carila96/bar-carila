@@ -1,21 +1,4 @@
-from pathlib import Path
-
-worker = Path('src/worker.mjs')
-s = worker.read_text(encoding='utf-8')
-
-s = s.replace("function drinkImagePayload(row) {\n  return {\n    url: row?.image_url || null,\n    photoId: row?.photo_id || '',\n    photographer: row?.photographer || '',\n    photographerUrl: row?.photographer_url || '',\n  };\n}", "function drinkImagePayload(row, source = '') {\n  return {\n    url: row?.image_url || null,\n    photoId: row?.photo_id || '',\n    photographer: row?.photographer || '',\n    photographerUrl: row?.photographer_url || '',\n    ...(source ? { source } : {}),\n  };\n}")
-
-s = s.replace("  return drinkImagePayload(row);", "  return drinkImagePayload(row, 'd1');")
-
-s = s.replace("  const cached = await cache.match(cacheKey);\n  if (cached) return cached;", "  const cached = await cache.match(cacheKey);\n  if (cached) {\n    const body = await cached.clone().json().catch(() => null);\n    if (body && typeof body === 'object') return json({ ...body, source: body.source || 'cloudflare-cache' }, cached.status, { 'cache-control': cached.headers.get('cache-control') || 'public, max-age=31536000' });\n    return cached;\n  }")
-
-s = s.replace("  const payload = {\n    url: imageUrl,\n    photoId: photo?.id || '',\n    photographer: photo?.user?.name || '',\n    photographerUrl: photo?.user?.links?.html || '',\n  };", "  const payload = {\n    url: imageUrl,\n    photoId: photo?.id || '',\n    photographer: photo?.user?.name || '',\n    photographerUrl: photo?.user?.links?.html || '',\n    source: 'unsplash',\n  };")
-
-worker.write_text(s, encoding='utf-8')
-
-# Add focused tests in a separate file to avoid disturbing the large existing suite.
-test = Path('test/d1-verification.test.mjs')
-test.write_text(r'''import test from 'node:test';
+import test from 'node:test';
 import assert from 'node:assert/strict';
 import worker from '../src/worker.mjs';
 
@@ -85,4 +68,3 @@ test('drink image response reports Unsplash on miss and persists the result into
     globalThis.fetch = originalFetch;
   }
 });
-''', encoding='utf-8')
