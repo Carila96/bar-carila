@@ -247,6 +247,30 @@ function safeUpstreamError(body) {
   }
 }
 
+async function enrichBarCarilaRecommendation(data, env) {
+  const textItem = data?.content?.find((item) => item?.type === 'text' && typeof item.text === 'string');
+  if (!textItem || !env.DRINK_DB) return data;
+  let parsed;
+  try { parsed = JSON.parse(textItem.text.replace(/```json|```/g, '').trim()); } catch { return data; }
+  if (parsed?.type !== 'recommendation' || !parsed?.drink?.name) return data;
+  let row;
+  try { row = await readDrinkMaster(env, parsed.drink.name); } catch (error) {
+    console.error('D1 drink master enrichment failed', error);
+    return data;
+  }
+  if (!row) return data;
+  if (Number.isFinite(row.japan_rarity_score)) parsed.drink.rarity = row.japan_rarity_score;
+  parsed.drink.rarityLabel = row.japan_rarity_label || '';
+  parsed.drink.rarityConfidence = row.japan_rarity_confidence ?? null;
+  parsed.drink.rarityReason = row.rarity_reason || '';
+  if (row.short_description) parsed.drink.description = row.short_description;
+  if (row.order_hint) parsed.drink.trivia = row.order_hint;
+  parsed.drink.masterSource = 'd1';
+  parsed.drink.evidenceVersion = row.evidence_version || '';
+  textItem.text = JSON.stringify(parsed);
+  return data;
+}
+
 function cacheStaticAsset(response, pathname) {
   if (!response.ok || response.status === 206) return response;
   const isLongLivedAsset = pathname.startsWith('/pandas/')
@@ -338,10 +362,9 @@ async function chat(request, env) {
     }, upstream.status);
   }
 
-  return new Response(upstream.body, {
-    status: upstream.status,
-    headers: { 'content-type': upstream.headers.get('content-type') || 'application/json' },
-  });
+  const data = await upstream.json();
+  await enrichBarCarilaRecommendation(data, env);
+  return json(data, upstream.status);
 }
 
 async function carilaChat(request, env) {
