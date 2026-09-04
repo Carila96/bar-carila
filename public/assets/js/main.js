@@ -41,11 +41,33 @@ function handleDrinkImgError(img){
   if(img.src!==fi){img.src=fi;}
   else{img.parentNode.innerHTML='<div class="rec-no-img"><div style="font-size:36px;">🍸</div><div style="font-size:11px;letter-spacing:0.2em;color:rgba(200,146,42,0.5);">NO IMAGE</div></div>';}
 }
-function getDrinkImg(name,cat){
-  const norm=s=>(s||'').toLowerCase().replace(/[・\s.\-]/g,'');
-  const nName=norm(name);
+const DRINK_IMG_CACHE_KEY='bar_carila_drink_img_cache_v1';
+function normDrinkName(s){return (s||'').toLowerCase().replace(/[・\s.\-]/g,'');}
+function findStaticDrinkImg(name){
+  const nName=normDrinkName(name);
   const keys=Object.keys(DRINK_IMGS).sort((a,b)=>b.length-a.length);
-  for(const k of keys){if(nName.includes(norm(k)))return DRINK_IMGS[k];}
+  for(const k of keys){if(nName.includes(normDrinkName(k)))return DRINK_IMGS[k];}
+  return null;
+}
+function readDrinkImgCache(){try{return JSON.parse(localStorage.getItem(DRINK_IMG_CACHE_KEY)||'{}')}catch{return{}}}
+function getCachedDrinkImg(name){
+  const entry=readDrinkImgCache()[normDrinkName(name)];
+  return entry&&typeof entry.url==='string'&&entry.url?entry:null;
+}
+function saveDrinkImgCache(name,data){
+  if(!name||!data||typeof data.url!=='string'||!data.url)return;
+  try{
+    const cache=readDrinkImgCache();
+    cache[normDrinkName(name)]={url:data.url,photoId:data.photoId||'',photographer:data.photographer||'',photographerUrl:data.photographerUrl||'',savedAt:Date.now()};
+    const entries=Object.entries(cache).sort((a,b)=>(b[1].savedAt||0)-(a[1].savedAt||0)).slice(0,250);
+    localStorage.setItem(DRINK_IMG_CACHE_KEY,JSON.stringify(Object.fromEntries(entries)));
+  }catch{}
+}
+function getDrinkImg(name,cat){
+  const fixed=findStaticDrinkImg(name);
+  if(fixed)return fixed;
+  const cached=getCachedDrinkImg(name);
+  if(cached)return cached.url;
   if(cat&&CAT_IMGS[cat])return CAT_IMGS[cat];
   return pickRandom(FALLBACK_IMGS);
 }
@@ -70,11 +92,15 @@ function buildImgQuery(cat){
   return 'cocktail drink bar';
 }
 async function fetchDrinkImg(name,cat,imgEl){
+  if(findStaticDrinkImg(name))return;
+  const cached=getCachedDrinkImg(name);
+  if(cached){if(imgEl&&imgEl.src!==cached.url)imgEl.src=cached.url;return;}
   try{
     const q=buildImgQuery(cat);
     const r=await fetch(`/api/drink-image?name=${encodeURIComponent(name)}&query=${encodeURIComponent(q)}`);
+    if(!r.ok)return;
     const d=await r.json();
-    if(d.url&&imgEl&&imgEl.src!==d.url)imgEl.src=d.url;
+    if(d.url){saveDrinkImgCache(name,d);if(imgEl&&imgEl.src!==d.url)imgEl.src=d.url;}
   }catch(e){}
 }
 

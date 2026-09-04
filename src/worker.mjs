@@ -173,7 +173,11 @@ async function drinkImage(request, env, context) {
   if (!name && !query) return json({ error: 'name or query required' }, 400);
 
   const cache = caches.default;
-  const cacheKey = new Request(url.toString(), { method: 'GET' });
+  const normalize = (value) => (value || '').trim().toLowerCase().replace(/[・\s.\-]/g, '');
+  const cacheIdentity = normalize(name) || normalize(query);
+  const cacheUrl = new URL('/api/drink-image', url.origin);
+  cacheUrl.searchParams.set('key', cacheIdentity);
+  const cacheKey = new Request(cacheUrl.toString(), { method: 'GET' });
   const cached = await cache.match(cacheKey);
   if (cached) return cached;
 
@@ -188,9 +192,16 @@ async function drinkImage(request, env, context) {
   if (!upstream.ok) return json({ error: 'Image service unavailable' }, 502);
 
   const data = await upstream.json();
-  const rawUrl = data.results?.[0]?.urls?.regular;
+  const photo = data.results?.[0];
+  const rawUrl = photo?.urls?.regular;
   const imageUrl = rawUrl ? `${rawUrl.split('?')[0]}?w=800&auto=format&fit=crop` : null;
-  const response = json({ url: imageUrl }, 200, { 'cache-control': 'public, max-age=86400' });
+  const ttl = imageUrl ? 31536000 : 2592000;
+  const response = json({
+    url: imageUrl,
+    photoId: photo?.id || '',
+    photographer: photo?.user?.name || '',
+    photographerUrl: photo?.user?.links?.html || '',
+  }, 200, { 'cache-control': `public, max-age=${ttl}, stale-while-revalidate=604800` });
   context.waitUntil(cache.put(cacheKey, response.clone()));
   return response;
 }

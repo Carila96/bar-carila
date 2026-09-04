@@ -334,3 +334,20 @@ test('chat API accepts Haiku and marks the system prompt cacheable', async () =>
     assert.deepEqual(forwarded.system, [{ type: 'text', text: 'cache me', cache_control: { type: 'ephemeral' } }]);
   } finally { globalThis.fetch = originalFetch; }
 });
+
+
+test('drink image client prefers fixed and locally cached images before API search', async () => {
+  const js = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');
+  assert.match(js, /const DRINK_IMG_CACHE_KEY='bar_carila_drink_img_cache_v1'/);
+  assert.match(js, /if\(findStaticDrinkImg\(name\)\)return;/);
+  assert.match(js, /const cached=getCachedDrinkImg\(name\);/);
+  assert.match(js, /saveDrinkImgCache\(name,d\)/);
+});
+
+test('drink image API uses normalized long-lived cache keys', async () => {
+  const source = await readFile(new URL('../src/worker.mjs', import.meta.url), 'utf8');
+  assert.match(source, /cacheUrl\.searchParams\.set\('key', cacheIdentity\)/);
+  assert.match(source, /const ttl = imageUrl \? 31536000 : 2592000/);
+  assert.match(source, /photoId: photo\?\.id \|\| ''/);
+  assert.match(source, /photographer: photo\?\.user\?\.name \|\| ''/);
+});
