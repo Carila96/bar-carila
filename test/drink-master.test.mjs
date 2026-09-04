@@ -8,7 +8,7 @@ test('drink master creates D1 tables and seeds calibrated drinks', () => {
   assert.match(source, /CREATE TABLE IF NOT EXISTS drinks/);
   assert.match(source, /CREATE TABLE IF NOT EXISTS drink_aliases/);
   assert.match(source, /CREATE TABLE IF NOT EXISTS drink_evidence/);
-  assert.match(source, /jp-rarity-v1\.7/);
+  assert.match(source, /jp-rarity-v1\.8/);
   assert.match(source, /アペロールスプリッツ/);
   assert.match(source, /ピスコサワー/);
   assert.match(source, /ホワイトレディ/);
@@ -18,6 +18,10 @@ test('drink master creates D1 tables and seeds calibrated drinks', () => {
   assert.match(source, /ソルクバーノ\",62,38/);
   assert.match(source, /ミチェラーダ\",38,62/);
   assert.match(source, /雪国/);
+  assert.match(source, /アラスカ/);
+  assert.match(source, /ブラッディシーザー/);
+  assert.match(source, /ゴールデンキャデラック/);
+  assert.match(source, /ビアスプリッツァー/);
 });
 
 test('drink meta API exposes Japan rarity separately from availability', () => {
