@@ -320,6 +320,12 @@ function optimizeBarCarilaHtml(response) {
     .transform(response);
 }
 
+function barCarilaLeanOutputInstruction() {
+  const names = DRINK_COPY_SEED.map(([name]) => name).join('、');
+  return '【BarCarila酒マスター省トークン出力】\n' +
+    '以下の酒名を推薦する場合、drink.rarity・drink.description・drink.trivia は出力しないでください。これらはサーバー側の調査済みD1酒マスターから補完します。name・category・abv・recipe・tags、および推薦message/analysisは従来どおり出力してください。対象外の酒を推薦する場合は、従来の完全なJSON仕様どおり rarity・description・trivia も出力してください。この指示は固定情報の出力要件に優先します。\n対象: ' + names;
+}
+
 async function chat(request, env) {
   if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405, { allow: 'POST' });
   if (!env.ANTHROPIC_API_KEY) return missingSecret('ANTHROPIC_API_KEY');
@@ -336,6 +342,15 @@ async function chat(request, env) {
     return json({ error: 'Invalid Anthropic Messages request' }, 400);
   }
 
+  let useDrinkMasterLeanOutput = false;
+  if (body.model === 'claude-sonnet-4-6' && env.DRINK_DB) {
+    try { useDrinkMasterLeanOutput = await ensureDrinkMasterTables(env); }
+    catch (error) { console.error('D1 drink master preflight failed', error); }
+  }
+  const effectiveSystem = useDrinkMasterLeanOutput && typeof body.system === 'string'
+    ? body.system + '\n\n' + barCarilaLeanOutputInstruction()
+    : body.system;
+
   const upstream = await fetch(ANTHROPIC_ENDPOINT, {
     method: 'POST',
     headers: {
@@ -343,7 +358,7 @@ async function chat(request, env) {
       'x-api-key': env.ANTHROPIC_API_KEY,
       'anthropic-version': '2023-06-01',
     },
-    body: JSON.stringify({ ...body, system: typeof body.system === 'string' && body.system ? [{ type: 'text', text: body.system, cache_control: { type: 'ephemeral' } }] : body.system }),
+    body: JSON.stringify({ ...body, system: typeof effectiveSystem === 'string' && effectiveSystem ? [{ type: 'text', text: effectiveSystem, cache_control: { type: 'ephemeral' } }] : effectiveSystem }),
   });
   if (!upstream.ok) {
     const requestId = diagnosticId();
