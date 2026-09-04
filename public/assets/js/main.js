@@ -255,7 +255,7 @@ function applyDrinkMetaToCard(data,card){
     if(!meta||!card)return;
     if(Number.isFinite(meta.rarity)){
       data.drink.rarity=meta.rarity;
-    if(meta.shortDescription) data.drink.description=meta.shortDescription;
+    if(meta.description) data.drink.description=meta.description;
       const fill=card.querySelector('.rarity-fill');if(fill)fill.style.width=meta.rarity+'%';
       const val=card.querySelector('.rarity-val');if(val)val.textContent=meta.rarity+'%';
     }
