@@ -1,0 +1,24 @@
+name: Verify live D1
+
+on:
+  push:
+    branches:
+      - chatgpt/live-d1-check
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Query live drink image API
+        shell: bash
+        run: |
+          set -euo pipefail
+          url='https://bar.carilaworks.com/api/drink-image?name=%E3%83%A9%E3%83%95%E3%83%AD%E3%82%A4%E3%82%B0%20%E3%82%AB%E3%82%B9%E3%82%AF%E3%82%B9%E3%83%88%E3%83%AC%E3%83%B3%E3%82%B0%E3%82%B9'
+          body="$(curl --fail --silent --show-error --location "$url")"
+          printf '%s\n' "$body"
+          BODY="$body" node - <<'NODE'
+          const body = JSON.parse(process.env.BODY);
+          if (!body.url) throw new Error('No image URL returned');
+          if (!body.source) throw new Error('No source marker returned');
+          console.log(`VERIFIED_SOURCE=${body.source}`);
+          NODE
