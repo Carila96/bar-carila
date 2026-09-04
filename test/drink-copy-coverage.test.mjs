@@ -13,7 +13,7 @@ function namesFromArray(constName){
 test('all 50 calibrated drinks have fixed D1 copy',()=>{
   const master=[...new Set(namesFromArray('DRINK_MASTER_SEED'))];
   const copy=new Set(namesFromArray('DRINK_COPY_SEED'));
-  assert.equal(master.length,50);
+  assert.equal(master.length,75);
   const missing=master.filter(name=>!copy.has(name));
   assert.deepEqual(missing,[]);
 });
