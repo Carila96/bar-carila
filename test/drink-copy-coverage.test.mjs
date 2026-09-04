@@ -10,10 +10,10 @@ function namesFromArray(constName){
   const text=source.slice(start+marker.length,end);
   return [...text.matchAll(/\["([^"]+)"/g)].map(m=>m[1]);
 }
-test('all 50 calibrated drinks have fixed D1 copy',()=>{
+test('all 100 calibrated drinks have fixed D1 copy',()=>{
   const master=[...new Set(namesFromArray('DRINK_MASTER_SEED'))];
   const copy=new Set(namesFromArray('DRINK_COPY_SEED'));
-  assert.equal(master.length,75);
+  assert.equal(master.length,100);
   const missing=master.filter(name=>!copy.has(name));
   assert.deepEqual(missing,[]);
 });
