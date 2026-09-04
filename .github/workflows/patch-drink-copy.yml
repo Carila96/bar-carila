@@ -1,0 +1,86 @@
+name: Patch drink copy
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message == 'Add one-shot drink copy patch workflow'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Write patch script
+        run: |
+          mkdir -p scripts
+          cat > scripts/patch-drink-copy.cjs <<'EOF'
+          const fs=require('fs');
+          let w=fs.readFileSync('src/worker.mjs','utf8');
+          let j=fs.readFileSync('public/assets/js/main.js','utf8');
+          const copy=[
+          ['ジントニック','ジンの香りをトニックの苦甘さと炭酸で軽快に楽しむロングカクテル。','爽やか、ほろ苦い、ドライ','迷ったらジンの銘柄指定なしで注文して問題ありません。'],
+          ['ジンフィズ','ジンに柑橘と甘味、ソーダを合わせるクラシックなロングカクテル。','爽やか、甘酸っぱい、軽快','酸味や甘さの好みを一言伝えると調整してもらいやすい一杯です。'],
+          ['ジンリッキー','ジンとライムをソーダで伸ばす、甘味を抑えたシンプルなロングカクテル。','ドライ、爽快、柑橘','甘くないものがよければそのまま注文しやすい一杯です。'],
+          ['ソルティドッグ','ウォッカとグレープフルーツに塩のアクセントを合わせる定番カクテル。','爽やか、ほろ苦い、塩味','塩の縁は好みなので、不要なら塩なしでも頼めます。'],
+          ['ブラッディメアリー','ウォッカとトマトを軸に、店ごとの味付けも楽しめるロングカクテル。','旨味、酸味、スパイシー','辛さやスパイス感は店によって違うので好みを伝えても構いません。'],
+          ['モスコミュール','ウォッカにライムとジンジャーの刺激を合わせる爽快なロングカクテル。','爽やか、辛口、ジンジャー','ジンジャーの辛さは店差があるため、好みがあれば伝えると安心です。'],
+          ['キューバリバー','ラムとコーラにライムを合わせる、親しみやすいロングカクテル。','甘め、爽快、コーラとライム','キューバリバー、またはキューバリブレの呼び方で通じることが多い一杯です。'],
+          ['モヒート','ラム、ライム、ミント、甘味とソーダを合わせる清涼感の強いカクテル。','爽快、ミント、甘酸っぱい','生ミントの在庫で作れないことがあるため、なければ近い方向で相談できます。'],
+          ['アイリッシュコーヒー','アイリッシュウイスキーとコーヒー、甘味、クリームを合わせる温かいカクテル。','温かい、コーヒー、まろやか','食後の一杯として頼みやすいですが、提供可否はコーヒー設備にも左右されます。'],
+          ['オールドファッションド','ウイスキーを甘味とビターズで整え、ゆっくり味わうクラシックカクテル。','濃厚、ほろ苦い、ウイスキー主体','ベースのウイスキーに希望があれば銘柄やスタイルを相談できます。'],
+          ['カンパリソーダ','カンパリをソーダで割り、薬草系の苦味を軽快に楽しむシンプルな一杯。','ほろ苦い、爽快、ハーブ','苦味が好きならそのまま、少し柔らかくしたい場合は相談できます。'],
+          ['カルーアミルク','コーヒーリキュールをミルクでまろやかに仕上げる甘口カクテル。','甘い、ミルキー、コーヒー','甘口を希望するときに名前でそのまま注文しやすい一杯です。'],
+          ['ベリーニ','桃とスパークリングワインを合わせる、果実感のある華やかなカクテル。','フルーティ、やや甘い、発泡','桃の材料やピューレの有無で提供できない店もあります。'],
+          ['ミモザ','オレンジとスパークリングワインを合わせる軽快で華やかなカクテル。','爽やか、フルーティ、発泡','スパークリングワインを扱う店なら相談しやすい一杯です。'],
+          ['シャンディガフ','ビールとジンジャーエールを合わせる軽快なビアカクテル。','爽快、軽め、ジンジャー','軽めに飲みたいときに名前で頼みやすい一杯です。'],
+          ['レッドアイ','ビールとトマトジュースを合わせる、軽めで旨味のあるビアカクテル。','軽め、トマト、旨味','トマトジュース常備の有無で提供可否が分かれます。'],
+          ['ギムレット','ジンとライムを中心に仕上げる、シャープでクラシックなショートカクテル。','ドライ、柑橘、シャープ','酸味や甘味のバランスに店の個性が出やすい一杯です。'],
+          ['マティーニ','ジンとベルモットを軸にした、香りとドライさを楽しむ代表的なショートカクテル。','ドライ、芳香、力強い','好みがなければまず通常のマティーニとして注文して十分です。'],
+          ['バラライカ','ウォッカとオレンジ系リキュール、レモンを合わせる端正なショートカクテル。','甘酸っぱい、柑橘、すっきり','スタンダードを扱うBARなら名前で相談できます。'],
+          ['ダイキリ','ホワイトラムとライム、甘味で作るシンプルなショートカクテル。','甘酸っぱい、ドライ、ラム','シンプルな分、酸味と甘味のバランスに店の個性が出ます。'],
+          ['マルガリータ','テキーラ、オレンジ系リキュール、柑橘を合わせ、塩を添える代表的なカクテル。','甘酸っぱい、塩味、テキーラ','グラスの塩が苦手なら塩なしで頼むこともできます。'],
+          ['マンハッタン','ウイスキーとスイートベルモット、ビターズを合わせる重厚なクラシック。','芳醇、ほろ苦い、甘み','ウイスキー主体の落ち着いた一杯が欲しいと伝えても通じやすいです。'],
+          ['アレキサンダー','ブランデー系のベースにカカオとクリームを合わせるデザート感のあるショートカクテル。','甘い、クリーミー、カカオ','食後の甘い一杯として相談しやすいカクテルです。'],
+          ['サイドカー','ブランデー、オレンジ系リキュール、レモンを合わせる端正なクラシック。','甘酸っぱい、柑橘、芳醇','酸味と甘味のバランスに好みがあれば伝えられます。'],
+          ['アペロールスプリッツ','アペロール、スパークリングワイン、ソーダを合わせるイタリアの食前酒スタイル。','ほろ苦い、ほのかな甘み、爽快','日本では一般BARの定番とは限らないため、アペロールとスパークリングの有無を尋ねると自然です。'],
+          ['ネグローニ','ジン、カンパリ、スイートベルモットを合わせる苦味と甘味の強いクラシック。','ビター、ハーブ、芳醇','苦味が得意なら名前でそのまま注文しやすい一杯です。'],
+          ['ミントジュレップ','ウイスキーにミントと甘味を合わせ、たっぷりの氷で楽しむ爽快なカクテル。','ミント、爽快、ウイスキー','生ミントが必要なので、提供できるか先に尋ねても自然です。'],
+          ['グラスホッパー','ミント系とカカオ系のリキュールにクリームを合わせる甘口カクテル。','甘い、ミント、カカオ','食後の甘い一杯として頼むとイメージが伝わりやすいです。'],
+          ['アメリカーノ','カンパリとスイートベルモットをソーダで伸ばす、ほろ苦く軽快なカクテル。','ほろ苦い、ハーブ、爽快','コーヒーのアメリカーノと区別するため、カクテルのアメリカーノと伝えると確実です。'],
+          ['ロングアイランドアイスティー','複数のスピリッツと柑橘、コーラを合わせる、見た目以上に強いロングカクテル。','甘酸っぱい、コーラ、アルコール感','飲みやすくても度数が高くなりやすいので、ゆっくり飲む前提で頼む一杯です。'],
+          ['パローマ','テキーラとグレープフルーツ系の風味を爽快に楽しむロングカクテル。','爽やか、ほろ苦い、柑橘','日本では店によって材料が異なるため、作れるか尋ねるのが確実です。'],
+          ['カイピリーニャ','カシャッサとライム、砂糖を合わせるブラジルを代表するカクテル。','甘酸っぱい、ライム、力強い','カシャッサを置いていないBARもあるため、在庫確認が必要なことがあります。'],
+          ['ピスコサワー','ピスコと柑橘、甘味を中心に仕上げる南米を代表するサワースタイル。','甘酸っぱい、芳香、まろやか','日本ではピスコ常備店が限られるので、作れるか尋ねるのが自然です。'],
+          ['ラモスジンフィズ','ジンフィズを土台に乳製品などを使い、手間をかけて滑らかに仕上げるクラシック。','クリーミー、柑橘、爽やか','時間と仕込みを要するため、混雑時には提供できないことがあります。']
+          ];
+          const marker='const DRINK_MASTER_ALIASES = [';
+          if(!w.includes('const DRINK_COPY_SEED = ')){
+            w=w.replace(marker,`const DRINK_COPY_SEED = ${JSON.stringify(copy)};\n${marker}`);
+            w=w.replace("      for (const [aliasText, canonicalName] of DRINK_MASTER_ALIASES) {",`      for (const [name, description, taste, orderHint] of DRINK_COPY_SEED) {\n        await env.DRINK_DB.prepare('UPDATE drinks SET short_description = ?, taste_summary = ?, order_hint = ?, updated_at = datetime(\\'now\\') WHERE canonical_key = ?')\n          .bind(description, taste, orderHint, normalizeDrinkMasterKey(name)).run();\n      }\n      for (const [aliasText, canonicalName] of DRINK_MASTER_ALIASES) {`);
+          }
+          if(!j.includes('meta.shortDescription')){
+            j=j.replace("data.drink.rarity=meta.rarity;",`data.drink.rarity=meta.rarity;\n    if(meta.shortDescription) data.drink.description=meta.shortDescription;`);
+          }
+          fs.writeFileSync('src/worker.mjs',w);
+          fs.writeFileSync('public/assets/js/main.js',j);
+          fs.writeFileSync('test/drink-copy.test.mjs',`import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';\nconst w=fs.readFileSync('src/worker.mjs','utf8');const j=fs.readFileSync('public/assets/js/main.js','utf8');\ntest('drink copy seed and fixed description override',()=>{assert.match(w,/DRINK_COPY_SEED/);assert.match(w,/short_description = \?/);assert.match(j,/meta\.shortDescription/);});\n`);
+          EOF
+      - name: Apply patch
+        run: node scripts/patch-drink-copy.cjs
+      - name: Test
+        run: npm test
+      - name: Syntax
+        run: node --check src/worker.mjs && node --check public/assets/js/main.js
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/worker.mjs public/assets/js/main.js test/drink-copy.test.mjs
+          git commit -m "Seed fixed drink copy in D1"
+          git push
