@@ -1,0 +1,28 @@
+name: One-shot D1 drink images
+on:
+  push:
+    branches:
+      - chatgpt/d1-drink-images
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, '[generated-d1-drink-images]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm install
+      - run: python scripts/patch-d1-drink-images.py
+      - run: npm test
+      - run: node --check src/worker.mjs
+      - name: Commit generated D1 cache
+        run: |
+          rm -f .github/workflows/one-shot-d1-drink-images.yml scripts/patch-d1-drink-images.py
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Persist drink image cache in D1 [generated-d1-drink-images]"
+          git push
