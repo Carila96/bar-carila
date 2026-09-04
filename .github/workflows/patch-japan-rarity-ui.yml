@@ -1,0 +1,34 @@
+name: Patch Japan rarity UI
+
+on:
+  push:
+    branches:
+      - chatgpt/japan-rarity-ui-phase2
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message == 'Add one-shot Japan rarity UI workflow'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/japan-rarity-ui-phase2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply patch
+        run: node scripts/patch-japan-rarity-ui.cjs
+      - name: Test
+        run: npm test
+      - name: Syntax check
+        run: node --check public/assets/js/main.js
+      - name: Commit generated changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/assets/js/main.js test/japan-rarity-ui.test.mjs
+          git commit -m "Apply Japan rarity metadata in BarCarila"
+          git push
