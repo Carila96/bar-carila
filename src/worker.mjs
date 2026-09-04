@@ -27,12 +27,13 @@ async function ensureDrinkImageTable(env) {
   return drinkImageTableReady;
 }
 
-function drinkImagePayload(row) {
+function drinkImagePayload(row, source = '') {
   return {
     url: row?.image_url || null,
     photoId: row?.photo_id || '',
     photographer: row?.photographer || '',
     photographerUrl: row?.photographer_url || '',
+    ...(source ? { source } : {}),
   };
 }
 
@@ -43,7 +44,7 @@ async function readDrinkImageFromD1(env, cacheIdentity, context) {
   if (!row) return null;
   context.waitUntil(env.DRINK_DB.prepare("UPDATE drink_images SET last_used_at = datetime('now'), use_count = use_count + 1 WHERE cache_key = ?")
     .bind(cacheIdentity).run().catch((error) => console.error('D1 drink image usage update failed', error)));
-  return drinkImagePayload(row);
+  return drinkImagePayload(row, 'd1');
 }
 
 async function saveDrinkImageToD1(env, record) {
@@ -240,7 +241,11 @@ async function drinkImage(request, env, context) {
   cacheUrl.searchParams.set('key', cacheIdentity);
   const cacheKey = new Request(cacheUrl.toString(), { method: 'GET' });
   const cached = await cache.match(cacheKey);
-  if (cached) return cached;
+  if (cached) {
+    const body = await cached.clone().json().catch(() => null);
+    if (body && typeof body === 'object') return json({ ...body, source: body.source || 'cloudflare-cache' }, cached.status, { 'cache-control': cached.headers.get('cache-control') || 'public, max-age=31536000' });
+    return cached;
+  }
 
   try {
     const stored = await readDrinkImageFromD1(env, cacheIdentity, context);
@@ -275,6 +280,7 @@ async function drinkImage(request, env, context) {
     photoId: photo?.id || '',
     photographer: photo?.user?.name || '',
     photographerUrl: photo?.user?.links?.html || '',
+    source: 'unsplash',
   };
   const ttl = imageUrl ? 31536000 : 2592000;
   const response = json(payload, 200, { 'cache-control': `public, max-age=${ttl}, stale-while-revalidate=604800` });
