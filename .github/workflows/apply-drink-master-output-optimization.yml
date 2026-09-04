@@ -1,0 +1,60 @@
+name: Apply drink master output optimization
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Patch worker
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          const p='src/worker.mjs';
+          let s=fs.readFileSync(p,'utf8');
+          const marker='async function chat(request, env) {';
+          if(!s.includes(marker)) throw new Error('chat marker not found');
+          if(!s.includes('function barCarilaLeanOutputInstruction()')){
+            const helper=`function barCarilaLeanOutputInstruction() {\n  const names = DRINK_COPY_SEED.map(([name]) => name).join('、');\n  return \`【BarCarila酒マスター省トークン出力】\\n以下の酒名を推薦する場合、drink.rarity・drink.description・drink.trivia は出力しないでください。サーバー側の調査済みD1酒マスターから補完します。name・category・abv・recipe・tags、および推薦message/analysisは従来どおり必須です。以下にない酒を推薦する場合は従来の完全なJSON仕様どおり rarity・description・trivia も出力してください。この指示は直前のJSON必須項目ルールより優先します。\\n対象: \\${names}\`;\n}\n\nfunction parseRecommendationJson(text) {\n  if (typeof text !== 'string') return null;\n  try {\n    const parsed = JSON.parse(text.replace(/\\\`\\\`\\\`json|\\\`\\\`\\\`/g, '').trim());\n    return parsed?.type === 'recommendation' && parsed?.drink?.name ? parsed : null;\n  } catch {\n    return null;\n  }\n}\n\nasync function enrichRecommendationFromDrinkMaster(data, env) {\n  const textItem = data?.content?.find((item) => item?.type === 'text' && typeof item.text === 'string');\n  if (!textItem) return data;\n  const recommendation = parseRecommendationJson(textItem.text);\n  if (!recommendation) return data;\n  try {\n    const row = await readDrinkMaster(env, recommendation.drink.name);\n    if (!row) return data;\n    recommendation.drink.rarity = row.japan_rarity_score;\n    if (row.short_description) recommendation.drink.description = row.short_description;\n    if (row.order_hint) recommendation.drink.trivia = row.order_hint;\n    textItem.text = JSON.stringify(recommendation);\n  } catch (error) {\n    console.error('D1 drink master enrichment failed', error);\n  }\n  return data;\n}\n\n`;
+            s=s.replace(marker,helper+marker);
+          }
+          const validation=`  if (!body || !ALLOWED_MODELS.has(body.model) || !Number.isInteger(body.max_tokens)\n    || body.max_tokens < 0 || !Array.isArray(body.messages) || body.messages.length === 0\n    || (body.system !== undefined && typeof body.system !== 'string')) {\n    return json({ error: 'Invalid Anthropic Messages request' }, 400);\n  }\n\n`;
+          if(!s.includes(validation)) throw new Error('validation block not found');
+          if(!s.includes('let useDrinkMasterLeanOutput = false;')){
+            const replacement=validation+`  let useDrinkMasterLeanOutput = false;\n  if (body.model === 'claude-sonnet-4-6' && env.DRINK_DB) {\n    try { useDrinkMasterLeanOutput = await ensureDrinkMasterTables(env); }\n    catch (error) { console.error('D1 drink master preflight failed', error); }\n  }\n  const effectiveSystem = useDrinkMasterLeanOutput && typeof body.system === 'string'\n    ? \`\\${body.system}\\n\\n\\${barCarilaLeanOutputInstruction()}\`\n    : body.system;\n\n`;
+            s=s.replace(validation,replacement);
+          }
+          const oldBody=`    body: JSON.stringify({ ...body, system: typeof body.system === 'string' && body.system ? [{ type: 'text', text: body.system, cache_control: { type: 'ephemeral' } }] : body.system }),`;
+          const newBody=`    body: JSON.stringify({ ...body, system: typeof effectiveSystem === 'string' && effectiveSystem ? [{ type: 'text', text: effectiveSystem, cache_control: { type: 'ephemeral' } }] : effectiveSystem }),`;
+          if(!s.includes(oldBody) && !s.includes(newBody)) throw new Error('upstream body block not found');
+          s=s.replace(oldBody,newBody);
+          const oldReturn=`  return new Response(upstream.body, {\n    status: upstream.status,\n    headers: { 'content-type': upstream.headers.get('content-type') || 'application/json' },\n  });\n}`;
+          const newReturn=`  const data = await upstream.json();\n  if (useDrinkMasterLeanOutput) await enrichRecommendationFromDrinkMaster(data, env);\n  return json(data, upstream.status);\n}`;
+          if(!s.includes(oldReturn) && !s.includes(newReturn)) throw new Error('chat return block not found');
+          s=s.replace(oldReturn,newReturn);
+          fs.writeFileSync(p,s);
+
+          const t='test/drink-master-output.test.mjs';
+          fs.writeFileSync(t,`import test from 'node:test';\nimport assert from 'node:assert/strict';\nimport fs from 'node:fs';\n\nconst source = fs.readFileSync(new URL('../src/worker.mjs', import.meta.url), 'utf8');\n\ntest('BarCarila can omit D1-backed fixed copy from Sonnet output', () => {\n  assert.match(source, /barCarilaLeanOutputInstruction/);\n  assert.match(source, /drink\\.rarity・drink\\.description・drink\\.trivia は出力しない/);\n  assert.match(source, /DRINK_COPY_SEED\\.map/);\n  assert.match(source, /useDrinkMasterLeanOutput = await ensureDrinkMasterTables/);\n});\n\ntest('server restores D1-backed recommendation fields before returning to browser', () => {\n  assert.match(source, /enrichRecommendationFromDrinkMaster/);\n  assert.match(source, /recommendation\\.drink\\.rarity = row\\.japan_rarity_score/);\n  assert.match(source, /recommendation\\.drink\\.description = row\\.short_description/);\n  assert.match(source, /recommendation\\.drink\\.trivia = row\\.order_hint/);\n});\n`);
+          NODE
+      - name: Validate
+        run: |
+          node --check src/worker.mjs
+          npm test
+          git diff --check
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/worker.mjs test/drink-master-output.test.mjs
+          git commit -m "Reduce BarCarila fixed-copy model output"
+          git push origin main
