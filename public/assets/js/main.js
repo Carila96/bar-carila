@@ -261,6 +261,7 @@ function applyDrinkMetaToCard(data,card){
     }
     const tag=card.querySelector('.rarity-tag');if(tag&&meta.rarityLabel)tag.textContent=meta.rarityLabel;
   };
+  if(data?.drink?.masterSource==='d1'){apply(data.drink);return;}
   const cached=getCachedDrinkMeta(data?.drink?.name);if(cached)apply(cached);
   fetch(DRINK_META_API+'?name='+encodeURIComponent(data.drink.name))
     .then(r=>r.ok?r.json():null)
@@ -505,8 +506,9 @@ Q5「今夜はどんな夜ですか？」
 
 【JSONのみ返答】
 質問: {"type":"question","emotion":"think","message":"セリフ","choices":["A","B","C","D"]}
-提案: {"type":"recommendation","emotion":"bartender or relax or counter or curious","message":"セリフ","analysis":"今夜の気分を2〜3行で表現する詩的テキスト。改行は\nで区切る。選択肢の言葉はそのまま使わず、その裏にある心情・情景を表現する。絵文字禁止。","drink":{"name":"正式名称","category":"上記カテゴリ名から選ぶ","abv":"推定アルコール度数（例：約5%）","rarity":62,"description":"説明2〜3文。飲み方含む","trivia":"豆知識・バーでの楽しみ方","recipe":{"ingredients":[{"name":"材料","amount":"分量"}],"method":"作り方1文"},"tags":["タグ1","タグ2","タグ3"]}}
+提案: {"type":"recommendation","emotion":"bartender or relax or counter or curious","message":"セリフ","analysis":"今夜の気分を2〜3行で表現する詩的テキスト。改行は\nで区切る。選択肢の言葉はそのまま使わず、その裏にある心情・情景を表現する。絵文字禁止。","drink":{"name":"正式名称","category":"上記カテゴリ名から選ぶ","abv":"推定アルコール度数（例：約5%）","rarity":62,"description":"フォールバック用の短い説明1文（60字以内）","trivia":"豆知識・バーでの楽しみ方","recipe":{"ingredients":[{"name":"材料","amount":"分量"}],"method":"作り方1文"},"tags":["タグ1","タグ2","タグ3"]}}
 カクテルはrecipe必須。単体酒のみrecipe:null可。abv・rarityは必ず含める。triviaはカクテル・モクテル・ノンアルはカクテルtriviaルール参照（省略可）。単体酒のtriviaには飲み方を必ず含める。
+固定情報は簡潔にする。descriptionは1文60字以内、triviaは必要な場合のみ1文80字以内。酒の一般説明や注文上の注意はD1酒マスターで補完されるため長文にしない。
 rarityは0〜100の整数。算出基準：日本国内の一般的なバーに置いてある確率の逆数。欧米・海外での普及度は関係なく、日本のバーでの実態を基準にすること。海外では定番でも日本のバーでは珍しいものは高めに設定する。
 日本のバーでの希少度目安：
 0〜20：ほぼ全ての日本のバーにある定番（モヒート・マティーニ・ジントニック・カシスソーダ・ハイボール・ネグローニ・オールドファッションなど）
@@ -613,7 +615,7 @@ async function callAPI(userMsg){
   const userTurns=chatHistory.filter(m=>m.role==='user').length;
   const fastTurn=userTurns<4;
   const model=fastTurn?FAST_MODEL:RECOMMEND_MODEL;
-  const maxTokens=fastTurn?600:1100;
+  const maxTokens=fastTurn?600:1000;
   const system=fastTurn?getFastSystem():getSystem();
   const res=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model,max_tokens:maxTokens,system,messages:chatHistory})});
   const data=await readAPIResponse(res);
