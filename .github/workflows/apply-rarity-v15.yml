@@ -37,18 +37,31 @@ jobs:
             ['["トリニダードサワー",18,82,"かなり珍しい",0.65,"ビターズを大量使用する特殊な構成で一般BAR標準から遠い。"]','["トリニダードサワー",24,76,"かなり珍しい",0.78,"国内の現行提供例はあるが、ビターズを大量使用する特殊構成で一般BAR標準から遠い。"]']
           ];
           for(const [a,b] of reps){ if(!s.includes(a)) throw new Error('target not found: '+a); s=s.replace(a,b); }
-          s=s.replace("'jp-rarity-v1.3', '2026-09-04'","'jp-rarity-v1.5', '2026-09-04'");
+          s=s.replaceAll("'jp-rarity-v1.3'","'jp-rarity-v1.5'");
+          const start=s.indexOf("      const countRow = await env.DRINK_DB.prepare('SELECT COUNT(*) AS count FROM drinks').first();");
+          const end=s.indexOf('      for (const [name, description, taste, orderHint] of DRINK_COPY_SEED)', start);
+          if(start<0||end<0) throw new Error('seed block not found');
+          const upsert=`      const statements = DRINK_MASTER_SEED.map(([name, availability, rarity, label, confidence, reason]) => env.DRINK_DB.prepare(\`INSERT INTO drinks (\n          canonical_key, name_ja, japan_availability_score, japan_rarity_score, japan_rarity_label,\n          japan_rarity_confidence, rarity_reason, evidence_version, evaluated_at\n        ) VALUES (?, ?, ?, ?, ?, ?, ?, 'jp-rarity-v1.5', '2026-09-04')\n        ON CONFLICT(canonical_key) DO UPDATE SET\n          name_ja = excluded.name_ja,\n          japan_availability_score = excluded.japan_availability_score,\n          japan_rarity_score = excluded.japan_rarity_score,\n          japan_rarity_label = excluded.japan_rarity_label,\n          japan_rarity_confidence = excluded.japan_rarity_confidence,\n          rarity_reason = excluded.rarity_reason,\n          evidence_version = excluded.evidence_version,\n          evaluated_at = excluded.evaluated_at,\n          updated_at = datetime('now')\`).bind(\n          normalizeDrinkMasterKey(name), name, availability, rarity, label, confidence, reason,\n        ));\n        if (typeof env.DRINK_DB.batch === 'function') await env.DRINK_DB.batch(statements);\n        else for (const statement of statements) await statement.run();\n`;
+          s=s.slice(0,start)+upsert+s.slice(end);
           fs.writeFileSync(p,s);
+
+          const t='test/drink-master.test.mjs';
+          let test=fs.readFileSync(t,'utf8');
+          test=test.replace(/jp-rarity-v1\\\.3/, 'jp-rarity-v1\\.5');
+          if(!test.includes('ON CONFLICT')) {
+            test=test.replace("  assert.match(source, /ピスコサワー/);", "  assert.match(source, /ピスコサワー/);\n  assert.match(source, /ON CONFLICT\\(canonical_key\\) DO UPDATE SET/);\n  assert.match(source, /パローマ\\\",64,36/);");
+          }
+          fs.writeFileSync(t,test);
           NODE
       - name: Validate
         run: |
           node --check src/worker.mjs
-          if [ -f package.json ]; then npm test; fi
+          npm test
           git diff --check
       - name: Commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/worker.mjs
+          git add src/worker.mjs test/drink-master.test.mjs
           git commit -m "Apply Japan rarity calibration v1.5"
           git push origin main
