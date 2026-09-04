@@ -53,17 +53,10 @@ jobs:
                   raise SystemExit('worker helper insertion marker not found')
               w=w.replace(marker,helper+marker,1)
 
-          old="""  return new Response(upstream.body, {
-            status: upstream.status,
-            headers: { 'content-type': upstream.headers.get('content-type') || 'application/json' },
-          });"""
-          new="""  const data = await upstream.json();
-            await enrichBarCarilaRecommendation(data, env);
-            return json(data, upstream.status);"""
-          if old in w:
-              w=w.replace(old,new,1)
-          elif 'await enrichBarCarilaRecommendation(data, env)' not in w:
-              raise SystemExit('chat return block not found')
+          chat_start=w.index('async function chat(request, env) {')
+          ret_start=w.index('  return new Response(upstream.body, {',chat_start)
+          ret_end=w.index('\n  });',ret_start)+len('\n  });')
+          w=w[:ret_start]+"  const data = await upstream.json();\n  await enrichBarCarilaRecommendation(data, env);\n  return json(data, upstream.status);"+w[ret_end:]
           wp.write_text(w)
 
           jp=Path('public/assets/js/main.js')
