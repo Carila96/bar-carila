@@ -118,6 +118,7 @@ new = r'''async function drinkImage(request, env, context) {
   const name = url.searchParams.get('name');
   const query = url.searchParams.get('query');
   if (!name && !query) return json({ error: 'name or query required' }, 400);
+  if (!env.UNSPLASH_ACCESS_KEY && !env.DRINK_DB) return missingSecret('UNSPLASH_ACCESS_KEY');
 
   const cache = caches.default;
   const normalize = (value) => (value || '').trim().toLowerCase().replace(/[・\s.\-]/g, '');
