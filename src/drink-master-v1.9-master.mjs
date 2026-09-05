@@ -5,6 +5,7 @@ import {
   JP_RARITY_V19_RENAMES,
   JP_RARITY_V19_CONFIRMED_ADDITIONS,
   JP_RARITY_V19_CANONICAL_JA_NAMES,
+  JP_RARITY_V19_BASE_SPIRITS,
   JP_RARITY_V19_KNOWN_IDENTITY_COLLISIONS,
 } from './drink-master-v1.9-canonical-corrections.mjs';
 
@@ -30,4 +31,7 @@ export const JP_RARITY_V19_JA_NAMES = new Map([
   ...[...JP_RARITY_V19_GAP_JA_NAMES].map(([english, japanese]) => [normalizeDrinkV19Key(english), japanese]),
   ...[...JP_RARITY_V19_CANONICAL_JA_NAMES].map(([english, japanese]) => [normalizeDrinkV19Key(english), japanese]),
 ]);
+export const JP_RARITY_V19_BASE_SPIRIT_BY_KEY = new Map(
+  [...JP_RARITY_V19_BASE_SPIRITS].map(([english, base]) => [normalizeDrinkV19Key(english), base])
+);
 export { normalizeDrinkV19Key, JP_RARITY_V19_KNOWN_IDENTITY_COLLISIONS };
