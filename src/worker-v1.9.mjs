@@ -1,5 +1,5 @@
 import baseWorker from './worker.mjs';
-import { JP_RARITY_V19_SEED_ROWS, normalizeDrinkV19Key } from './drink-master-v1.9-master.mjs';
+import { JP_RARITY_V19_SEED_ROWS, JP_RARITY_V19_JA_NAMES, normalizeDrinkV19Key } from './drink-master-v1.9-master.mjs';
 
 const EVIDENCE_VERSION = 'jp-rarity-v1.9';
 const EVALUATED_AT = '2026-09-05';
@@ -56,14 +56,19 @@ async function ensureV19Tables(env) {
 async function seedV19(env) {
   if (!env.DRINK_DB) return;
   await ensureV19Tables(env);
-  const statements = JP_RARITY_V19_SEED_ROWS.map(([name, availability, rarity, confidence]) =>
-    env.DRINK_DB.prepare(`INSERT INTO drinks (
+  const statements = JP_RARITY_V19_SEED_ROWS.map(([name, availability, rarity, confidence]) => {
+    const key = normalizeDrinkV19Key(name);
+    const japaneseName = JP_RARITY_V19_JA_NAMES.get(key) || '';
+    return env.DRINK_DB.prepare(`INSERT INTO drinks (
       canonical_key, name_ja, name_en, japan_availability_score, japan_rarity_score,
       japan_rarity_label, japan_rarity_confidence, rarity_reason, evidence_version, evaluated_at, updated_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
     ON CONFLICT(canonical_key) DO UPDATE SET
-      name_ja = excluded.name_ja,
-      name_en = CASE WHEN drinks.name_en = '' THEN excluded.name_en ELSE drinks.name_en END,
+      name_ja = CASE
+        WHEN excluded.name_ja <> '' THEN excluded.name_ja
+        ELSE drinks.name_ja
+      END,
+      name_en = CASE WHEN excluded.name_en <> '' THEN excluded.name_en ELSE drinks.name_en END,
       japan_availability_score = excluded.japan_availability_score,
       japan_rarity_score = excluded.japan_rarity_score,
       japan_rarity_label = excluded.japan_rarity_label,
@@ -72,8 +77,8 @@ async function seedV19(env) {
       evidence_version = excluded.evidence_version,
       evaluated_at = excluded.evaluated_at,
       updated_at = datetime('now')`)
-      .bind(normalizeDrinkV19Key(name), name, name, availability, rarity, rarityLabel(rarity), confidence, rarityReason(availability), EVIDENCE_VERSION, EVALUATED_AT)
-  );
+      .bind(key, japaneseName, name, availability, rarity, rarityLabel(rarity), confidence, rarityReason(availability), EVIDENCE_VERSION, EVALUATED_AT);
+  });
   for (let i = 0; i < statements.length; i += 80) await env.DRINK_DB.batch(statements.slice(i, i + 80));
 }
 
