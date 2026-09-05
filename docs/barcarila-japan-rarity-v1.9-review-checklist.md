@@ -6,8 +6,10 @@
 - [x] Validation script added
 - [x] Node tests added
 - [x] Rejected non-book additions documented
-- [ ] Final canonical 400-row reconciliation into production seed
-- [ ] D1 runtime wiring
-- [ ] Preview verification
+- [x] Fixed runtime master reconciles to exactly 400 normalized keys
+- [x] D1 runtime upsert wiring added with `jp-rarity-v1.9`
+- [x] CI and v1.9 validator pass
+- [ ] Cloudflare Preview verification
+- [ ] Human approval before Production
 
-The unchecked items are intentionally blocked from production until the canonical reconciliation is complete.
+PR is implementation-ready. Preview/Production deployment remains outside this branch and should follow the CARILA WORKS Control release flow.
