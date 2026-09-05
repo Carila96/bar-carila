@@ -2,6 +2,7 @@ import { JP_RARITY_V19_SUPPLEMENTAL, normalizeDrinkV19Key } from './drink-master
 import { JP_RARITY_V19_GAP, JP_RARITY_V19_GAP_JA_NAMES } from './drink-master-v1.9-gap.mjs';
 import { JP_RARITY_V19_BASE_CANONICAL } from './drink-master-v1.9-base-canonical.mjs';
 import { JP_RARITY_V19_ROWS } from './drink-master-v1.9-research.mjs';
+import { JP_RARITY_V19_FINAL_MISSING } from './drink-master-v1.9-final-missing.mjs';
 import { BOOK_INDEX_V19_ROWS } from './drink-master-v1.9-book-index.mjs';
 
 const aliases = new Map([
@@ -28,6 +29,7 @@ for (const row of JP_RARITY_V19_BASE_CANONICAL) add(row);
 for (const row of JP_RARITY_V19_SUPPLEMENTAL) add(row);
 for (const row of JP_RARITY_V19_ROWS) add(row);
 for (const row of JP_RARITY_V19_GAP) add(row);
+for (const row of JP_RARITY_V19_FINAL_MISSING) add(row);
 
 // Visually confirmed index corrections/additions with already researched scores.
 for (const row of [
