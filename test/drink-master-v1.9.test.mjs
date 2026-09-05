@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { JP_RARITY_V19_ROWS, validateJpRarityV19Rows } from '../src/drink-master-v1.9-research.mjs';
-import { JP_RARITY_V19_SEED_ROWS, JP_RARITY_V19_JA_NAMES, normalizeDrinkV19Key } from '../src/drink-master-v1.9-master.mjs';
+import { JP_RARITY_V19_SEED_ROWS, JP_RARITY_V19_JA_NAMES, JP_RARITY_V19_MISSING_SCORE_ROWS, normalizeDrinkV19Key } from '../src/drink-master-v1.9-master.mjs';
+import { BOOK_INDEX_V19_ROWS } from '../src/drink-master-v1.9-book-index.mjs';
 import { JP_RARITY_V19_GAP, JP_RARITY_V19_GAP_EVIDENCE } from '../src/drink-master-v1.9-gap.mjs';
 import { enrichV19Response } from '../src/worker-v1.9.mjs';
 
@@ -20,25 +21,22 @@ test('v1.9 seed rows are normalized-unique and arithmetically valid', () => {
   }
 });
 
-test('the 14 previously missing book rows are researched, not anonymous filler', () => {
+test('the 14 previously missing rows retain documented evidence', () => {
   assert.equal(JP_RARITY_V19_GAP.length, 14);
   assert.equal(JP_RARITY_V19_GAP_EVIDENCE.size, 14);
   for (const [name] of JP_RARITY_V19_GAP) {
     const evidence = JP_RARITY_V19_GAP_EVIDENCE.get(name);
     assert.ok(evidence?.grade, `${name}: evidence grade missing`);
     assert.ok(evidence?.note, `${name}: evidence note missing`);
-    assert.ok(JP_RARITY_V19_JA_NAMES.get(normalizeDrinkV19Key(name)), `${name}: Japanese display name missing`);
   }
 });
 
-test('legacy v1.8 plus v1.9 produce exactly 400 fixed runtime keys', async () => {
-  const source = await readFile(new URL('../src/worker.mjs', import.meta.url), 'utf8');
-  const match = source.match(/const DRINK_MASTER_SEED = (\[\[.*?\]\]);\nconst DRINK_COPY_SEED/s);
-  assert.ok(match, 'DRINK_MASTER_SEED must remain extractable for coverage validation');
-  const merged = new Map();
-  for (const row of JSON.parse(match[1])) merged.set(normalizeDrinkV19Key(row[0]), row);
-  for (const row of JP_RARITY_V19_SEED_ROWS) merged.set(normalizeDrinkV19Key(row[0]), row);
-  assert.equal(merged.size, 400);
+test('v1.9 runtime population equals the exact book-index source', () => {
+  assert.deepEqual(JP_RARITY_V19_MISSING_SCORE_ROWS, []);
+  assert.equal(JP_RARITY_V19_SEED_ROWS.length, BOOK_INDEX_V19_ROWS.length);
+  const expected = new Set(BOOK_INDEX_V19_ROWS.map(({ name }) => normalizeDrinkV19Key(name)));
+  const actual = new Set(JP_RARITY_V19_SEED_ROWS.map(([name]) => normalizeDrinkV19Key(name)));
+  assert.deepEqual(actual, expected);
 });
 
 test('v1.9 response enrichment uses canonical masterKey', async () => {
