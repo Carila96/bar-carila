@@ -4,6 +4,13 @@ import { JP_RARITY_V19_SEED_ROWS, JP_RARITY_V19_JA_NAMES, JP_RARITY_V19_BASE_SPI
 const EVIDENCE_VERSION = 'jp-rarity-v1.9';
 const EVALUATED_AT = '2026-09-05';
 const V19_BY_KEY = new Map(JP_RARITY_V19_SEED_ROWS.map((row) => [normalizeDrinkV19Key(row[0]), row]));
+const LOOKUP_ALIASES = new Map([
+  [normalizeDrinkV19Key('Corpse Reviver No.2'), normalizeDrinkV19Key('Corpse Reviver')],
+  [normalizeDrinkV19Key('Corpse Reviver No 2'), normalizeDrinkV19Key('Corpse Reviver')],
+  [normalizeDrinkV19Key('Corpse Reviver #2'), normalizeDrinkV19Key('Corpse Reviver')],
+  [normalizeDrinkV19Key('コープスリバイバー No.2'), normalizeDrinkV19Key('Corpse Reviver')],
+  [normalizeDrinkV19Key('コープスリバイバーNo.2'), normalizeDrinkV19Key('Corpse Reviver')],
+]);
 let v19Ready;
 
 function rarityLabel(rarity) {
@@ -19,6 +26,11 @@ function rarityReason(availability) {
   if (availability >= 60) return '国内で現行提供を確認でき、一般的なBARでも比較的成立しやすいが店差がある。';
   if (availability >= 40) return '国内提供例はあるが、名称定着・専用材料・運用のいずれかで店差が大きい。';
   return '国内の現行提供密度が低く、専用材料または特殊な運用を要するため成立店が限られる。';
+}
+
+function canonicalLookupKey(value) {
+  const normalized = normalizeDrinkV19Key(value);
+  return LOOKUP_ALIASES.get(normalized) || normalized;
 }
 
 async function ensureV19Tables(env) {
@@ -91,11 +103,26 @@ async function addMasterKeyInstruction(request) {
   let body;
   try { body = await request.clone().json(); } catch { return request; }
   if (!body || typeof body !== 'object' || typeof body.system !== 'string') return request;
-  body.system += '\n\n【BarCarila固定マスター照合】最終回答が recommendation の場合、drink.masterKey にそのカクテルの標準的な英語名を必ず入れてください（例: Gin and Tonic, Moscow Mule）。同名で別レシピが存在する場合はベースまで含めた固定キーを使ってください。アカプルコは必ず Acapulco (Rum) または Acapulco (Tequila) のどちらかにしてください。既存フィールドは変更しないでください。';
+  body.system += '\n\n【BarCarila固定マスター照合】最終回答が recommendation の場合、drink.masterKey にそのカクテルの標準的な英語名を必ず入れてください（例: Gin and Tonic, Moscow Mule）。同名で別レシピが存在する場合はベースまで含めた固定キーを使ってください。アカプルコは必ず Acapulco (Rum) または Acapulco (Tequila) のどちらかにしてください。コープスリバイバーNo.2は masterKey を Corpse Reviver としてください。既存フィールドは変更しないでください。';
   return new Request(request, { body: JSON.stringify(body) });
 }
 
-async function enrichV19Response(response) {
+async function readV19FromD1(env, lookup) {
+  if (!env?.DRINK_DB || !lookup) return null;
+  const key = canonicalLookupKey(lookup);
+  try {
+    const row = await env.DRINK_DB.prepare(`SELECT canonical_key, japan_availability_score, japan_rarity_score,
+      japan_rarity_label, japan_rarity_confidence, rarity_reason, evidence_version
+      FROM drinks WHERE canonical_key = ? LIMIT 1`).bind(key).first();
+    if (!row || row.evidence_version !== EVIDENCE_VERSION) return null;
+    return row;
+  } catch (error) {
+    console.error('v1.9 D1 lookup failed', error);
+    return null;
+  }
+}
+
+async function enrichV19Response(response, env) {
   if (!response.ok || !String(response.headers.get('content-type') || '').includes('application/json')) return response;
   let data;
   try { data = await response.clone().json(); } catch { return response; }
@@ -104,23 +131,44 @@ async function enrichV19Response(response) {
   let parsed;
   try { parsed = JSON.parse(textItem.text.replace(/```json|```/g, '').trim()); } catch { return response; }
   if (parsed?.type !== 'recommendation' || !parsed?.drink) return response;
-  const lookup = parsed.drink.masterKey || parsed.drink.name || '';
-  const row = V19_BY_KEY.get(normalizeDrinkV19Key(lookup));
-  if (!row) return response;
-  const [, availability, rarity, confidence] = row;
-  parsed.drink.rarity = rarity;
-  parsed.drink.rarityLabel = rarityLabel(rarity);
-  parsed.drink.rarityConfidence = confidence;
-  parsed.drink.rarityReason = rarityReason(availability);
-  parsed.drink.masterSource = 'd1';
-  parsed.drink.evidenceVersion = EVIDENCE_VERSION;
+
+  const candidates = [parsed.drink.masterKey, parsed.drink.name].filter(Boolean);
+  let d1Row = null;
+  for (const candidate of candidates) {
+    d1Row = await readV19FromD1(env, candidate);
+    if (d1Row) break;
+  }
+
+  if (d1Row) {
+    parsed.drink.rarity = d1Row.japan_rarity_score;
+    parsed.drink.rarityLabel = d1Row.japan_rarity_label || rarityLabel(d1Row.japan_rarity_score);
+    parsed.drink.rarityConfidence = d1Row.japan_rarity_confidence;
+    parsed.drink.rarityReason = d1Row.rarity_reason || rarityReason(d1Row.japan_availability_score);
+    parsed.drink.masterSource = 'd1';
+    parsed.drink.evidenceVersion = d1Row.evidence_version;
+  } else {
+    let embeddedRow = null;
+    for (const candidate of candidates) {
+      embeddedRow = V19_BY_KEY.get(canonicalLookupKey(candidate));
+      if (embeddedRow) break;
+    }
+    if (!embeddedRow) return response;
+    const [, availability, rarity, confidence] = embeddedRow;
+    parsed.drink.rarity = rarity;
+    parsed.drink.rarityLabel = rarityLabel(rarity);
+    parsed.drink.rarityConfidence = confidence;
+    parsed.drink.rarityReason = rarityReason(availability);
+    parsed.drink.masterSource = 'embedded-v1.9';
+    parsed.drink.evidenceVersion = EVIDENCE_VERSION;
+  }
+
   textItem.text = JSON.stringify(parsed);
   const headers = new Headers(response.headers);
   headers.set('content-type', 'application/json; charset=utf-8');
   return new Response(JSON.stringify(data), { status: response.status, headers });
 }
 
-export { JP_RARITY_V19_SEED_ROWS as V19_ROWS, rarityLabel, rarityReason, enrichV19Response };
+export { JP_RARITY_V19_SEED_ROWS as V19_ROWS, rarityLabel, rarityReason, canonicalLookupKey, enrichV19Response };
 
 export default {
   async fetch(request, env, context) {
@@ -128,6 +176,6 @@ export default {
     const { pathname } = new URL(request.url);
     const effectiveRequest = pathname === '/api/chat' ? await addMasterKeyInstruction(request) : request;
     const response = await baseWorker.fetch(effectiveRequest, env, context);
-    return pathname === '/api/chat' ? enrichV19Response(response) : response;
+    return pathname === '/api/chat' ? enrichV19Response(response, env) : response;
   }
 };
