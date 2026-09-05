@@ -1,5 +1,5 @@
 import baseWorker from './worker.mjs';
-import { JP_RARITY_V19_SUPPLEMENTAL } from './drink-master-v1.9-supplemental.mjs';
+import { JP_RARITY_V19_SEED_ROWS } from './drink-master-v1.9-master.mjs';
 
 const EVIDENCE_VERSION = 'jp-rarity-v1.9';
 const EVALUATED_AT = '2026-09-05';
@@ -65,7 +65,7 @@ async function seedV19(env) {
   if (!v19Ready) {
     v19Ready = (async () => {
       await ensureV19Tables(env);
-      const statements = JP_RARITY_V19_SUPPLEMENTAL.map(([name, availability, rarity, confidence]) => {
+      const statements = JP_RARITY_V19_SEED_ROWS.map(([name, availability, rarity, confidence]) => {
         const label = rarityLabel(rarity);
         const reason = rarityReason(availability);
         return env.DRINK_DB.prepare(`INSERT INTO drinks (
