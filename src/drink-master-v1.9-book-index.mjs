@@ -1,13 +1,13 @@
 // Source of truth: 『カクテル完全バイブル』 cocktail index, pp.6–22.
-// Audited visually against the uploaded 2012 edition. The category counts below must sum to 400.
-// Names in parentheses disambiguate same-name/different-recipe entries for runtime identity only.
+// Audited visually against the user's uploaded 2012 edition.
+// Runtime-only parentheticals disambiguate same-name/different-recipe entries.
 
 export const BOOK_INDEX_V19 = {
   gin: [
     'Gin and Tonic','Gimlet','Martini','Earthquake','Ideal','Blue Coral Reef','Appetizer','Around the World','Alaska',
-    "Alexander's Sister",'Wedding Bell (Sweet)','Angel Face','Opera Martini','Orange Fizz','Orange Blossom','Casino','Cafe de Paris','Campari Cocktail',
+    "Alexander's Sister",'Kiwi Martini','Angel Face','Opera Martini','Orange Fizz','Orange Blossom','Casino','Cafe de Paris','Campari Cocktail',
     'Kiss in the Dark','Gibson','Classic Dry Martini','Claridge','Green Alaska','Clover Club','Gordon','Cosmopolitan Martini','Zaza',
-    'J.F.K.','Silver Bullet','Gin and It','Singapore Sling','Gin Daisy','Gin Buck','Gin Fizz','Gin Rickey','Spring Feeling',
+    'J.F.K.','Gin and Bitters','Gin and It','Singapore Sling','Gin Daisy','Gin Buck','Gin Fizz','Gin Rickey','Gin Sour',
     'Smoky Martini','Seventh Heaven','Dirty Martini','Tango','Texas Fizz','Desert Healer','Totty','Tom Collins','Negroni',
     'Knockout','Bartender','Paradise','Hawaiian','Beauty Spot','Pink Gin','Pink Lady','Fallen Angel','Princess Mary',
     'Blue Moon','French 75','Bronx','Honolulu','White Lady','White Rose','Bond Martini','Million Dollar','Long Island Iced Tea'
@@ -21,13 +21,13 @@ export const BOOK_INDEX_V19 = {
   ],
   rum: [
     'Cuba River','Daiquiri','Mojito','Acapulco (Rum)','Aloha','XYZ','Eggnog','El Presidente','Quarter Deck','Green Eyes','Columbus','Santiago','Jack Tar','Shanghai','Sky Diving',
-    'Scorpion','Sonora','Tom and Jerry','Nevada','Bacardi Cocktail','Havana Beach','Parisian Blonde',"Bee's Kiss",'Pina Colada','Platinum Blonde','Black Devil',"Planter's Cocktail",
+    'Scorpion','Sonora','Tom and Jerry','Nevada','Bacardi Cocktail','Havana Beach','Parisian Blonde',"Bee's Kiss",'Pina Colada','Platinum Blonde','Black Devil','Brown Derby Cocktail',
     'Blue Hawaii','Frozen Daiquiri','Polar Short Cut','Boston Cooler','Miami','Mai Tai','Millionaire','Mary Pickford','Last Kiss','Rum Collins','Little Devil','Little Princess'
   ],
   tequila: [
     'Tequila Sunrise','Mockingbird','Margarita','Ice Breaker','Acapulco (Tequila)','Ambassador','Evergreen','El Diablo','Grand Marnier Margarita','Conchita','Cyclamen','Sloe Tequila',
     'Salty Bull','Charro Negro','T.T.T.','Tequila Sunset','Tequila Manhattan','Picador','Blue Margarita','Frozen Margarita','Broadway Thirst','Hermes','Matador','Margarita Cosmo',
-    'Mexican','Rising Sun',"King's Valley"
+    'Mexican','Rising Sun','La Rumeur'
   ],
   whisky: [
     'Rusty Nail','Old Fashioned','Manhattan','Irish Coffee','Irish Rose','Up-to-Date','Affinity','Imperial Fizz','Whisky Sour','Whisky Soda Highball','Whisky Float','Whisky Mist',
@@ -43,7 +43,7 @@ export const BOOK_INDEX_V19 = {
   ],
   other_spirits: ['Caipirinha'],
   liqueur: [
-    'Pousse-Cafe','Union Jack','Advocaat Egg','After Dinner','African Queen','Apricot Cocktail','Apricot Cooler','Yellow Parrot','Winning Run','Orange Cassis','Cool Banana',
+    'Pousse-Cafe','Union Jack','Advantage','After Dinner','African Queen','Apricot Cocktail','Apricot Cooler','Yellow Parrot','Winning Run','Orange Cassis','Cool Banana',
     'Grand Blue','Green Emotion','Georgia Collins','Sweet Memory',"Scarlet O'Hara",'Strawberry Field','Sloe Gin Cocktail','Sloe Gin Fizz','Cherry Blossom','Charlie Chaplin','China Blue',
     'Dita Moni','Pearl Harbor','Valencia','Peach Blossom','Ping Pong','Fuzzy Navel','Blue Lady','Brain Hemorrhage','Proposal','Velvet Hammer','Monkey Mix','La Festa','Ruby Fizz',
     'Lady Joker','Royal Quartet','Amer Picon Highball','Amer Moni','Americano',"Widow's Dream",'Campari Orange','Campari Soda','Kiss Me Quick','Grasshopper','Glad Eye',
