@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "test": "node --test",
+    "validate:drink-master-v1.9": "node scripts/validate-drink-master-v1.9.mjs",
     "dev": "wrangler dev",
     "deploy:preview": "wrangler deploy"
   },

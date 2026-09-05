@@ -1,7 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "bar-carila",
-  "main": "src/worker.mjs",
+  "main": "src/worker-v1.9.mjs",
   "compatibility_date": "2026-08-25",
   "workers_dev": true,
   "preview_urls": true,
