@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import { JP_RARITY_V19_SUPPLEMENTAL, normalizeDrinkV19Key } from '../src/drink-master-v1.9-supplemental.mjs';
+import { JP_RARITY_V19_GAP } from '../src/drink-master-v1.9-gap.mjs';
 
 const worker = fs.readFileSync(new URL('../src/worker.mjs', import.meta.url), 'utf8');
 const match = worker.match(/const DRINK_MASTER_SEED = (\[\[.*?\]\]);\nconst DRINK_COPY_SEED/s);
@@ -17,7 +18,7 @@ const merged = new Map();
 for (const [name, availability, rarity, label, confidence] of base) {
   merged.set(normalizeDrinkV19Key(name), [name, availability, rarity, confidence, 'base']);
 }
-for (const [name, availability, rarity, confidence] of JP_RARITY_V19_SUPPLEMENTAL) {
+for (const [name, availability, rarity, confidence] of [...JP_RARITY_V19_SUPPLEMENTAL, ...JP_RARITY_V19_GAP]) {
   merged.set(normalizeDrinkV19Key(name), [name, availability, rarity, confidence, 'v1.9']);
 }
 
@@ -31,12 +32,12 @@ for (const [name, availability, rarity, confidence] of merged.values()) {
 for (const name of rejected) {
   if (merged.has(normalizeDrinkV19Key(name))) errors.push(`${name}: rejected non-canonical population contamination`);
 }
-if (merged.size !== 400) errors.push(`expected canonical master=400, got ${merged.size} (base=${base.length}, supplemental=${JP_RARITY_V19_SUPPLEMENTAL.length})`);
+if (merged.size !== 400) errors.push(`expected canonical master=400, got ${merged.size} (base=${base.length}, supplemental=${JP_RARITY_V19_SUPPLEMENTAL.length}, gap=${JP_RARITY_V19_GAP.length})`);
 
 if (errors.length) {
   console.error('BarCarila v1.9 validation failed:');
   for (const error of errors) console.error(`- ${error}`);
   process.exitCode = 1;
 } else {
-  console.log(`BarCarila v1.9 master OK: ${merged.size} unique cocktails (base ${base.length} + reconciled supplemental ${JP_RARITY_V19_SUPPLEMENTAL.length})`);
+  console.log(`BarCarila v1.9 master OK: ${merged.size} unique cocktails`);
 }
