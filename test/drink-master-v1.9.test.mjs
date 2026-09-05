@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { JP_RARITY_V19_ROWS, validateJpRarityV19Rows } from '../src/drink-master-v1.9-research.mjs';
-import { JP_RARITY_V19_SEED_ROWS, normalizeDrinkV19Key } from '../src/drink-master-v1.9-master.mjs';
+import { JP_RARITY_V19_SEED_ROWS, JP_RARITY_V19_JA_NAMES, normalizeDrinkV19Key } from '../src/drink-master-v1.9-master.mjs';
+import { JP_RARITY_V19_GAP, JP_RARITY_V19_GAP_EVIDENCE } from '../src/drink-master-v1.9-gap.mjs';
 import { enrichV19Response } from '../src/worker-v1.9.mjs';
 
 test('final-pass override rows are internally consistent', () => {
@@ -16,6 +17,17 @@ test('v1.9 seed rows are normalized-unique and arithmetically valid', () => {
     assert.equal(rarity, 100 - availability, name);
     assert.ok(availability >= 0 && availability <= 100, name);
     assert.ok(confidence >= 0 && confidence <= 1, name);
+  }
+});
+
+test('the 14 previously missing book rows are researched, not anonymous filler', () => {
+  assert.equal(JP_RARITY_V19_GAP.length, 14);
+  assert.equal(JP_RARITY_V19_GAP_EVIDENCE.size, 14);
+  for (const [name] of JP_RARITY_V19_GAP) {
+    const evidence = JP_RARITY_V19_GAP_EVIDENCE.get(name);
+    assert.ok(evidence?.grade, `${name}: evidence grade missing`);
+    assert.ok(evidence?.note, `${name}: evidence note missing`);
+    assert.ok(JP_RARITY_V19_JA_NAMES.get(normalizeDrinkV19Key(name)), `${name}: Japanese display name missing`);
   }
 });
 
@@ -40,6 +52,13 @@ test('v1.9 response enrichment uses canonical masterKey', async () => {
   assert.equal(parsed.drink.rarity, 50);
   assert.equal(parsed.drink.masterSource, 'd1');
   assert.equal(parsed.drink.evidenceVersion, 'jp-rarity-v1.9');
+});
+
+test('runtime entry keeps English canonical identity separate from Japanese display name', async () => {
+  const source = await readFile(new URL('../src/worker-v1.9.mjs', import.meta.url), 'utf8');
+  assert.match(source, /JP_RARITY_V19_JA_NAMES/);
+  assert.match(source, /const japaneseName = JP_RARITY_V19_JA_NAMES\.get\(key\) \|\| ''/);
+  assert.match(source, /\.bind\(key, japaneseName, name,/);
 });
 
 test('runtime entry wires v1.9 D1 seed before delegating to existing Worker', async () => {
