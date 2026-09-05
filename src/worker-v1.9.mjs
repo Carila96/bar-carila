@@ -1,5 +1,5 @@
 import baseWorker from './worker.mjs';
-import { JP_RARITY_V19_ROWS } from './drink-master-v1.9-research.mjs';
+import { JP_RARITY_V19_SUPPLEMENTAL } from './drink-master-v1.9-supplemental.mjs';
 
 const EVIDENCE_VERSION = 'jp-rarity-v1.9';
 const EVALUATED_AT = '2026-09-05';
@@ -50,8 +50,8 @@ async function ensureV19Tables(env) {
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
   )`).run();
 
-  // The legacy v1.8 bootstrap in worker.mjs still runs for the original 150 rows.
-  // Prevent that bootstrap from downgrading rows already normalized by v1.9.
+  // worker.mjs still contains the v1.8 bootstrap for its original 150 rows.
+  // Do not allow that bootstrap to downgrade a row already normalized by v1.9.
   await env.DRINK_DB.prepare(`CREATE TRIGGER IF NOT EXISTS protect_jp_rarity_v19
     BEFORE UPDATE ON drinks
     WHEN OLD.evidence_version = '${EVIDENCE_VERSION}' AND NEW.evidence_version = 'jp-rarity-v1.8'
@@ -65,7 +65,7 @@ async function seedV19(env) {
   if (!v19Ready) {
     v19Ready = (async () => {
       await ensureV19Tables(env);
-      const statements = JP_RARITY_V19_ROWS.map(([name, availability, rarity, confidence]) => {
+      const statements = JP_RARITY_V19_SUPPLEMENTAL.map(([name, availability, rarity, confidence]) => {
         const label = rarityLabel(rarity);
         const reason = rarityReason(availability);
         return env.DRINK_DB.prepare(`INSERT INTO drinks (
