@@ -65,6 +65,17 @@ async function ensureV19Tables(env) {
     BEGIN SELECT RAISE(IGNORE); END`).run();
 }
 
+async function hasCurrentV19Seed(env) {
+  if (!env?.DRINK_DB) return false;
+  try {
+    const row = await env.DRINK_DB.prepare(`SELECT COUNT(*) AS count FROM drinks WHERE evidence_version = ?`)
+      .bind(EVIDENCE_VERSION).first();
+    return Number(row?.count || 0) >= JP_RARITY_V19_SEED_ROWS.length;
+  } catch {
+    return false;
+  }
+}
+
 async function seedV19(env) {
   if (!env.DRINK_DB) return;
   await ensureV19Tables(env);
@@ -93,8 +104,14 @@ async function seedV19(env) {
   for (let i = 0; i < statements.length; i += 80) await env.DRINK_DB.batch(statements.slice(i, i + 80));
 }
 
+async function seedV19IfNeeded(env) {
+  if (!env?.DRINK_DB) return;
+  if (await hasCurrentV19Seed(env)) return;
+  await seedV19(env);
+}
+
 function ensureV19Seed(env) {
-  if (!v19Ready) v19Ready = seedV19(env).catch((error) => { v19Ready = undefined; throw error; });
+  if (!v19Ready) v19Ready = seedV19IfNeeded(env).catch((error) => { v19Ready = undefined; throw error; });
   return v19Ready;
 }
 
@@ -168,14 +185,19 @@ async function enrichV19Response(response, env) {
   return new Response(JSON.stringify(data), { status: response.status, headers });
 }
 
-export { JP_RARITY_V19_SEED_ROWS as V19_ROWS, rarityLabel, rarityReason, canonicalLookupKey, enrichV19Response };
+export { JP_RARITY_V19_SEED_ROWS as V19_ROWS, rarityLabel, rarityReason, canonicalLookupKey, enrichV19Response, hasCurrentV19Seed };
 
 export default {
   async fetch(request, env, context) {
-    try { await ensureV19Seed(env); } catch (error) { console.error('v1.9 D1 seed failed', error); }
     const { pathname } = new URL(request.url);
-    const effectiveRequest = pathname === '/api/chat' ? await addMasterKeyInstruction(request) : request;
+    if (pathname !== '/api/chat') return baseWorker.fetch(request, env, context);
+
+    const seedPromise = ensureV19Seed(env).catch((error) => {
+      console.error('v1.9 D1 seed failed', error);
+    });
+    const effectiveRequest = await addMasterKeyInstruction(request);
     const response = await baseWorker.fetch(effectiveRequest, env, context);
-    return pathname === '/api/chat' ? enrichV19Response(response, env) : response;
+    await seedPromise;
+    return enrichV19Response(response, env);
   }
 };

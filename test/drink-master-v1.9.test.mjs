@@ -5,7 +5,7 @@ import { JP_RARITY_V19_ROWS, validateJpRarityV19Rows } from '../src/drink-master
 import { JP_RARITY_V19_SEED_ROWS, JP_RARITY_V19_JA_NAMES, JP_RARITY_V19_MISSING_SCORE_ROWS, normalizeDrinkV19Key } from '../src/drink-master-v1.9-master.mjs';
 import { BOOK_INDEX_V19_ROWS } from '../src/drink-master-v1.9-book-index.mjs';
 import { JP_RARITY_V19_GAP, JP_RARITY_V19_GAP_EVIDENCE } from '../src/drink-master-v1.9-gap.mjs';
-import { canonicalLookupKey, enrichV19Response } from '../src/worker-v1.9.mjs';
+import { canonicalLookupKey, enrichV19Response, hasCurrentV19Seed } from '../src/worker-v1.9.mjs';
 
 function fakeD1(rows) {
   return {
@@ -105,11 +105,36 @@ test('Corpse Reviver No.2 display name resolves to the fixed Corpse Reviver D1 r
   assert.equal(parsed.drink.evidenceVersion, 'jp-rarity-v1.9');
 });
 
+test('current v1.9 seed detection skips the expensive 400-row rewrite', async () => {
+  const env = {
+    DRINK_DB: {
+      prepare(sql) {
+        assert.match(sql, /COUNT\(\*\)/);
+        return {
+          bind(version) {
+            assert.equal(version, 'jp-rarity-v1.9');
+            return { async first() { return { count: JP_RARITY_V19_SEED_ROWS.length }; } };
+          }
+        };
+      }
+    }
+  };
+  assert.equal(await hasCurrentV19Seed(env), true);
+});
+
 test('runtime entry keeps English canonical identity separate from Japanese display name', async () => {
   const source = await readFile(new URL('../src/worker-v1.9.mjs', import.meta.url), 'utf8');
   assert.match(source, /JP_RARITY_V19_JA_NAMES/);
   assert.match(source, /const japaneseName = JP_RARITY_V19_JA_NAMES\.get\(key\) \|\| ''/);
   assert.match(source, /\.bind\(key, japaneseName, name,/);
+});
+
+test('runtime entry overlaps seed preflight with the Anthropic request', async () => {
+  const source = await readFile(new URL('../src/worker-v1.9.mjs', import.meta.url), 'utf8');
+  assert.match(source, /const seedPromise = ensureV19Seed\(env\)/);
+  assert.match(source, /const response = await baseWorker\.fetch\(effectiveRequest, env, context\)/);
+  assert.match(source, /await seedPromise;\n    return enrichV19Response/);
+  assert.match(source, /hasCurrentV19Seed/);
 });
 
 test('runtime entry wires v1.9 D1 seed and D1 lookup before returning chat response', async () => {
