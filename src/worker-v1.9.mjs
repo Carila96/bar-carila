@@ -1,5 +1,5 @@
 import baseWorker from './worker.mjs';
-import { JP_RARITY_V19_SEED_ROWS, JP_RARITY_V19_JA_NAMES, normalizeDrinkV19Key } from './drink-master-v1.9-master.mjs';
+import { JP_RARITY_V19_SEED_ROWS, JP_RARITY_V19_JA_NAMES, JP_RARITY_V19_BASE_SPIRIT_BY_KEY, normalizeDrinkV19Key } from './drink-master-v1.9-master.mjs';
 
 const EVIDENCE_VERSION = 'jp-rarity-v1.9';
 const EVALUATED_AT = '2026-09-05';
@@ -59,16 +59,15 @@ async function seedV19(env) {
   const statements = JP_RARITY_V19_SEED_ROWS.map(([name, availability, rarity, confidence]) => {
     const key = normalizeDrinkV19Key(name);
     const japaneseName = JP_RARITY_V19_JA_NAMES.get(key) || '';
+    const baseSpirit = JP_RARITY_V19_BASE_SPIRIT_BY_KEY.get(key) || '';
     return env.DRINK_DB.prepare(`INSERT INTO drinks (
-      canonical_key, name_ja, name_en, japan_availability_score, japan_rarity_score,
+      canonical_key, name_ja, name_en, base_spirit, japan_availability_score, japan_rarity_score,
       japan_rarity_label, japan_rarity_confidence, rarity_reason, evidence_version, evaluated_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
     ON CONFLICT(canonical_key) DO UPDATE SET
-      name_ja = CASE
-        WHEN excluded.name_ja <> '' THEN excluded.name_ja
-        ELSE drinks.name_ja
-      END,
+      name_ja = CASE WHEN excluded.name_ja <> '' THEN excluded.name_ja ELSE drinks.name_ja END,
       name_en = CASE WHEN excluded.name_en <> '' THEN excluded.name_en ELSE drinks.name_en END,
+      base_spirit = CASE WHEN excluded.base_spirit <> '' THEN excluded.base_spirit ELSE drinks.base_spirit END,
       japan_availability_score = excluded.japan_availability_score,
       japan_rarity_score = excluded.japan_rarity_score,
       japan_rarity_label = excluded.japan_rarity_label,
@@ -77,7 +76,7 @@ async function seedV19(env) {
       evidence_version = excluded.evidence_version,
       evaluated_at = excluded.evaluated_at,
       updated_at = datetime('now')`)
-      .bind(key, japaneseName, name, availability, rarity, rarityLabel(rarity), confidence, rarityReason(availability), EVIDENCE_VERSION, EVALUATED_AT);
+      .bind(key, japaneseName, name, baseSpirit, availability, rarity, rarityLabel(rarity), confidence, rarityReason(availability), EVIDENCE_VERSION, EVALUATED_AT);
   });
   for (let i = 0; i < statements.length; i += 80) await env.DRINK_DB.batch(statements.slice(i, i + 80));
 }
@@ -92,7 +91,7 @@ async function addMasterKeyInstruction(request) {
   let body;
   try { body = await request.clone().json(); } catch { return request; }
   if (!body || typeof body !== 'object' || typeof body.system !== 'string') return request;
-  body.system += '\n\n【BarCarila固定マスター照合】最終回答が recommendation の場合、drink.masterKey にそのカクテルの標準的な英語名を必ず入れてください（例: Gin and Tonic, Moscow Mule）。既存フィールドは変更しないでください。';
+  body.system += '\n\n【BarCarila固定マスター照合】最終回答が recommendation の場合、drink.masterKey にそのカクテルの標準的な英語名を必ず入れてください（例: Gin and Tonic, Moscow Mule）。同名で別レシピが存在する場合はベースまで含めた固定キーを使ってください。アカプルコは必ず Acapulco (Rum) または Acapulco (Tequila) のどちらかにしてください。既存フィールドは変更しないでください。';
   return new Request(request, { body: JSON.stringify(body) });
 }
 
