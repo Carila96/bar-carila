@@ -27,7 +27,7 @@ jobs:
           t=Path('test/worker.test.mjs')
           s=t.read_text(encoding='utf-8')
           marker="test('drink image client refreshes exact-name images before trusting old generic placeholders', async () => {"
-          extra="test('Aperol Spritz has a verified orange drink placeholder', async () => {\n  const js = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');\n  assert.match(js, /アペロールスプリッツ.*photo-1688912740928-123e137c45fd/);\n  assert.doesNotMatch(js, /アペロールスプリッツ.*photo-1563077764-93e534f3acaa/);\n});\n\n"
+          extra="test('Aperol Spritz has a verified orange drink placeholder', async () => {\n  const js = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');\n  assert.match(js, /\\\"アペロールスプリッツ\\\": \\\"https:\\/\\/images\\.unsplash\\.com\\/photo-1688912740928-123e137c45fd/);\n  assert.doesNotMatch(js, /\\\"アペロールスプリッツ\\\": \\\"https:\\/\\/images\\.unsplash\\.com\\/photo-1563077764-93e534f3acaa/);\n});\n\n"
           if 'verified orange drink placeholder' not in s:
               if marker not in s: raise SystemExit('image test marker missing')
               s=s.replace(marker,extra+marker,1)
