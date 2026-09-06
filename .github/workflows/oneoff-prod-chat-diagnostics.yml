@@ -1,0 +1,89 @@
+name: One-off production chat diagnostics patch
+on:
+  push:
+    branches:
+      - fix/prod-chat-diagnostics
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/prod-chat-diagnostics
+      - name: Expose safe production chat diagnostics
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('src/worker.mjs')
+          s=p.read_text(encoding='utf-8')
+          old="""    return json({
+      error: 'Chat service unavailable',
+      code: `ANTHROPIC_${error.type.toUpperCase()}`,
+      requestId,
+    }, upstream.status);"""
+          new="""    return json({
+      error: 'Chat service unavailable',
+      code: `ANTHROPIC_${error.type.toUpperCase()}`,
+      requestId,
+      detail: error.message,
+      upstreamRequestId: upstream.headers.get('request-id') || undefined,
+    }, upstream.status);"""
+          if old not in s: raise SystemExit('upstream error response anchor missing')
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+
+          p=Path('public/assets/js/main.js')
+          s=p.read_text(encoding='utf-8')
+          old="""    error.status=res.status;error.code=data&&data.code;error.requestId=data&&data.requestId;throw error;"""
+          new="""    error.status=res.status;error.code=data&&data.code;error.requestId=data&&data.requestId;error.detail=data&&data.detail;error.upstreamRequestId=data&&data.upstreamRequestId;throw error;"""
+          if old not in s: raise SystemExit('frontend error detail anchor missing')
+          s=s.replace(old,new,1)
+          old="""function previewChatDiagnostic(error){
+  if(!location.hostname.endsWith('.workers.dev'))return null;
+  const status=Number.isInteger(error&&error.status)&&error.status>=100&&error.status<=599?error.status:null;
+  const code=typeof(error&&error.code)==='string'&&/^[A-Z0-9_]+$/.test(error.code)?error.code:null;
+  const requestId=typeof(error&&error.requestId)==='string'&&/^[A-Za-z0-9_-]+$/.test(error.requestId)?error.requestId:null;
+  if(status===null&&!code&&!requestId)return null;
+  return [status===null?null:`HTTP ${status}`,code,requestId].filter(Boolean).join(' / ');
+}"""
+          new="""function previewChatDiagnostic(error){
+  const allowedHost=location.hostname.endsWith('.workers.dev')||location.hostname==='bar.carilaworks.com';
+  if(!allowedHost)return null;
+  const status=Number.isInteger(error&&error.status)&&error.status>=100&&error.status<=599?error.status:null;
+  const code=typeof(error&&error.code)==='string'&&/^[A-Z0-9_]+$/.test(error.code)?error.code:null;
+  const requestId=typeof(error&&error.requestId)==='string'&&/^[A-Za-z0-9_-]+$/.test(error.requestId)?error.requestId:null;
+  const upstreamRequestId=typeof(error&&error.upstreamRequestId)==='string'?error.upstreamRequestId:null;
+  const detail=typeof(error&&error.detail)==='string'?error.detail.slice(0,240):null;
+  if(status===null&&!code&&!requestId&&!detail)return null;
+  return [status===null?null:`HTTP ${status}`,code,detail,upstreamRequestId?`upstream ${upstreamRequestId}`:null,requestId?`local ${requestId}`:null].filter(Boolean).join(' / ');
+}"""
+          if old not in s: raise SystemExit('preview diagnostic function anchor missing')
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+
+          t=Path('test/worker.test.mjs')
+          s=t.read_text(encoding='utf-8')
+          s=s.replace("assert.match(html, /location\\.hostname\\.endsWith\\('\\.workers\\.dev'\\)/);", "assert.match(html, /location\\.hostname==='bar\\.carilaworks\\.com'/);", 1)
+          if "production chat errors expose only safe upstream diagnostics" not in s:
+              marker="test('frontend routes quick turns to Haiku and final recommendations to Sonnet', async () => {"
+              extra="""test('production chat errors expose only safe upstream diagnostics', async () => {\n  const html = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');\n  const workerSource = await readFile(new URL('../src/worker.mjs', import.meta.url), 'utf8');\n  assert.match(html, /error\\.detail=data&&data\\.detail/);\n  assert.match(html, /location\\.hostname==='bar\\.carilaworks\\.com'/);\n  assert.match(workerSource, /detail: error\\.message/);\n  assert.match(workerSource, /upstreamRequestId: upstream\\.headers\\.get\\('request-id'\\)/);\n});\n\n"""
+              if marker not in s: raise SystemExit('test marker missing')
+              s=s.replace(marker,extra+marker,1)
+          t.write_text(s,encoding='utf-8')
+          PY
+      - name: Run tests
+        run: |
+          npm ci
+          npm test
+          npm run validate:drink-master-v1.9
+      - name: Commit patch and remove one-off workflow
+        run: |
+          rm -f .github/workflows/oneoff-prod-chat-diagnostics.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/worker.mjs public/assets/js/main.js test/worker.test.mjs .github/workflows/oneoff-prod-chat-diagnostics.yml
+          git commit -m "Expose safe production chat diagnostics"
+          git push origin HEAD:fix/prod-chat-diagnostics
