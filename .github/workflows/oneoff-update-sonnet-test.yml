@@ -1,0 +1,38 @@
+name: One-off update Sonnet test
+
+on:
+  push:
+    branches:
+      - perf/sonnet5-latency
+
+permissions:
+  contents: write
+
+jobs:
+  update-test:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: perf/sonnet5-latency
+      - name: Update legacy Sonnet model assertion
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('test/worker.test.mjs')
+          s = p.read_text(encoding='utf-8')
+          old = "assert.match(mainJs, /const RECOMMEND_MODEL='claude-sonnet-4-6'/);"
+          new = "assert.match(mainJs, /const RECOMMEND_MODEL='claude-sonnet-5'/);"
+          if old not in s:
+              raise SystemExit('legacy Sonnet assertion not found')
+          p.write_text(s.replace(old, new, 1), encoding='utf-8')
+          PY
+      - name: Remove one-off workflow and commit
+        run: |
+          rm .github/workflows/oneoff-update-sonnet-test.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add test/worker.test.mjs .github/workflows/oneoff-update-sonnet-test.yml
+          git commit -m "Update recommendation model routing test for Sonnet 5"
+          git push origin HEAD:perf/sonnet5-latency
