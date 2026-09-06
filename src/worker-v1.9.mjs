@@ -120,6 +120,7 @@ async function addMasterKeyInstruction(request) {
   let body;
   try { body = await request.clone().json(); } catch { return request; }
   if (!body || typeof body !== 'object' || typeof body.system !== 'string') return request;
+  if (body.model === 'claude-sonnet-5') body.thinking = { type: 'disabled' };
   body.system += '\n\n【BarCarila固定マスター照合】最終回答が recommendation の場合、drink.masterKey にそのカクテルの標準的な英語名を必ず入れてください（例: Gin and Tonic, Moscow Mule）。同名で別レシピが存在する場合はベースまで含めた固定キーを使ってください。アカプルコは必ず Acapulco (Rum) または Acapulco (Tequila) のどちらかにしてください。コープスリバイバーNo.2は masterKey を Corpse Reviver としてください。既存フィールドは変更しないでください。';
   return new Request(request, { body: JSON.stringify(body) });
 }
