@@ -1,0 +1,58 @@
+name: One-off fix final recommendation JSON
+on:
+  push:
+    branches:
+      - fix/final-json-newline
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/final-json-newline
+      - name: Patch final recommendation JSON contract
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('public/assets/js/main.js')
+          s=p.read_text(encoding='utf-8')
+          old='''"analysis":"今夜の気分を2〜3行で表現する詩的テキスト。改行は\\
+で区切る。選択肢の言葉はそのまま使わず、その裏にある心情・情景を表現する。絵文字禁止。"'''
+          new='''"analysis":"今夜の気分を2〜3文で表現する詩的テキスト。必ず1行の文字列にし、生の改行を入れない。選択肢の言葉はそのまま使わず、その裏にある心情・情景を表現する。絵文字禁止。"'''
+          if old not in s:
+              raise SystemExit('analysis JSON contract anchor missing')
+          s=s.replace(old,new,1)
+          old2="""  const system=fastTurn?getFastSystem():getSystem();"""
+          new2="""  const system=fastTurn?getFastSystem():getSystem()+(forceRecommend?'\\n\\n【最終推薦ターン固定】ここでは質問を返さず、必ず type=recommendation のJSONを返してください。JSON文字列の値に生の改行を含めないでください。analysisを含む全ての文字列は1行で出力してください。Markdownコードフェンスや前置き・後書きは禁止です。':'');"""
+          if old2 not in s:
+              raise SystemExit('final system anchor missing')
+          s=s.replace(old2,new2,1)
+          p.write_text(s,encoding='utf-8')
+
+          t=Path('test/worker.test.mjs')
+          s=t.read_text(encoding='utf-8')
+          marker="test('choice-based recommendation flow stays local until the final Sonnet request', async () => {"
+          extra="""test('final recommendation prompt forbids raw newlines inside JSON strings', async () => {\n  const html = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');\n  assert.match(html, /必ず1行の文字列にし、生の改行を入れない/);\n  assert.match(html, /最終推薦ターン固定/);\n  assert.match(html, /質問を返さず、必ず type=recommendation/);\n  assert.match(html, /JSON文字列の値に生の改行を含めない/);\n});\n\n"""
+          if extra not in s:
+              if marker not in s: raise SystemExit('test marker missing')
+              s=s.replace(marker,extra+marker,1)
+          t.write_text(s,encoding='utf-8')
+          PY
+      - name: Remove temporary diagnostic page
+        run: rm -f public/diagnostic.html test/diagnostic-page.test.mjs
+      - name: Run tests
+        run: |
+          npm ci
+          npm test
+          npm run validate:drink-master-v1.9
+      - name: Commit fix and remove one-off workflow
+        run: |
+          rm -f .github/workflows/oneoff-fix-final-json.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/assets/js/main.js test/worker.test.mjs public/diagnostic.html test/diagnostic-page.test.mjs .github/workflows/oneoff-fix-final-json.yml
+          git commit -m "Fix malformed final recommendation JSON"
+          git push origin HEAD:fix/final-json-newline
