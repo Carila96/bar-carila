@@ -276,6 +276,14 @@ test('Sonnet 5 final request reserves JSON completion headroom and asks for comp
   assert.match(source, /簡潔なJSONオブジェクトを1個だけ/);
 });
 
+test('final recommendation prompt forbids raw newlines inside JSON strings', async () => {
+  const html = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');
+  assert.match(html, /必ず1行の文字列にし、生の改行を入れない/);
+  assert.match(html, /最終推薦ターン固定/);
+  assert.match(html, /質問を返さず、必ず type=recommendation/);
+  assert.match(html, /JSON文字列の値に生の改行を含めない/);
+});
+
 test('choice-based recommendation flow stays local until the final Sonnet request', async () => {
   const html = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');
   assert.match(html, /const LOCAL_FLOW_COPY=/);
