@@ -259,6 +259,23 @@ test('frontend routes quick turns to Haiku and final recommendations to Sonnet',
   assert.doesNotMatch(html, /claude-sonnet-4-20250514/);
 });
 
+test('frontend final recommendation parser tolerates wrapped JSON and allows enough output budget', async () => {
+  const js = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');
+  assert.match(js, /function parseAssistantJson\(data\)/);
+  assert.match(js, /blocks\.find\(b=>b&&b\.type==='text'/);
+  assert.match(js, /const maxTokens=fastTurn\?600:2200/);
+  const callApi = js.match(/async function callAPI\(userMsg,forceRecommend=false\)\{[\s\S]*?\n\}/)?.[0] || '';
+  assert.match(callApi, /parseAssistantJson\(data\)/);
+  assert.doesNotMatch(callApi, /data\.content\[0\]\.text/);
+});
+
+test('Sonnet 5 final request reserves JSON completion headroom and asks for compact JSON', async () => {
+  const source = await readFile(new URL('../src/worker-v1.9.mjs', import.meta.url), 'utf8');
+  assert.match(source, /Math\.max\(Number\(body\.max_tokens\) \|\| 0, 2200\)/);
+  assert.match(source, /最終JSON安定化/);
+  assert.match(source, /簡潔なJSONオブジェクトを1個だけ/);
+});
+
 test('choice-based recommendation flow stays local until the final Sonnet request', async () => {
   const html = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');
   assert.match(html, /const LOCAL_FLOW_COPY=/);

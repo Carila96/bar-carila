@@ -45,7 +45,7 @@ test('guided local flow reaches Sonnet 5 with a valid final payload and normaliz
 
     assert.equal(response.status, 200);
     assert.equal(forwarded.model, 'claude-sonnet-5');
-    assert.equal(forwarded.max_tokens, 1400);
+    assert.equal(forwarded.max_tokens, 2200);
     assert.deepEqual(forwarded.thinking, { type: 'disabled' });
     assert.deepEqual(forwarded.output_config, { effort: 'low' });
     assert.deepEqual(forwarded.messages, localFlowMessages);

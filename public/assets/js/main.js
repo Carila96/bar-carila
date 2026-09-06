@@ -717,13 +717,24 @@ async function callAPI(userMsg,forceRecommend=false){
   const userTurns=chatHistory.filter(m=>m.role==='user').length;
   const fastTurn=!forceRecommend&&userTurns<4;
   const model=fastTurn?FAST_MODEL:RECOMMEND_MODEL;
-  const maxTokens=fastTurn?600:1000;
+  const maxTokens=fastTurn?600:2200;
   const system=fastTurn?getFastSystem():getSystem();
   const res=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model,max_tokens:maxTokens,system,messages:chatHistory})});
   const data=await readAPIResponse(res);
-  const text=data.content[0].text;
-  chatHistory.push({role:'assistant',content:text});
-  return JSON.parse(text.replace(/```json|```/g,'').trim());
+  const parsed=parseAssistantJson(data);
+  chatHistory.push({role:'assistant',content:JSON.stringify(parsed)});
+  return parsed;
+}
+
+function parseAssistantJson(data){
+  const blocks=Array.isArray(data&&data.content)?data.content:[];
+  const textBlock=blocks.find(b=>b&&b.type==='text'&&typeof b.text==='string')||blocks.find(b=>b&&typeof b.text==='string');
+  if(!textBlock)throw new Error('Chat API returned no text block');
+  const cleaned=textBlock.text.replace(/```json|```/g,'').trim();
+  try{return JSON.parse(cleaned);}catch{}
+  const first=cleaned.indexOf('{'),last=cleaned.lastIndexOf('}');
+  if(first>=0&&last>first)return JSON.parse(cleaned.slice(first,last+1));
+  throw new Error('Chat API returned malformed JSON');
 }
 
 async function readAPIResponse(res){
