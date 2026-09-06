@@ -133,7 +133,7 @@ async function addMasterKeyInstruction(request) {
   if (body.model === 'claude-sonnet-5') {
     body.thinking = { type: 'disabled' };
     body.output_config = { ...(body.output_config || {}), effort: 'low' };
-    body.max_tokens = Math.max(Number(body.max_tokens) || 0, 2200);
+    body.max_tokens = Math.max(Number(body.max_tokens) || 0, 1200);
   }
   body.system += '\n\n【BarCarila固定マスター照合】最終回答が recommendation の場合、drink.masterKey にそのカクテルの標準的な英語名を必ず入れてください（例: Gin and Tonic, Moscow Mule）。同名で別レシピが存在する場合はベースまで含めた固定キーを使ってください。アカプルコは必ず Acapulco (Rum) または Acapulco (Tequila) のどちらかにしてください。コープスリバイバーNo.2は masterKey を Corpse Reviver としてください。既存フィールドは変更しないでください。';
   if (body.model === 'claude-sonnet-5') body.system += '\n\n【最終JSON安定化】Claude Sonnet 5では前置き・後書き・Markdownコードフェンスを付けず、必要項目だけの簡潔なJSONオブジェクトを1個だけ返してください。description・trivia等をD1から補完する対象では、それらを重複生成しないでください。';

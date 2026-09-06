@@ -1,6 +1,8 @@
 const API='/api/chat';
 const DRINK_META_API='/api/drink-meta';
 const DRINK_META_CACHE_KEY='bar_carila_drink_meta_cache_v1';
+const LOCAL_CHOICE_DELAY_MS=450;
+const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const FAST_MODEL='claude-haiku-4-5-20251001';
 const RECOMMEND_MODEL='claude-sonnet-5';
 const AMAZON_TAG='carila-22';
@@ -43,7 +45,7 @@ function handleDrinkImgError(img){
   if(img.src!==fi){img.src=fi;}
   else{img.parentNode.innerHTML='<div class="rec-no-img"><div style="font-size:36px;">🍸</div><div style="font-size:11px;letter-spacing:0.2em;color:rgba(200,146,42,0.5);">NO IMAGE</div></div>';}
 }
-const DRINK_IMG_CACHE_KEY='bar_carila_drink_img_cache_v1';
+const DRINK_IMG_CACHE_KEY='bar_carila_drink_img_cache_v2';
 function normDrinkName(s){return (s||'').toLowerCase().replace(/[・\s.\-]/g,'');}
 function findStaticDrinkImg(name){
   const nName=normDrinkName(name);
@@ -66,10 +68,10 @@ function saveDrinkImgCache(name,data){
   }catch{}
 }
 function getDrinkImg(name,cat){
-  const fixed=findStaticDrinkImg(name);
-  if(fixed)return fixed;
   const cached=getCachedDrinkImg(name);
   if(cached)return cached.url;
+  const fixed=findStaticDrinkImg(name);
+  if(fixed)return fixed;
   if(cat&&CAT_IMGS[cat])return CAT_IMGS[cat];
   return pickRandom(FALLBACK_IMGS);
 }
@@ -93,12 +95,11 @@ function buildImgQuery(cat){
   if(/リキュール/.test(c)) return 'liqueur glass bar';
   return 'cocktail drink bar';
 }
-async function fetchDrinkImg(name,cat,imgEl){
-  if(findStaticDrinkImg(name))return;
+async function fetchDrinkImg(name,cat,imgEl,searchName=''){
   const cached=getCachedDrinkImg(name);
   if(cached){if(imgEl&&imgEl.src!==cached.url)imgEl.src=cached.url;return;}
   try{
-    const q=buildImgQuery(cat);
+    const q=`${searchName||name} ${buildImgQuery(cat)}`.trim();
     const r=await fetch(`/api/drink-image?name=${encodeURIComponent(name)}&query=${encodeURIComponent(q)}`);
     if(!r.ok)return;
     const d=await r.json();
@@ -332,7 +333,7 @@ function showRec(data){
   applyDrinkMetaToCard(data,card);
 
   const recImgEl=card.querySelector('.rec-img-wrap img');
-  if(recImgEl)fetchDrinkImg(data.drink.name,data.drink.category,recImgEl);
+  if(recImgEl)fetchDrinkImg(data.drink.name,data.drink.category,recImgEl,data.drink.masterKey||'');
 
   const nudge=document.createElement('div');
   nudge.className='social-nudge';
@@ -593,6 +594,20 @@ function getSystem(){return SYSTEM+(I18N[lang].langRule||'');}
 function getFastSystem(){return getSystem()+`
 
 【高速質問ターン】まだ最終提案に必要な情報が十分でない場合は、短く自然な質問を1つだけ返す。messageは簡潔にし、choicesは原則4個以内。情報が十分ならrecommendationを返してよい。`;}
+function getFinalSystem(){return `あなたはBar Carilaのバーテンダーです。messages内のこれまでの質問と回答をすべて読み、今夜の一杯を1つだけ選んでください。
+
+【最終推薦ターン固定】
+・ここでは質問を返さず、必ず type=recommendation を返す。
+・ユーザーの回答を総合し、味・香り・強さ・気分・場面に合う実在する一杯を選ぶ。
+・日本のBARで実際に注文する場面を前提にする。カクテル／モクテルは標準的なレシピを使う。単体酒は自然な銘柄またはカテゴリを提案する。
+・説明は簡潔にし、同じ内容を繰り返さない。
+・JSON文字列の値に生の改行を含めない。analysisを含む全ての文字列は1行。Markdownコードフェンス、前置き、後書きは禁止。
+
+【出力JSON】
+{"type":"recommendation","emotion":"bartender or relax or counter or curious","message":"短い一言","analysis":"今夜の気分を2〜3文で表す1行の文章","drink":{"name":"正式名称","masterKey":"標準的な英語名","category":"カテゴリ","abv":"約8%のような推定値","rarity":0,"description":"60字以内の説明1文","trivia":"80字以内の豆知識またはBARでの楽しみ方","recipe":{"ingredients":[{"name":"材料","amount":"分量"}],"method":"作り方1文"},"tags":["タグ1","タグ2","タグ3"]}}
+・カクテル／モクテルはrecipe必須。単体酒のみrecipe:null可。
+・rarityは0〜100の整数で日本の一般BARで見つけにくいほど高くする。固定マスター対象はサーバー側で上書きされる。
+・emotionはカクテル／モクテル=bartender、洋酒=relax、珍しい提案=curiousを基本にする。`+(I18N[lang].langRule||'');}
 function initialAssistantPayload(){return {type:'question',emotion:'counter',message:t().initialMsg,choices:t().initialChoices};}
 function initialHistory(){return [{role:'user',content:t().startMsg},{role:'assistant',content:JSON.stringify(initialAssistantPayload())}];}
 
@@ -672,6 +687,7 @@ async function handleLocalChoice(text){
     localFlow={route,answers:[],step:0,currentChoices:[]};
     const first=localQuestions(route,[])[0];
     if(!first){localFlow=null;return false;}
+    await sleep(LOCAL_CHOICE_DELAY_MS);
     presentLocalQuestion(first);
     return true;
   }
@@ -684,6 +700,7 @@ async function handleLocalChoice(text){
   localFlow.step+=1;
   const questions=localQuestions(localFlow.route,localFlow.answers);
   if(localFlow.step<questions.length){
+    await sleep(LOCAL_CHOICE_DELAY_MS);
     presentLocalQuestion(questions[localFlow.step]);
     return true;
   }
@@ -717,8 +734,8 @@ async function callAPI(userMsg,forceRecommend=false){
   const userTurns=chatHistory.filter(m=>m.role==='user').length;
   const fastTurn=!forceRecommend&&userTurns<4;
   const model=fastTurn?FAST_MODEL:RECOMMEND_MODEL;
-  const maxTokens=fastTurn?600:2200;
-  const system=fastTurn?getFastSystem():getSystem()+(forceRecommend?'\n\n【最終推薦ターン固定】ここでは質問を返さず、必ず type=recommendation のJSONを返してください。JSON文字列の値に生の改行を含めないでください。analysisを含む全ての文字列は1行で出力してください。Markdownコードフェンスや前置き・後書きは禁止です。':'');
+  const maxTokens=fastTurn?600:1200;
+  const system=forceRecommend?getFinalSystem():(fastTurn?getFastSystem():getSystem());
   const res=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model,max_tokens:maxTokens,system,messages:chatHistory})});
   const data=await readAPIResponse(res);
   const parsed=parseAssistantJson(data);

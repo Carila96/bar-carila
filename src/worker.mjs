@@ -429,7 +429,7 @@ async function drinkImage(request, env, context) {
 
   const cache = caches.default;
   const normalize = (value) => (value || '').trim().toLowerCase().replace(/[・\s.\-]/g, '');
-  const cacheIdentity = normalize(name) || normalize(query);
+  const cacheIdentity = 'v2:' + (normalize(name) || normalize(query));
   const cacheUrl = new URL('/api/drink-image', url.origin);
   cacheUrl.searchParams.set('key', cacheIdentity);
   const cacheKey = new Request(cacheUrl.toString(), { method: 'GET' });
@@ -453,7 +453,7 @@ async function drinkImage(request, env, context) {
   }
 
   if (!env.UNSPLASH_ACCESS_KEY) return missingSecret('UNSPLASH_ACCESS_KEY');
-  const searchQuery = query || `${name} cocktail drink`;
+  const searchQuery = [name, query].filter(Boolean).join(' ').trim() || 'cocktail drink';
   const params = new URLSearchParams({
     query: searchQuery,
     per_page: '3',
