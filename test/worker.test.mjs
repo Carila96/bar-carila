@@ -252,7 +252,7 @@ test('frontend localizes chat errors and reports safe diagnostics', async () => 
 test('frontend routes quick turns to Haiku and final recommendations to Sonnet', async () => {
   const html = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');
   assert.match(html, /const FAST_MODEL='claude-haiku-4-5-20251001'/);
-  assert.match(html, /const RECOMMEND_MODEL='claude-sonnet-4-6'/);
+  assert.match(html, /const RECOMMEND_MODEL='claude-sonnet-5'/);
   assert.match(html, /const fastTurn=userTurns<4/);
   assert.match(html, /model=fastTurn\?FAST_MODEL:RECOMMEND_MODEL/);
   assert.match(html, /max_tokens:0,system:getFastSystem\(\)/);
