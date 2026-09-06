@@ -44,10 +44,21 @@ jobs:
               x=x[:line_end+1]+"\n  if (body.model === 'claude-sonnet-5') body.system += '\\n\\n"+instruction+"';"+x[line_end+1:]
           w.write_text(x,encoding='utf-8')
 
+          # Update tests that intentionally pin the final output budget.
+          dc=Path('test/drink-copy.test.mjs')
+          d=dc.read_text(encoding='utf-8')
+          d=d.replace(r"const maxTokens=fastTurn\?600:1000", r"const maxTokens=fastTurn\?600:2200")
+          dc.write_text(d,encoding='utf-8')
+
+          ff=Path('test/final-recommendation-flow.test.mjs')
+          f=ff.read_text(encoding='utf-8')
+          f=f.replace('assert.equal(forwarded.max_tokens, 1400);','assert.equal(forwarded.max_tokens, 2200);')
+          ff.write_text(f,encoding='utf-8')
+
           t=Path('test/worker.test.mjs')
           z=t.read_text(encoding='utf-8')
           marker="test('choice-based recommendation flow stays local until the final Sonnet request', async () => {"
-          extra="""test('frontend final recommendation parser tolerates wrapped JSON and allows enough output budget', async () => {\n  const js = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');\n  assert.match(js, /function parseAssistantJson\\(data\\)/);\n  assert.match(js, /blocks\\.find\\(b=>b&&b\\.type==='text'/);\n  assert.match(js, /const maxTokens=fastTurn\\?600:2200/);\n  assert.doesNotMatch(js, /data\\.content\\[0\\]\\.text/);\n});\n\ntest('Sonnet 5 final request reserves JSON completion headroom and asks for compact JSON', async () => {\n  const source = await readFile(new URL('../src/worker-v1.9.mjs', import.meta.url), 'utf8');\n  assert.match(source, /Math\\.max\\(Number\\(body\\.max_tokens\\) \\|\\| 0, 2200\\)/);\n  assert.match(source, /最終JSON安定化/);\n  assert.match(source, /簡潔なJSONオブジェクトを1個だけ/);\n});\n\n"""
+          extra="""test('frontend final recommendation parser tolerates wrapped JSON and allows enough output budget', async () => {\n  const js = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');\n  assert.match(js, /function parseAssistantJson\\(data\\)/);\n  assert.match(js, /blocks\\.find\\(b=>b&&b\\.type==='text'/);\n  assert.match(js, /const maxTokens=fastTurn\\?600:2200/);\n  const callApi = js.match(/async function callAPI\\(userMsg,forceRecommend=false\\)\\{[\\s\\S]*?\\n\\}/)?.[0] || '';\n  assert.match(callApi, /parseAssistantJson\\(data\\)/);\n  assert.doesNotMatch(callApi, /data\\.content\\[0\\]\\.text/);\n});\n\ntest('Sonnet 5 final request reserves JSON completion headroom and asks for compact JSON', async () => {\n  const source = await readFile(new URL('../src/worker-v1.9.mjs', import.meta.url), 'utf8');\n  assert.match(source, /Math\\.max\\(Number\\(body\\.max_tokens\\) \\|\\| 0, 2200\\)/);\n  assert.match(source, /最終JSON安定化/);\n  assert.match(source, /簡潔なJSONオブジェクトを1個だけ/);\n});\n\n"""
           if 'frontend final recommendation parser tolerates wrapped JSON' not in z:
               if marker not in z: raise SystemExit('test insertion anchor missing')
               z=z.replace(marker,extra+marker,1)
@@ -63,6 +74,6 @@ jobs:
           rm -f .github/workflows/oneoff-final-json-reliability.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/assets/js/main.js src/worker-v1.9.mjs test/worker.test.mjs .github/workflows/oneoff-final-json-reliability.yml
+          git add public/assets/js/main.js src/worker-v1.9.mjs test/worker.test.mjs test/drink-copy.test.mjs test/final-recommendation-flow.test.mjs .github/workflows/oneoff-final-json-reliability.yml
           git commit -m "Harden final recommendation JSON completion"
           git push origin HEAD:fix/structured-final-output
