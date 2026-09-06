@@ -1,0 +1,184 @@
+name: One-off BarCarila UX speed and image v2
+on:
+  push:
+    branches:
+      - ux/pacing-latency-image-v2
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ux/pacing-latency-image-v2
+      - name: Patch pacing, final prompt, and drink images
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p=Path('public/assets/js/main.js')
+          s=p.read_text(encoding='utf-8')
+
+          # Add a subtle beat between local guided questions.
+          anchor="const DRINK_META_CACHE_KEY='bar_carila_drink_meta_cache_v1';"
+          if anchor not in s: raise SystemExit('top constant anchor missing')
+          s=s.replace(anchor, anchor+"\nconst LOCAL_CHOICE_DELAY_MS=450;\nconst sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));",1)
+
+          # Invalidate browser-side image cache produced by generic searches.
+          old="const DRINK_IMG_CACHE_KEY='bar_carila_drink_img_cache_v1';"
+          new="const DRINK_IMG_CACHE_KEY='bar_carila_drink_img_cache_v2';"
+          if old not in s: raise SystemExit('drink image cache key anchor missing')
+          s=s.replace(old,new,1)
+
+          # Guided final recommendation uses a compact, recommendation-only prompt.
+          anchor="function initialAssistantPayload(){return {type:'question',emotion:'counter',message:t().initialMsg,choices:t().initialChoices};}"
+          if anchor not in s: raise SystemExit('initialAssistantPayload anchor missing')
+          final_system=r'''function getFinalSystem(){return `あなたはBar Carilaのバーテンダーです。messages内のこれまでの質問と回答をすべて読み、今夜の一杯を1つだけ選んでください。
+
+【最終推薦ターン固定】
+・ここでは質問を返さず、必ず type=recommendation を返す。
+・ユーザーの回答を総合し、味・香り・強さ・気分・場面に合う実在する一杯を選ぶ。
+・日本のBARで実際に注文する場面を前提にする。カクテル／モクテルは標準的なレシピを使う。単体酒は自然な銘柄またはカテゴリを提案する。
+・説明は簡潔にし、同じ内容を繰り返さない。
+・JSON文字列の値に生の改行を含めない。analysisを含む全ての文字列は1行。Markdownコードフェンス、前置き、後書きは禁止。
+
+【出力JSON】
+{"type":"recommendation","emotion":"bartender or relax or counter or curious","message":"短い一言","analysis":"今夜の気分を2〜3文で表す1行の文章","drink":{"name":"正式名称","masterKey":"標準的な英語名","category":"カテゴリ","abv":"約8%のような推定値","rarity":0,"description":"60字以内の説明1文","trivia":"80字以内の豆知識またはBARでの楽しみ方","recipe":{"ingredients":[{"name":"材料","amount":"分量"}],"method":"作り方1文"},"tags":["タグ1","タグ2","タグ3"]}}
+・カクテル／モクテルはrecipe必須。単体酒のみrecipe:null可。
+・rarityは0〜100の整数で日本の一般BARで見つけにくいほど高くする。固定マスター対象はサーバー側で上書きされる。
+・emotionはカクテル／モクテル=bartender、洋酒=relax、珍しい提案=curiousを基本にする。`+(I18N[lang].langRule||'');}
+'''
+          s=s.replace(anchor,final_system+anchor,1)
+
+          # Use compact final system and smaller safe completion budget.
+          old="const maxTokens=fastTurn?600:2200;"
+          new="const maxTokens=fastTurn?600:1200;"
+          if old not in s: raise SystemExit('maxTokens anchor missing')
+          s=s.replace(old,new,1)
+          old="const system=fastTurn?getFastSystem():getSystem()+(forceRecommend?'\\n\\n【最終推薦ターン固定】ここでは質問を返さず、必ず type=recommendation のJSONを返してください。JSON文字列の値に生の改行を含めないでください。analysisを含む全ての文字列は1行で出力してください。Markdownコードフェンスや前置き・後書きは禁止です。':'');"
+          new="const system=forceRecommend?getFinalSystem():(fastTurn?getFastSystem():getSystem());"
+          if old not in s: raise SystemExit('system selection anchor missing')
+          s=s.replace(old,new,1)
+
+          # Add a 450ms beat before each locally generated next question.
+          old="    presentLocalQuestion(first);\n    return true;"
+          new="    await sleep(LOCAL_CHOICE_DELAY_MS);\n    presentLocalQuestion(first);\n    return true;"
+          if old not in s: raise SystemExit('first local question anchor missing')
+          s=s.replace(old,new,1)
+          old="  if(localFlow.step<questions.length){\n    presentLocalQuestion(questions[localFlow.step]);\n    return true;\n  }"
+          new="  if(localFlow.step<questions.length){\n    await sleep(LOCAL_CHOICE_DELAY_MS);\n    presentLocalQuestion(questions[localFlow.step]);\n    return true;\n  }"
+          if old not in s: raise SystemExit('next local question anchor missing')
+          s=s.replace(old,new,1)
+
+          # Prefer v2 cached exact-search images over generic static placeholders.
+          old="""function getDrinkImg(name,cat){
+  const fixed=findStaticDrinkImg(name);
+  if(fixed)return fixed;
+  const cached=getCachedDrinkImg(name);
+  if(cached)return cached.url;
+  if(cat&&CAT_IMGS[cat])return CAT_IMGS[cat];
+  return pickRandom(FALLBACK_IMGS);
+}"""
+          new="""function getDrinkImg(name,cat){
+  const cached=getCachedDrinkImg(name);
+  if(cached)return cached.url;
+  const fixed=findStaticDrinkImg(name);
+  if(fixed)return fixed;
+  if(cat&&CAT_IMGS[cat])return CAT_IMGS[cat];
+  return pickRandom(FALLBACK_IMGS);
+}"""
+          if old not in s: raise SystemExit('getDrinkImg anchor missing')
+          s=s.replace(old,new,1)
+
+          old="""async function fetchDrinkImg(name,cat,imgEl){
+  if(findStaticDrinkImg(name))return;
+  const cached=getCachedDrinkImg(name);"""
+          new="""async function fetchDrinkImg(name,cat,imgEl,searchName=''){
+  const cached=getCachedDrinkImg(name);"""
+          if old not in s: raise SystemExit('fetchDrinkImg anchor missing')
+          s=s.replace(old,new,1)
+          old="    const q=buildImgQuery(cat);"
+          new="    const q=`${searchName||name} ${buildImgQuery(cat)}`.trim();"
+          if old not in s: raise SystemExit('image query anchor missing')
+          s=s.replace(old,new,1)
+          old="if(recImgEl)fetchDrinkImg(data.drink.name,data.drink.category,recImgEl);"
+          new="if(recImgEl)fetchDrinkImg(data.drink.name,data.drink.category,recImgEl,data.drink.masterKey||'');"
+          if old not in s: raise SystemExit('recommendation image call anchor missing')
+          s=s.replace(old,new,1)
+
+          p.write_text(s,encoding='utf-8')
+
+          # Server-side image search v2: invalidate bad generic D1/edge entries and always include the drink name.
+          w=Path('src/worker.mjs')
+          s=w.read_text(encoding='utf-8')
+          old="const cacheIdentity = normalize(name) || normalize(query);"
+          new="const cacheIdentity = 'v2:' + (normalize(name) || normalize(query));"
+          if old not in s: raise SystemExit('worker image cache identity anchor missing')
+          s=s.replace(old,new,1)
+          old="const searchQuery = query || `${name} cocktail drink`;"
+          new="const searchQuery = [name, query].filter(Boolean).join(' ').trim() || 'cocktail drink';"
+          if old not in s: raise SystemExit('worker image search query anchor missing')
+          s=s.replace(old,new,1)
+          w.write_text(s,encoding='utf-8')
+
+          # Keep Sonnet 5, low effort, no thinking; reduce over-reserved completion ceiling.
+          w=Path('src/worker-v1.9.mjs')
+          s=w.read_text(encoding='utf-8')
+          old="body.max_tokens = Math.max(Number(body.max_tokens) || 0, 2200);"
+          new="body.max_tokens = Math.max(Number(body.max_tokens) || 0, 1200);"
+          if old not in s: raise SystemExit('worker-v1.9 max token anchor missing')
+          s=s.replace(old,new,1)
+          w.write_text(s,encoding='utf-8')
+
+          # Update regression expectations and add explicit UX/image assertions.
+          t=Path('test/worker.test.mjs')
+          s=t.read_text(encoding='utf-8')
+          s=s.replace("const maxTokens=fastTurn\\?600:2200", "const maxTokens=fastTurn\\?600:1200")
+          s=s.replace("Math\\.max\\(Number\\(body\\.max_tokens\\) \\|\\| 0, 2200\\)", "Math\\.max\\(Number\\(body\\.max_tokens\\) \\|\\| 0, 1200\\)")
+          old="""test('drink image client prefers fixed and locally cached images before API search', async () => {
+  const js = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');
+  assert.match(js, /const DRINK_IMG_CACHE_KEY='bar_carila_drink_img_cache_v1'/);
+  assert.match(js, /if\\(findStaticDrinkImg\\(name\\)\\)return;/);
+  assert.match(js, /const cached=getCachedDrinkImg\\(name\\);/);
+  assert.match(js, /saveDrinkImgCache\\(name,d\\)/);
+});"""
+          new="""test('drink image client refreshes exact-name images before trusting old generic placeholders', async () => {
+  const js = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');
+  assert.match(js, /const DRINK_IMG_CACHE_KEY='bar_carila_drink_img_cache_v2'/);
+  assert.doesNotMatch(js, /if\\(findStaticDrinkImg\\(name\\)\\)return;/);
+  assert.match(js, /`\\$\\{searchName\\|\\|name\\} \\$\\{buildImgQuery\\(cat\\)\\}`/);
+  assert.match(js, /data\\.drink\\.masterKey\\|\\|''/);
+  assert.match(js, /saveDrinkImgCache\\(name,d\\)/);
+});"""
+          if old not in s: raise SystemExit('old drink image test anchor missing')
+          s=s.replace(old,new,1)
+
+          marker="test('choice-based recommendation flow stays local until the final Sonnet request', async () => {"
+          extra="""test('guided flow adds a short beat and uses a compact final-only prompt', async () => {\n  const js = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');\n  assert.match(js, /const LOCAL_CHOICE_DELAY_MS=450/);\n  assert.equal((js.match(/await sleep\\(LOCAL_CHOICE_DELAY_MS\\)/g)||[]).length, 2);\n  assert.match(js, /function getFinalSystem\\(\\)/);\n  assert.match(js, /const system=forceRecommend\\?getFinalSystem\\(\\)/);\n  assert.match(js, /今夜の一杯を1つだけ選んでください/);\n});\n\ntest('drink image API v2 invalidates generic results and searches with the drink name', async () => {\n  const source = await readFile(new URL('../src/worker.mjs', import.meta.url), 'utf8');\n  assert.match(source, /const cacheIdentity = 'v2:' \\+ \\(normalize\\(name\\) \\|\\| normalize\\(query\\)\\)/);\n  assert.match(source, /const searchQuery = \\[name, query\\]\\.filter\\(Boolean\\)\\.join\\(' '\\)/);\n});\n\n"""
+          if extra not in s:
+              if marker not in s: raise SystemExit('guided flow test marker missing')
+              s=s.replace(marker,extra+marker,1)
+          t.write_text(s,encoding='utf-8')
+
+          # Update any remaining hard-coded 2200 expectations in test files only.
+          for f in Path('test').glob('*.mjs'):
+              x=f.read_text(encoding='utf-8')
+              if '2200' in x:
+                  x=x.replace('2200','1200')
+                  f.write_text(x,encoding='utf-8')
+          PY
+      - name: Run tests
+        run: |
+          npm ci
+          npm test
+          npm run validate:drink-master-v1.9
+      - name: Commit patch and remove one-off workflow
+        run: |
+          rm -f .github/workflows/oneoff-ux-speed-image-v2.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Tune guided pacing, final latency, and drink images"
+          git push origin HEAD:ux/pacing-latency-image-v2
