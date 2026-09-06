@@ -42,6 +42,10 @@ p=Path('test/final-recommendation-flow.test.mjs')
 s=p.read_text(encoding='utf-8').replace("assert.equal(forwarded.max_tokens, 1200);","assert.equal(forwarded.max_tokens, 1000);")
 p.write_text(s,encoding='utf-8')
 
+p=Path('test/drink-copy.test.mjs')
+s=p.read_text(encoding='utf-8').replace("/const maxTokens=fastTurn\\?600:1200/","/const maxTokens=fastTurn\\?600:850/")
+p.write_text(s,encoding='utf-8')
+
 p=Path('test/worker.test.mjs')
 s=p.read_text(encoding='utf-8')
 s=s.replace("assert.match(js, /const maxTokens=fastTurn\\?600:1200/);","assert.match(js, /const maxTokens=fastTurn\\?600:850/);")
