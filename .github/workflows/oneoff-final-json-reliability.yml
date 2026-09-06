@@ -1,0 +1,68 @@
+name: One-off final JSON reliability patch
+on:
+  push:
+    branches:
+      - fix/structured-final-output
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/structured-final-output
+      - name: Harden final recommendation JSON path
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('public/assets/js/main.js')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace("  const maxTokens=fastTurn?600:1000;", "  const maxTokens=fastTurn?600:2200;", 1)
+          old="""  const data=await readAPIResponse(res);\n  const text=data.content[0].text;\n  chatHistory.push({role:'assistant',content:text});\n  return JSON.parse(text.replace(/```json|```/g,'').trim());"""
+          new="""  const data=await readAPIResponse(res);\n  const parsed=parseAssistantJson(data);\n  chatHistory.push({role:'assistant',content:JSON.stringify(parsed)});\n  return parsed;"""
+          if old not in s: raise SystemExit('callAPI parse anchor missing')
+          s=s.replace(old,new,1)
+          anchor="async function readAPIResponse(res){\n"
+          helper="""function parseAssistantJson(data){\n  const blocks=Array.isArray(data&&data.content)?data.content:[];\n  const textBlock=blocks.find(b=>b&&b.type==='text'&&typeof b.text==='string')||blocks.find(b=>b&&typeof b.text==='string');\n  if(!textBlock)throw new Error('Chat API returned no text block');\n  const cleaned=textBlock.text.replace(/```json|```/g,'').trim();\n  try{return JSON.parse(cleaned);}catch{}\n  const first=cleaned.indexOf('{'),last=cleaned.lastIndexOf('}');\n  if(first>=0&&last>first)return JSON.parse(cleaned.slice(first,last+1));\n  throw new Error('Chat API returned malformed JSON');\n}\n\n"""
+          if 'function parseAssistantJson(data)' not in s:
+              if anchor not in s: raise SystemExit('readAPIResponse anchor missing')
+              s=s.replace(anchor,helper+anchor,1)
+          p.write_text(s,encoding='utf-8')
+
+          w=Path('src/worker-v1.9.mjs')
+          x=w.read_text(encoding='utf-8')
+          x=x.replace("body.max_tokens = Math.max(Number(body.max_tokens) || 0, 1400);", "body.max_tokens = Math.max(Number(body.max_tokens) || 0, 2200);", 1)
+          instruction="【最終JSON安定化】Claude Sonnet 5では前置き・後書き・Markdownコードフェンスを付けず、必要項目だけの簡潔なJSONオブジェクトを1個だけ返してください。description・trivia等をD1から補完する対象では、それらを重複生成しないでください。"
+          marker="body.system += '\\n\\n【BarCarila固定マスター照合】"
+          if instruction not in x:
+              idx=x.find(marker)
+              if idx<0: raise SystemExit('worker system instruction anchor missing')
+              line_end=x.find(";",idx)
+              if line_end<0: raise SystemExit('worker instruction line end missing')
+              x=x[:line_end+1]+"\n  if (body.model === 'claude-sonnet-5') body.system += '\\n\\n"+instruction+"';"+x[line_end+1:]
+          w.write_text(x,encoding='utf-8')
+
+          t=Path('test/worker.test.mjs')
+          z=t.read_text(encoding='utf-8')
+          marker="test('choice-based recommendation flow stays local until the final Sonnet request', async () => {"
+          extra="""test('frontend final recommendation parser tolerates wrapped JSON and allows enough output budget', async () => {\n  const js = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');\n  assert.match(js, /function parseAssistantJson\\(data\\)/);\n  assert.match(js, /blocks\\.find\\(b=>b&&b\\.type==='text'/);\n  assert.match(js, /const maxTokens=fastTurn\\?600:2200/);\n  assert.doesNotMatch(js, /data\\.content\\[0\\]\\.text/);\n});\n\ntest('Sonnet 5 final request reserves JSON completion headroom and asks for compact JSON', async () => {\n  const source = await readFile(new URL('../src/worker-v1.9.mjs', import.meta.url), 'utf8');\n  assert.match(source, /Math\\.max\\(Number\\(body\\.max_tokens\\) \\|\\| 0, 2200\\)/);\n  assert.match(source, /最終JSON安定化/);\n  assert.match(source, /簡潔なJSONオブジェクトを1個だけ/);\n});\n\n"""
+          if 'frontend final recommendation parser tolerates wrapped JSON' not in z:
+              if marker not in z: raise SystemExit('test insertion anchor missing')
+              z=z.replace(marker,extra+marker,1)
+          t.write_text(z,encoding='utf-8')
+          PY
+      - name: Run tests
+        run: |
+          npm ci
+          npm test
+          npm run validate:drink-master-v1.9
+      - name: Commit patch and remove one-off workflow
+        run: |
+          rm -f .github/workflows/oneoff-final-json-reliability.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/assets/js/main.js src/worker-v1.9.mjs test/worker.test.mjs .github/workflows/oneoff-final-json-reliability.yml
+          git commit -m "Harden final recommendation JSON completion"
+          git push origin HEAD:fix/structured-final-output
