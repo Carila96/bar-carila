@@ -287,7 +287,7 @@ test('final recommendation prompt forbids raw newlines inside JSON strings', asy
 test('guided choices fade immediately instead of waiting idle before replacement', async () => {
   const js = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');
   const css = await readFile(new URL('../public/assets/css/main.css', import.meta.url), 'utf8');
-  assert.match(js, /const CHOICE_FADE_MS=350/);
+  assert.match(js, /const CHOICE_FADE_OUT_MS=180/);
   assert.match(js, /async function fadeChoicesOut\(\)/);
   assert.doesNotMatch(js, /LOCAL_CHOICE_DELAY_MS/);
   assert.match(css, /\.choices\.leaving\{opacity:0;transform:translateY\(-5px\);pointer-events:none;\}/);
@@ -303,17 +303,17 @@ test('guided final recommendation sends only route and selected answers', async 
 
 test('guided flow uses a visible fade transition and a compact final-only prompt', async () => {
   const js = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');
-  assert.match(js, /const CHOICE_FADE_MS=350/);
+  assert.match(js, /const CHOICE_FADE_OUT_MS=180/);
   assert.equal((js.match(/await fadeChoicesOut\(\)/g)||[]).length, 3);
   assert.match(js, /function getFinalSystem\(\)/);
   assert.match(js, /const system=forceRecommend\?getFinalSystem\(\)/);
   assert.match(js, /今夜の一杯を1つだけ選んでください/);
 });
 
-test('drink image API v2 invalidates generic results and searches with the drink name', async () => {
+test('drink image API v3 prefers the explicit visual query and invalidates old results', async () => {
   const source = await readFile(new URL('../src/worker.mjs', import.meta.url), 'utf8');
-  assert.match(source, /const cacheIdentity = 'v2:'/);
-  assert.match(source, /\[name, query\]\.filter\(Boolean\)\.join\(' '\)/);
+  assert.match(source, /const cacheIdentity = 'v3:'/);
+  assert.match(source, /const searchQuery = \(query \|\| name \|\| 'cocktail drink'\)\.trim\(\)/);
 });
 
 test('choice-based recommendation flow stays local until the final Sonnet request', async () => {
@@ -412,7 +412,7 @@ test('Aperol Spritz has a verified orange drink placeholder', async () => {
 
 test('drink image client refreshes exact-name images before trusting old generic placeholders', async () => {
   const js = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');
-  assert.match(js, /const DRINK_IMG_CACHE_KEY='bar_carila_drink_img_cache_v2'/);
+  assert.match(js, /const DRINK_IMG_CACHE_KEY='bar_carila_drink_img_cache_v3'/);
   assert.doesNotMatch(js, /if\(findStaticDrinkImg\(name\)\)return;/);
   assert.match(js, /searchName\|\|name/);
   assert.match(js, /data\.drink\.masterKey\|\|''/);
