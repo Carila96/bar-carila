@@ -263,7 +263,7 @@ test('frontend final recommendation parser tolerates wrapped JSON and allows eno
   const js = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');
   assert.match(js, /function parseAssistantJson\(data\)/);
   assert.match(js, /blocks\.find\(b=>b&&b\.type==='text'/);
-  assert.match(js, /const maxTokens=fastTurn\?600:2200/);
+  assert.match(js, /const maxTokens=fastTurn\?600:1200/);
   const callApi = js.match(/async function callAPI\(userMsg,forceRecommend=false\)\{[\s\S]*?\n\}/)?.[0] || '';
   assert.match(callApi, /parseAssistantJson\(data\)/);
   assert.doesNotMatch(callApi, /data\.content\[0\]\.text/);
@@ -271,7 +271,7 @@ test('frontend final recommendation parser tolerates wrapped JSON and allows eno
 
 test('Sonnet 5 final request reserves JSON completion headroom and asks for compact JSON', async () => {
   const source = await readFile(new URL('../src/worker-v1.9.mjs', import.meta.url), 'utf8');
-  assert.match(source, /Math\.max\(Number\(body\.max_tokens\) \|\| 0, 2200\)/);
+  assert.match(source, /Math\.max\(Number\(body\.max_tokens\) \|\| 0, 1200\)/);
   assert.match(source, /最終JSON安定化/);
   assert.match(source, /簡潔なJSONオブジェクトを1個だけ/);
 });
@@ -282,6 +282,21 @@ test('final recommendation prompt forbids raw newlines inside JSON strings', asy
   assert.match(html, /最終推薦ターン固定/);
   assert.match(html, /質問を返さず、必ず type=recommendation/);
   assert.match(html, /JSON文字列の値に生の改行を含めない/);
+});
+
+test('guided flow adds a short beat and uses a compact final-only prompt', async () => {
+  const js = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');
+  assert.match(js, /const LOCAL_CHOICE_DELAY_MS=450/);
+  assert.equal((js.match(/await sleep\(LOCAL_CHOICE_DELAY_MS\)/g)||[]).length, 2);
+  assert.match(js, /function getFinalSystem\(\)/);
+  assert.match(js, /const system=forceRecommend\?getFinalSystem\(\)/);
+  assert.match(js, /今夜の一杯を1つだけ選んでください/);
+});
+
+test('drink image API v2 invalidates generic results and searches with the drink name', async () => {
+  const source = await readFile(new URL('../src/worker.mjs', import.meta.url), 'utf8');
+  assert.match(source, /const cacheIdentity = 'v2:'/);
+  assert.match(source, /\[name, query\]\.filter\(Boolean\)\.join\(' '\)/);
 });
 
 test('choice-based recommendation flow stays local until the final Sonnet request', async () => {
@@ -372,11 +387,12 @@ test('chat API accepts Haiku and marks the system prompt cacheable', async () =>
 });
 
 
-test('drink image client prefers fixed and locally cached images before API search', async () => {
+test('drink image client refreshes exact-name images before trusting old generic placeholders', async () => {
   const js = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');
-  assert.match(js, /const DRINK_IMG_CACHE_KEY='bar_carila_drink_img_cache_v1'/);
-  assert.match(js, /if\(findStaticDrinkImg\(name\)\)return;/);
-  assert.match(js, /const cached=getCachedDrinkImg\(name\);/);
+  assert.match(js, /const DRINK_IMG_CACHE_KEY='bar_carila_drink_img_cache_v2'/);
+  assert.doesNotMatch(js, /if\(findStaticDrinkImg\(name\)\)return;/);
+  assert.match(js, /searchName\|\|name/);
+  assert.match(js, /data\.drink\.masterKey\|\|''/);
   assert.match(js, /saveDrinkImgCache\(name,d\)/);
 });
 
