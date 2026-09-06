@@ -1,8 +1,9 @@
 const API='/api/chat';
 const DRINK_META_API='/api/drink-meta';
 const DRINK_META_CACHE_KEY='bar_carila_drink_meta_cache_v1';
-const LOCAL_CHOICE_DELAY_MS=450;
+const CHOICE_FADE_MS=220;
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+async function fadeChoicesOut(){const el=document.querySelector('#choicesArea .choices');if(!el)return;el.classList.add('leaving');await sleep(CHOICE_FADE_MS);}
 const FAST_MODEL='claude-haiku-4-5-20251001';
 const RECOMMEND_MODEL='claude-sonnet-5';
 const AMAZON_TAG='carila-22';
@@ -599,6 +600,7 @@ function getFinalSystem(){return `あなたはBar Carilaのバーテンダーで
 【最終推薦ターン固定】
 ・ここでは質問を返さず、必ず type=recommendation を返す。
 ・ユーザーの回答を総合し、味・香り・強さ・気分・場面に合う実在する一杯を選ぶ。
+・messagesのroute制約を厳守する。cocktail=カクテルのみ、spirits=単体のウイスキー／洋酒のみ、nonAlcohol=アルコール0%のみ、recommend=全カテゴリ可。回答に度数希望がある場合は必ず守る。
 ・日本のBARで実際に注文する場面を前提にする。カクテル／モクテルは標準的なレシピを使う。単体酒は自然な銘柄またはカテゴリを提案する。
 ・説明は簡潔にし、同じ内容を繰り返さない。
 ・JSON文字列の値に生の改行を含めない。analysisを含む全ての文字列は1行。Markdownコードフェンス、前置き、後書きは禁止。
@@ -687,7 +689,7 @@ async function handleLocalChoice(text){
     localFlow={route,answers:[],step:0,currentChoices:[]};
     const first=localQuestions(route,[])[0];
     if(!first){localFlow=null;return false;}
-    await sleep(LOCAL_CHOICE_DELAY_MS);
+    await fadeChoicesOut();
     presentLocalQuestion(first);
     return true;
   }
@@ -700,14 +702,16 @@ async function handleLocalChoice(text){
   localFlow.step+=1;
   const questions=localQuestions(localFlow.route,localFlow.answers);
   if(localFlow.step<questions.length){
-    await sleep(LOCAL_CHOICE_DELAY_MS);
+    await fadeChoicesOut();
     presentLocalQuestion(questions[localFlow.step]);
     return true;
   }
+  const completedFlow={route:localFlow.route,answers:[...localFlow.answers]};
   localFlow=null;
+  await fadeChoicesOut();
   showLoading();
   try{
-    const r=await callAPI(null,true);
+    const r=await callAPI(null,true,completedFlow);
     if(r.type==='question'){
       setPanda(r.emotion||'think');showMsg(r.message);showChoices(r.choices);
     }else{showRec(r);}
@@ -729,14 +733,15 @@ function toggleLang(){
   setTimeout(()=>{expandPanda();chatHistory=[];convLog=[];setPanda('counter');startChat();},300);
 }
 
-async function callAPI(userMsg,forceRecommend=false){
+async function callAPI(userMsg,forceRecommend=false,flowSummary=null){
   if(userMsg)chatHistory.push({role:'user',content:userMsg});
   const userTurns=chatHistory.filter(m=>m.role==='user').length;
   const fastTurn=!forceRecommend&&userTurns<4;
   const model=fastTurn?FAST_MODEL:RECOMMEND_MODEL;
-  const maxTokens=fastTurn?600:1200;
+  const maxTokens=fastTurn?600:850;
   const system=forceRecommend?getFinalSystem():(fastTurn?getFastSystem():getSystem());
-  const res=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model,max_tokens:maxTokens,system,messages:chatHistory})});
+  const messages=forceRecommend&&flowSummary?[{role:'user',content:`route=${flowSummary.route}; answers=${flowSummary.answers.join(' / ')}`}]:chatHistory;
+  const res=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model,max_tokens:maxTokens,system,messages})});
   const data=await readAPIResponse(res);
   const parsed=parseAssistantJson(data);
   chatHistory.push({role:'assistant',content:JSON.stringify(parsed)});
