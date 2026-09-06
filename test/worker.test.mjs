@@ -245,7 +245,7 @@ test('frontend localizes chat errors and reports safe diagnostics', async () => 
   assert.match(html, /location\.hostname\.endsWith\('\.workers\.dev'\)/);
   assert.match(html, /line\.textContent=`\$\{t\(\)\.chatDiagnostic\}: \$\{diagnostic\}`/);
   assert.match(html, /function showChatError\(error,pandaState='sad'\)/);
-  assert.equal((html.match(/showChatError\(e(?:,'counter')?\)/g)||[]).length, 1);
+  assert.equal((html.match(/showChatError\(e(?:,'counter')?\)/g)||[]).length, 2);
   assert.doesNotMatch(html, /line\.innerHTML/);
 });
 
