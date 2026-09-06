@@ -1,0 +1,91 @@
+from pathlib import Path
+
+p=Path('public/assets/css/main.css')
+s=p.read_text(encoding='utf-8')
+old=".choices{display:flex;flex-direction:column;gap:7px;margin-bottom:8px;animation:fadeUp 0.32s ease both;}"
+new=".choices{display:flex;flex-direction:column;gap:7px;margin-bottom:8px;animation:fadeUp 0.32s ease both;transition:opacity 0.22s ease,transform 0.22s ease;}\n.choices.leaving{opacity:0;transform:translateY(-5px);pointer-events:none;}"
+if old not in s: raise SystemExit('choices css anchor missing')
+s=s.replace(old,new,1)
+p.write_text(s,encoding='utf-8')
+
+p=Path('public/assets/js/main.js')
+s=p.read_text(encoding='utf-8')
+old="const LOCAL_CHOICE_DELAY_MS=450;\nconst sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));"
+new="const CHOICE_FADE_MS=220;\nconst sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));\nasync function fadeChoicesOut(){const el=document.querySelector('#choicesArea .choices');if(!el)return;el.classList.add('leaving');await sleep(CHOICE_FADE_MS);}"
+if old not in s: raise SystemExit('choice delay constants anchor missing')
+s=s.replace(old,new,1)
+s=s.replace("await sleep(LOCAL_CHOICE_DELAY_MS);\n    presentLocalQuestion(first);","await fadeChoicesOut();\n    presentLocalQuestion(first);",1)
+s=s.replace("await sleep(LOCAL_CHOICE_DELAY_MS);\n    presentLocalQuestion(questions[localFlow.step]);","await fadeChoicesOut();\n    presentLocalQuestion(questions[localFlow.step]);",1)
+old="  localFlow=null;\n  showLoading();\n  try{\n    const r=await callAPI(null,true);"
+new="  const completedFlow={route:localFlow.route,answers:[...localFlow.answers]};\n  localFlow=null;\n  await fadeChoicesOut();\n  showLoading();\n  try{\n    const r=await callAPI(null,true,completedFlow);"
+if old not in s: raise SystemExit('final local flow anchor missing')
+s=s.replace(old,new,1)
+old="async function callAPI(userMsg,forceRecommend=false){\n  if(userMsg)chatHistory.push({role:'user',content:userMsg});\n  const userTurns=chatHistory.filter(m=>m.role==='user').length;\n  const fastTurn=!forceRecommend&&userTurns<4;\n  const model=fastTurn?FAST_MODEL:RECOMMEND_MODEL;\n  const maxTokens=fastTurn?600:1200;\n  const system=forceRecommend?getFinalSystem():(fastTurn?getFastSystem():getSystem());\n  const res=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model,max_tokens:maxTokens,system,messages:chatHistory})});"
+new="async function callAPI(userMsg,forceRecommend=false,flowSummary=null){\n  if(userMsg)chatHistory.push({role:'user',content:userMsg});\n  const userTurns=chatHistory.filter(m=>m.role==='user').length;\n  const fastTurn=!forceRecommend&&userTurns<4;\n  const model=fastTurn?FAST_MODEL:RECOMMEND_MODEL;\n  const maxTokens=fastTurn?600:850;\n  const system=forceRecommend?getFinalSystem():(fastTurn?getFastSystem():getSystem());\n  const messages=forceRecommend&&flowSummary?[{role:'user',content:`route=${flowSummary.route}; answers=${flowSummary.answers.join(' / ')}`}]:chatHistory;\n  const res=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model,max_tokens:maxTokens,system,messages})});"
+if old not in s: raise SystemExit('callAPI anchor missing')
+s=s.replace(old,new,1)
+old="・ユーザーの回答を総合し、味・香り・強さ・気分・場面に合う実在する一杯を選ぶ。\n・日本のBARで実際に注文する場面を前提にする。カクテル／モクテルは標準的なレシピを使う。単体酒は自然な銘柄またはカテゴリを提案する。"
+new="・ユーザーの回答を総合し、味・香り・強さ・気分・場面に合う実在する一杯を選ぶ。\n・messagesのroute制約を厳守する。cocktail=カクテルのみ、spirits=単体のウイスキー／洋酒のみ、nonAlcohol=アルコール0%のみ、recommend=全カテゴリ可。回答に度数希望がある場合は必ず守る。\n・日本のBARで実際に注文する場面を前提にする。カクテル／モクテルは標準的なレシピを使う。単体酒は自然な銘柄またはカテゴリを提案する。"
+if old not in s: raise SystemExit('final prompt rules anchor missing')
+s=s.replace(old,new,1)
+p.write_text(s,encoding='utf-8')
+
+p=Path('src/worker-v1.9.mjs')
+s=p.read_text(encoding='utf-8')
+old="body.max_tokens = Math.max(Number(body.max_tokens) || 0, 1200);"
+new="body.max_tokens = Math.max(Number(body.max_tokens) || 0, 850);"
+if old not in s: raise SystemExit('worker max token anchor missing')
+s=s.replace(old,new,1)
+p.write_text(s,encoding='utf-8')
+
+p=Path('test/final-recommendation-flow.test.mjs')
+s=p.read_text(encoding='utf-8').replace("assert.equal(forwarded.max_tokens, 1200);","assert.equal(forwarded.max_tokens, 1000);")
+p.write_text(s,encoding='utf-8')
+
+p=Path('test/worker.test.mjs')
+s=p.read_text(encoding='utf-8')
+s=s.replace("assert.match(js, /const maxTokens=fastTurn\\?600:1200/);","assert.match(js, /const maxTokens=fastTurn\\?600:850/);")
+s=s.replace("const callApi = js.match(/async function callAPI\\(userMsg,forceRecommend=false\\)\\{[\\s\\S]*?\\n\\}/)?.[0] || '';","const callApi = js.match(/async function callAPI\\(userMsg,forceRecommend=false,flowSummary=null\\)\\{[\\s\\S]*?\\n\\}/)?.[0] || '';")
+s=s.replace("assert.match(source, /Math\\.max\\(Number\\(body\\.max_tokens\\) \\|\\| 0, 1200\\)/);","assert.match(source, /Math\\.max\\(Number\\(body\\.max_tokens\\) \\|\\| 0, 850\\)/);")
+old="""test('guided flow adds a short beat and uses a compact final-only prompt', async () => {
+  const js = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');
+  assert.match(js, /const LOCAL_CHOICE_DELAY_MS=450/);
+  assert.equal((js.match(/await sleep\\(LOCAL_CHOICE_DELAY_MS\\)/g)||[]).length, 2);
+  assert.match(js, /function getFinalSystem\\(\\)/);
+  assert.match(js, /const system=forceRecommend\\?getFinalSystem\\(\\)/);
+  assert.match(js, /今夜の一杯を1つだけ選んでください/);
+});"""
+new="""test('guided flow uses a visible fade transition and a compact final-only prompt', async () => {
+  const js = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');
+  assert.match(js, /const CHOICE_FADE_MS=220/);
+  assert.equal((js.match(/await fadeChoicesOut\\(\\)/g)||[]).length, 3);
+  assert.match(js, /function getFinalSystem\\(\\)/);
+  assert.match(js, /const system=forceRecommend\\?getFinalSystem\\(\\)/);
+  assert.match(js, /今夜の一杯を1つだけ選んでください/);
+});"""
+if old not in s: raise SystemExit('guided flow test anchor missing')
+s=s.replace(old,new,1)
+s=s.replace("assert.match(html, /callAPI\\(null,true\\)/);","assert.match(html, /callAPI\\(null,true,completedFlow\\)/);")
+marker="test('guided flow uses a visible fade transition and a compact final-only prompt', async () => {"
+extra="""test('guided choices fade immediately instead of waiting idle before replacement', async () => {
+  const js = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');
+  const css = await readFile(new URL('../public/assets/css/main.css', import.meta.url), 'utf8');
+  assert.match(js, /const CHOICE_FADE_MS=220/);
+  assert.match(js, /async function fadeChoicesOut\\(\\)/);
+  assert.doesNotMatch(js, /LOCAL_CHOICE_DELAY_MS/);
+  assert.match(css, /\\.choices\\.leaving\\{opacity:0;transform:translateY\\(-5px\\);pointer-events:none;\\}/);
+});
+
+test('guided final recommendation sends only route and selected answers', async () => {
+  const js = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');
+  assert.match(js, /const completedFlow=\\{route:localFlow\\.route,answers:\\[\\.\\.\\.localFlow\\.answers\\]\\}/);
+  assert.match(js, /callAPI\\(null,true,completedFlow\\)/);
+  assert.match(js, /const messages=forceRecommend&&flowSummary/);
+  assert.match(js, /cocktail=カクテルのみ/);
+});
+
+"""
+if 'guided choices fade immediately instead of waiting idle' not in s:
+    if marker not in s: raise SystemExit('new guided test marker missing')
+    s=s.replace(marker,extra+marker,1)
+p.write_text(s,encoding='utf-8')
