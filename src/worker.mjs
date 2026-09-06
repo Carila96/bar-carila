@@ -1,7 +1,7 @@
 import { CARILA_MAX_TOKENS, CARILA_MODEL, CARILA_SYSTEM_PROMPT } from './carila-personality.mjs';
 const ANTHROPIC_ENDPOINT = 'https://api.anthropic.com/v1/messages';
 const UNSPLASH_ENDPOINT = 'https://api.unsplash.com/search/photos';
-const ALLOWED_MODELS = new Set(['claude-sonnet-4-6', 'claude-haiku-4-5-20251001']);
+const ALLOWED_MODELS = new Set(['claude-sonnet-5', 'claude-sonnet-4-6', 'claude-haiku-4-5-20251001']);
 
 let drinkImageTableReady;
 
@@ -343,7 +343,7 @@ async function chat(request, env) {
   }
 
   let useDrinkMasterLeanOutput = false;
-  if (body.model === 'claude-sonnet-4-6' && env.DRINK_DB) {
+  if ((body.model === 'claude-sonnet-5' || body.model === 'claude-sonnet-4-6') && env.DRINK_DB) {
     try { useDrinkMasterLeanOutput = await ensureDrinkMasterTables(env); }
     catch (error) { console.error('D1 drink master preflight failed', error); }
   }

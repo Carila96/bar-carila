@@ -2,7 +2,7 @@ const API='/api/chat';
 const DRINK_META_API='/api/drink-meta';
 const DRINK_META_CACHE_KEY='bar_carila_drink_meta_cache_v1';
 const FAST_MODEL='claude-haiku-4-5-20251001';
-const RECOMMEND_MODEL='claude-sonnet-4-6';
+const RECOMMEND_MODEL='claude-sonnet-5';
 const AMAZON_TAG='carila-22';
 const RAKUTEN_ID='51ff76f6.9c656021.51ff76f7.1d6ddd8e';
 const FEEDBACK_URL='https://docs.google.com/forms/d/e/1FAIpQLScUWpIEo738dwiCziMGv_P_wjeQkHD97EEmHPmFnuKeLmvPAw/viewform?usp=header';
