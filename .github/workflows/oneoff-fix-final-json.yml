@@ -40,8 +40,8 @@ jobs:
               s=s.replace(marker,extra+marker,1)
           t.write_text(s,encoding='utf-8')
           PY
-      - name: Remove temporary diagnostic page
-        run: rm -f public/diagnostic.html test/diagnostic-page.test.mjs
+      - name: Remove temporary diagnostic page and tests
+        run: rm -f public/diagnostic.html test/diagnostic-page.test.mjs test/diagnostic.test.mjs
       - name: Run tests
         run: |
           npm ci
