@@ -245,7 +245,7 @@ test('frontend localizes chat errors and reports safe diagnostics', async () => 
   assert.match(html, /location\.hostname\.endsWith\('\.workers\.dev'\)/);
   assert.match(html, /line\.textContent=`\$\{t\(\)\.chatDiagnostic\}: \$\{diagnostic\}`/);
   assert.match(html, /function showChatError\(error,pandaState='sad'\)/);
-  assert.equal((html.match(/showChatError\(e(?:,'counter')?\)/g)||[]).length, 1);
+  assert.equal((html.match(/showChatError\(e(?:,'counter')?\)/g)||[]).length, 2);
   assert.doesNotMatch(html, /line\.innerHTML/);
 });
 
@@ -253,10 +253,21 @@ test('frontend routes quick turns to Haiku and final recommendations to Sonnet',
   const html = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');
   assert.match(html, /const FAST_MODEL='claude-haiku-4-5-20251001'/);
   assert.match(html, /const RECOMMEND_MODEL='claude-sonnet-5'/);
-  assert.match(html, /const fastTurn=userTurns<4/);
+  assert.match(html, /const fastTurn=!forceRecommend&&userTurns<4/);
   assert.match(html, /model=fastTurn\?FAST_MODEL:RECOMMEND_MODEL/);
   assert.match(html, /max_tokens:0,system:getFastSystem\(\)/);
   assert.doesNotMatch(html, /claude-sonnet-4-20250514/);
+});
+
+test('choice-based recommendation flow stays local until the final Sonnet request', async () => {
+  const html = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');
+  assert.match(html, /const LOCAL_FLOW_COPY=/);
+  assert.match(html, /async function handleLocalChoice\(text\)/);
+  assert.match(html, /const handledLocally=await handleLocalChoice\(text\)/);
+  assert.match(html, /callAPI\(null,true\)/);
+  assert.match(html, /const fastTurn=!forceRecommend&&userTurns<4/);
+  assert.match(html, /localFlow=null;\n  chatHistory=initialHistory\(\)/);
+  assert.doesNotMatch(html, /showChoices\(t\(\)\.initialChoices\);\n  prewarmFastModel\(\)/);
 });
 
 test('drink image fails safely when its secret is missing', async () => {
