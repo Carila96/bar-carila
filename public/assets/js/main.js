@@ -1,9 +1,9 @@
 const API='/api/chat';
 const DRINK_META_API='/api/drink-meta';
 const DRINK_META_CACHE_KEY='bar_carila_drink_meta_cache_v1';
-const CHOICE_FADE_MS=350;
+const CHOICE_FADE_OUT_MS=180;
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
-async function fadeChoicesOut(){const el=document.querySelector('#choicesArea .choices');if(!el)return;el.classList.add('leaving');await sleep(CHOICE_FADE_MS);}
+async function fadeChoicesOut(){const el=document.querySelector('#choicesArea .choices');if(!el)return;el.classList.add('leaving');await sleep(CHOICE_FADE_OUT_MS);}
 const FAST_MODEL='claude-haiku-4-5-20251001';
 const RECOMMEND_MODEL='claude-sonnet-5';
 const AMAZON_TAG='carila-22';
@@ -46,7 +46,7 @@ function handleDrinkImgError(img){
   if(img.src!==fi){img.src=fi;}
   else{img.parentNode.innerHTML='<div class="rec-no-img"><div style="font-size:36px;">🍸</div><div style="font-size:11px;letter-spacing:0.2em;color:rgba(200,146,42,0.5);">NO IMAGE</div></div>';}
 }
-const DRINK_IMG_CACHE_KEY='bar_carila_drink_img_cache_v2';
+const DRINK_IMG_CACHE_KEY='bar_carila_drink_img_cache_v3';
 function normDrinkName(s){return (s||'').toLowerCase().replace(/[・\s.\-]/g,'');}
 function findStaticDrinkImg(name){
   const nName=normDrinkName(name);
@@ -96,11 +96,11 @@ function buildImgQuery(cat){
   if(/リキュール/.test(c)) return 'liqueur glass bar';
   return 'cocktail drink bar';
 }
-async function fetchDrinkImg(name,cat,imgEl,searchName=''){
+async function fetchDrinkImg(name,cat,imgEl,searchName='',imageQuery=''){
   const cached=getCachedDrinkImg(name);
   if(cached){if(imgEl&&imgEl.src!==cached.url)imgEl.src=cached.url;return;}
   try{
-    const q=`${searchName||name} ${buildImgQuery(cat)}`.trim();
+    const q=(imageQuery||`${searchName||name} ${buildImgQuery(cat)}`).trim();
     const r=await fetch(`/api/drink-image?name=${encodeURIComponent(name)}&query=${encodeURIComponent(q)}`);
     if(!r.ok)return;
     const d=await r.json();
@@ -334,7 +334,7 @@ function showRec(data){
   applyDrinkMetaToCard(data,card);
 
   const recImgEl=card.querySelector('.rec-img-wrap img');
-  if(recImgEl)fetchDrinkImg(data.drink.name,data.drink.category,recImgEl,data.drink.masterKey||'');
+  if(recImgEl)fetchDrinkImg(data.drink.name,data.drink.category,recImgEl,data.drink.masterKey||'',data.drink.imageQuery||'');
 
   const nudge=document.createElement('div');
   nudge.className='social-nudge';
@@ -606,7 +606,8 @@ function getFinalSystem(){return `あなたはBar Carilaのバーテンダーで
 ・JSON文字列の値に生の改行を含めない。analysisを含む全ての文字列は1行。Markdownコードフェンス、前置き、後書きは禁止。
 
 【出力JSON】
-{"type":"recommendation","emotion":"bartender or relax or counter or curious","message":"短い一言","analysis":"今夜の気分を2〜3文で表す1行の文章","drink":{"name":"正式名称","masterKey":"標準的な英語名","category":"カテゴリ","abv":"約8%のような推定値","rarity":0,"description":"60字以内の説明1文","trivia":"80字以内の豆知識またはBARでの楽しみ方","recipe":{"ingredients":[{"name":"材料","amount":"分量"}],"method":"作り方1文"},"tags":["タグ1","タグ2","タグ3"]}}
+{"type":"recommendation","emotion":"bartender or relax or counter or curious","message":"短い一言","analysis":"今夜の気分を2〜3文で表す1行の文章","drink":{"name":"正式名称","masterKey":"標準的な英語名","imageQuery":"写真検索用の英語8語以内。酒名だけにせず色・グラス・主要材料など見た目を表す","category":"カテゴリ","abv":"約8%のような推定値","rarity":0,"description":"60字以内の説明1文","trivia":"80字以内の豆知識またはBARでの楽しみ方","recipe":{"ingredients":[{"name":"材料","amount":"分量"}],"method":"作り方1文"},"tags":["タグ1","タグ2","タグ3"]}}
+・imageQueryはUnsplash写真検索専用。英語8語以内で、固有名詞だけにせず色、グラス形状、主要材料、見た目を優先する。例: red grenadine ginger ale mocktail highball glass。
 ・カクテル／モクテルはrecipe必須。単体酒のみrecipe:null可。
 ・rarityは0〜100の整数で日本の一般BARで見つけにくいほど高くする。固定マスター対象はサーバー側で上書きされる。
 ・emotionはカクテル／モクテル=bartender、洋酒=relax、珍しい提案=curiousを基本にする。`+(I18N[lang].langRule||'');}
