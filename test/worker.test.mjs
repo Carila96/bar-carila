@@ -387,6 +387,12 @@ test('chat API accepts Haiku and marks the system prompt cacheable', async () =>
 });
 
 
+test('Aperol Spritz has a verified orange drink placeholder', async () => {
+  const js = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');
+  assert.match(js, /\"アペロールスプリッツ\": \"https:\/\/images\.unsplash\.com\/photo-1688912740928-123e137c45fd/);
+  assert.doesNotMatch(js, /\"アペロールスプリッツ\": \"https:\/\/images\.unsplash\.com\/photo-1563077764-93e534f3acaa/);
+});
+
 test('drink image client refreshes exact-name images before trusting old generic placeholders', async () => {
   const js = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');
   assert.match(js, /const DRINK_IMG_CACHE_KEY='bar_carila_drink_img_cache_v2'/);
