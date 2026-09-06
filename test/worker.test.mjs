@@ -287,7 +287,7 @@ test('final recommendation prompt forbids raw newlines inside JSON strings', asy
 test('guided choices fade immediately instead of waiting idle before replacement', async () => {
   const js = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');
   const css = await readFile(new URL('../public/assets/css/main.css', import.meta.url), 'utf8');
-  assert.match(js, /const CHOICE_FADE_MS=220/);
+  assert.match(js, /const CHOICE_FADE_MS=350/);
   assert.match(js, /async function fadeChoicesOut\(\)/);
   assert.doesNotMatch(js, /LOCAL_CHOICE_DELAY_MS/);
   assert.match(css, /\.choices\.leaving\{opacity:0;transform:translateY\(-5px\);pointer-events:none;\}/);
@@ -303,7 +303,7 @@ test('guided final recommendation sends only route and selected answers', async 
 
 test('guided flow uses a visible fade transition and a compact final-only prompt', async () => {
   const js = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');
-  assert.match(js, /const CHOICE_FADE_MS=220/);
+  assert.match(js, /const CHOICE_FADE_MS=350/);
   assert.equal((js.match(/await fadeChoicesOut\(\)/g)||[]).length, 3);
   assert.match(js, /function getFinalSystem\(\)/);
   assert.match(js, /const system=forceRecommend\?getFinalSystem\(\)/);

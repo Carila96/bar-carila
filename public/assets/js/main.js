@@ -1,7 +1,7 @@
 const API='/api/chat';
 const DRINK_META_API='/api/drink-meta';
 const DRINK_META_CACHE_KEY='bar_carila_drink_meta_cache_v1';
-const CHOICE_FADE_MS=220;
+const CHOICE_FADE_MS=350;
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function fadeChoicesOut(){const el=document.querySelector('#choicesArea .choices');if(!el)return;el.classList.add('leaving');await sleep(CHOICE_FADE_MS);}
 const FAST_MODEL='claude-haiku-4-5-20251001';
