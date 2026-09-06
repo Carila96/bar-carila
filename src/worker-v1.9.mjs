@@ -33,6 +33,16 @@ function canonicalLookupKey(value) {
   return LOOKUP_ALIASES.get(normalized) || normalized;
 }
 
+function parseJsonText(text) {
+  if (typeof text !== 'string') return null;
+  const cleaned = text.replace(/```json|```/g, '').trim();
+  try { return JSON.parse(cleaned); } catch {}
+  const first = cleaned.indexOf('{');
+  const last = cleaned.lastIndexOf('}');
+  if (first < 0 || last <= first) return null;
+  try { return JSON.parse(cleaned.slice(first, last + 1)); } catch { return null; }
+}
+
 async function ensureV19Tables(env) {
   if (!env.DRINK_DB) return;
   await env.DRINK_DB.prepare(`CREATE TABLE IF NOT EXISTS drinks (
@@ -120,7 +130,11 @@ async function addMasterKeyInstruction(request) {
   let body;
   try { body = await request.clone().json(); } catch { return request; }
   if (!body || typeof body !== 'object' || typeof body.system !== 'string') return request;
-  if (body.model === 'claude-sonnet-5') body.thinking = { type: 'disabled' };
+  if (body.model === 'claude-sonnet-5') {
+    body.thinking = { type: 'disabled' };
+    body.output_config = { ...(body.output_config || {}), effort: 'low' };
+    body.max_tokens = Math.max(Number(body.max_tokens) || 0, 1400);
+  }
   body.system += '\n\n【BarCarila固定マスター照合】最終回答が recommendation の場合、drink.masterKey にそのカクテルの標準的な英語名を必ず入れてください（例: Gin and Tonic, Moscow Mule）。同名で別レシピが存在する場合はベースまで含めた固定キーを使ってください。アカプルコは必ず Acapulco (Rum) または Acapulco (Tequila) のどちらかにしてください。コープスリバイバーNo.2は masterKey を Corpse Reviver としてください。既存フィールドは変更しないでください。';
   return new Request(request, { body: JSON.stringify(body) });
 }
@@ -144,43 +158,46 @@ async function enrichV19Response(response, env) {
   if (!response.ok || !String(response.headers.get('content-type') || '').includes('application/json')) return response;
   let data;
   try { data = await response.clone().json(); } catch { return response; }
-  const textItem = data?.content?.find((item) => item?.type === 'text' && typeof item.text === 'string');
+  const textItem = data?.content?.find((item) => item?.type === 'text' && typeof item.text === 'string')
+    || data?.content?.find((item) => typeof item?.text === 'string');
   if (!textItem) return response;
-  let parsed;
-  try { parsed = JSON.parse(textItem.text.replace(/```json|```/g, '').trim()); } catch { return response; }
-  if (parsed?.type !== 'recommendation' || !parsed?.drink) return response;
+  const parsed = parseJsonText(textItem.text);
+  if (!parsed) return response;
 
-  const candidates = [parsed.drink.masterKey, parsed.drink.name].filter(Boolean);
-  let d1Row = null;
-  for (const candidate of candidates) {
-    d1Row = await readV19FromD1(env, candidate);
-    if (d1Row) break;
-  }
-
-  if (d1Row) {
-    parsed.drink.rarity = d1Row.japan_rarity_score;
-    parsed.drink.rarityLabel = d1Row.japan_rarity_label || rarityLabel(d1Row.japan_rarity_score);
-    parsed.drink.rarityConfidence = d1Row.japan_rarity_confidence;
-    parsed.drink.rarityReason = d1Row.rarity_reason || rarityReason(d1Row.japan_availability_score);
-    parsed.drink.masterSource = 'd1';
-    parsed.drink.evidenceVersion = d1Row.evidence_version;
-  } else {
-    let embeddedRow = null;
+  if (parsed?.type === 'recommendation' && parsed?.drink) {
+    const candidates = [parsed.drink.masterKey, parsed.drink.name].filter(Boolean);
+    let d1Row = null;
     for (const candidate of candidates) {
-      embeddedRow = V19_BY_KEY.get(canonicalLookupKey(candidate));
-      if (embeddedRow) break;
+      d1Row = await readV19FromD1(env, candidate);
+      if (d1Row) break;
     }
-    if (!embeddedRow) return response;
-    const [, availability, rarity, confidence] = embeddedRow;
-    parsed.drink.rarity = rarity;
-    parsed.drink.rarityLabel = rarityLabel(rarity);
-    parsed.drink.rarityConfidence = confidence;
-    parsed.drink.rarityReason = rarityReason(availability);
-    parsed.drink.masterSource = 'embedded-v1.9';
-    parsed.drink.evidenceVersion = EVIDENCE_VERSION;
+
+    if (d1Row) {
+      parsed.drink.rarity = d1Row.japan_rarity_score;
+      parsed.drink.rarityLabel = d1Row.japan_rarity_label || rarityLabel(d1Row.japan_rarity_score);
+      parsed.drink.rarityConfidence = d1Row.japan_rarity_confidence;
+      parsed.drink.rarityReason = d1Row.rarity_reason || rarityReason(d1Row.japan_availability_score);
+      parsed.drink.masterSource = 'd1';
+      parsed.drink.evidenceVersion = d1Row.evidence_version;
+    } else {
+      let embeddedRow = null;
+      for (const candidate of candidates) {
+        embeddedRow = V19_BY_KEY.get(canonicalLookupKey(candidate));
+        if (embeddedRow) break;
+      }
+      if (embeddedRow) {
+        const [, availability, rarity, confidence] = embeddedRow;
+        parsed.drink.rarity = rarity;
+        parsed.drink.rarityLabel = rarityLabel(rarity);
+        parsed.drink.rarityConfidence = confidence;
+        parsed.drink.rarityReason = rarityReason(availability);
+        parsed.drink.masterSource = 'embedded-v1.9';
+        parsed.drink.evidenceVersion = EVIDENCE_VERSION;
+      }
+    }
   }
 
-  textItem.text = JSON.stringify(parsed);
+  data.content = [{ type: 'text', text: JSON.stringify(parsed) }];
   const headers = new Headers(response.headers);
   headers.set('content-type', 'application/json; charset=utf-8');
   return new Response(JSON.stringify(data), { status: response.status, headers });
