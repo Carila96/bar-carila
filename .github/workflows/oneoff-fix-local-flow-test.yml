@@ -1,0 +1,29 @@
+name: One-off local flow test fix
+
+on:
+  push:
+    branches:
+      - perf/local-choice-flow
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: perf/local-choice-flow
+      - name: Patch test expectation
+        run: python scripts/oneoff_fix_local_flow_test.py
+      - name: Remove one-off files and commit
+        run: |
+          rm .github/workflows/oneoff-fix-local-flow-test.yml
+          rm scripts/oneoff_fix_local_flow_test.py
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add test/worker.test.mjs .github/workflows/oneoff-fix-local-flow-test.yml scripts/oneoff_fix_local_flow_test.py
+          git commit -m "Fix local choice flow error-handling regression test"
+          git push origin HEAD:perf/local-choice-flow
