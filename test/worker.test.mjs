@@ -263,15 +263,15 @@ test('frontend final recommendation parser tolerates wrapped JSON and allows eno
   const js = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');
   assert.match(js, /function parseAssistantJson\(data\)/);
   assert.match(js, /blocks\.find\(b=>b&&b\.type==='text'/);
-  assert.match(js, /const maxTokens=fastTurn\?600:1200/);
-  const callApi = js.match(/async function callAPI\(userMsg,forceRecommend=false\)\{[\s\S]*?\n\}/)?.[0] || '';
+  assert.match(js, /const maxTokens=fastTurn\?600:850/);
+  const callApi = js.match(/async function callAPI\(userMsg,forceRecommend=false,flowSummary=null\)\{[\s\S]*?\n\}/)?.[0] || '';
   assert.match(callApi, /parseAssistantJson\(data\)/);
   assert.doesNotMatch(callApi, /data\.content\[0\]\.text/);
 });
 
 test('Sonnet 5 final request reserves JSON completion headroom and asks for compact JSON', async () => {
   const source = await readFile(new URL('../src/worker-v1.9.mjs', import.meta.url), 'utf8');
-  assert.match(source, /Math\.max\(Number\(body\.max_tokens\) \|\| 0, 1200\)/);
+  assert.match(source, /Math\.max\(Number\(body\.max_tokens\) \|\| 0, 850\)/);
   assert.match(source, /最終JSON安定化/);
   assert.match(source, /簡潔なJSONオブジェクトを1個だけ/);
 });
@@ -284,10 +284,27 @@ test('final recommendation prompt forbids raw newlines inside JSON strings', asy
   assert.match(html, /JSON文字列の値に生の改行を含めない/);
 });
 
-test('guided flow adds a short beat and uses a compact final-only prompt', async () => {
+test('guided choices fade immediately instead of waiting idle before replacement', async () => {
   const js = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');
-  assert.match(js, /const LOCAL_CHOICE_DELAY_MS=450/);
-  assert.equal((js.match(/await sleep\(LOCAL_CHOICE_DELAY_MS\)/g)||[]).length, 2);
+  const css = await readFile(new URL('../public/assets/css/main.css', import.meta.url), 'utf8');
+  assert.match(js, /const CHOICE_FADE_MS=220/);
+  assert.match(js, /async function fadeChoicesOut\(\)/);
+  assert.doesNotMatch(js, /LOCAL_CHOICE_DELAY_MS/);
+  assert.match(css, /\.choices\.leaving\{opacity:0;transform:translateY\(-5px\);pointer-events:none;\}/);
+});
+
+test('guided final recommendation sends only route and selected answers', async () => {
+  const js = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');
+  assert.match(js, /const completedFlow=\{route:localFlow\.route,answers:\[\.\.\.localFlow\.answers\]\}/);
+  assert.match(js, /callAPI\(null,true,completedFlow\)/);
+  assert.match(js, /const messages=forceRecommend&&flowSummary/);
+  assert.match(js, /cocktail=カクテルのみ/);
+});
+
+test('guided flow uses a visible fade transition and a compact final-only prompt', async () => {
+  const js = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');
+  assert.match(js, /const CHOICE_FADE_MS=220/);
+  assert.equal((js.match(/await fadeChoicesOut\(\)/g)||[]).length, 3);
   assert.match(js, /function getFinalSystem\(\)/);
   assert.match(js, /const system=forceRecommend\?getFinalSystem\(\)/);
   assert.match(js, /今夜の一杯を1つだけ選んでください/);
@@ -304,7 +321,7 @@ test('choice-based recommendation flow stays local until the final Sonnet reques
   assert.match(html, /const LOCAL_FLOW_COPY=/);
   assert.match(html, /async function handleLocalChoice\(text\)/);
   assert.match(html, /const handledLocally=await handleLocalChoice\(text\)/);
-  assert.match(html, /callAPI\(null,true\)/);
+  assert.match(html, /callAPI\(null,true,completedFlow\)/);
   assert.match(html, /const fastTurn=!forceRecommend&&userTurns<4/);
   assert.match(html, /localFlow=null;\n  chatHistory=initialHistory\(\)/);
   assert.doesNotMatch(html, /showChoices\(t\(\)\.initialChoices\);\n  prewarmFastModel\(\)/);
