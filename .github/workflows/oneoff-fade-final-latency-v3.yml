@@ -1,0 +1,99 @@
+name: One-off fade and final latency v3
+on:
+  push:
+    branches:
+      - ux/fade-and-final-latency-v3
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ux/fade-and-final-latency-v3
+      - name: Patch turn fade and compact final request
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          # CSS: fade the current choices immediately after tap, then let the next set fade in.
+          p=Path('public/assets/css/main.css')
+          s=p.read_text(encoding='utf-8')
+          old=".choices{display:flex;flex-direction:column;gap:7px;margin-bottom:8px;animation:fadeUp 0.32s ease both;}"
+          new=".choices{display:flex;flex-direction:column;gap:7px;margin-bottom:8px;animation:fadeUp 0.32s ease both;transition:opacity 0.22s ease,transform 0.22s ease;}\n.choices.leaving{opacity:0;transform:translateY(-5px);pointer-events:none;}"
+          if old not in s: raise SystemExit('choices css anchor missing')
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+
+          p=Path('public/assets/js/main.js')
+          s=p.read_text(encoding='utf-8')
+
+          # Replace the idle pause with an actual visual transition.
+          old="const LOCAL_CHOICE_DELAY_MS=450;\nconst sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));"
+          new="const CHOICE_FADE_MS=220;\nconst sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));\nasync function fadeChoicesOut(){const el=document.querySelector('#choicesArea .choices');if(!el)return;el.classList.add('leaving');await sleep(CHOICE_FADE_MS);}"
+          if old not in s: raise SystemExit('choice delay constants anchor missing')
+          s=s.replace(old,new,1)
+          s=s.replace("await sleep(LOCAL_CHOICE_DELAY_MS);\n    presentLocalQuestion(first);","await fadeChoicesOut();\n    presentLocalQuestion(first);",1)
+          s=s.replace("await sleep(LOCAL_CHOICE_DELAY_MS);\n    presentLocalQuestion(questions[localFlow.step]);","await fadeChoicesOut();\n    presentLocalQuestion(questions[localFlow.step]);",1)
+
+          # Fade the last choice set before switching to loading, too.
+          old="  localFlow=null;\n  showLoading();\n  try{\n    const r=await callAPI(null,true);"
+          new="  const completedFlow={route:localFlow.route,answers:[...localFlow.answers]};\n  localFlow=null;\n  await fadeChoicesOut();\n  showLoading();\n  try{\n    const r=await callAPI(null,true,completedFlow);"
+          if old not in s: raise SystemExit('final local flow anchor missing')
+          s=s.replace(old,new,1)
+
+          # Guided final turns do not need the entire alternating UI history. Send only route + answers.
+          old="async function callAPI(userMsg,forceRecommend=false){\n  if(userMsg)chatHistory.push({role:'user',content:userMsg});\n  const userTurns=chatHistory.filter(m=>m.role==='user').length;\n  const fastTurn=!forceRecommend&&userTurns<4;\n  const model=fastTurn?FAST_MODEL:RECOMMEND_MODEL;\n  const maxTokens=fastTurn?600:1200;\n  const system=forceRecommend?getFinalSystem():(fastTurn?getFastSystem():getSystem());\n  const res=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model,max_tokens:maxTokens,system,messages:chatHistory})});"
+          new="async function callAPI(userMsg,forceRecommend=false,flowSummary=null){\n  if(userMsg)chatHistory.push({role:'user',content:userMsg});\n  const userTurns=chatHistory.filter(m=>m.role==='user').length;\n  const fastTurn=!forceRecommend&&userTurns<4;\n  const model=fastTurn?FAST_MODEL:RECOMMEND_MODEL;\n  const maxTokens=fastTurn?600:850;\n  const system=forceRecommend?getFinalSystem():(fastTurn?getFastSystem():getSystem());\n  const messages=forceRecommend&&flowSummary?[{role:'user',content:`route=${flowSummary.route}; answers=${flowSummary.answers.join(' / ')}`}]:chatHistory;\n  const res=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model,max_tokens:maxTokens,system,messages})});"
+          if old not in s: raise SystemExit('callAPI anchor missing')
+          s=s.replace(old,new,1)
+
+          # Compact final prompt must preserve route constraints now that full UI history/system is not sent.
+          old="・ユーザーの回答を総合し、味・香り・強さ・気分・場面に合う実在する一杯を選ぶ。\n・日本のBARで実際に注文する場面を前提にする。カクテル／モクテルは標準的なレシピを使う。単体酒は自然な銘柄またはカテゴリを提案する。"
+          new="・ユーザーの回答を総合し、味・香り・強さ・気分・場面に合う実在する一杯を選ぶ。\n・messagesのroute制約を厳守する。cocktail=カクテルのみ、spirits=単体のウイスキー／洋酒のみ、nonAlcohol=アルコール0%のみ、recommend=全カテゴリ可。回答に度数希望がある場合は必ず守る。\n・日本のBARで実際に注文する場面を前提にする。カクテル／モクテルは標準的なレシピを使う。単体酒は自然な銘柄またはカテゴリを提案する。"
+          if old not in s: raise SystemExit('final prompt rules anchor missing')
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+
+          # Worker currently forces Sonnet back up to 1200 tokens; align it with the lean client request.
+          p=Path('src/worker-v1.9.mjs')
+          s=p.read_text(encoding='utf-8')
+          old="body.max_tokens = Math.max(Number(body.max_tokens) || 0, 1200);"
+          new="body.max_tokens = Math.max(Number(body.max_tokens) || 0, 850);"
+          if old not in s: raise SystemExit('worker max token anchor missing')
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+
+          # Update existing regression expectations and add explicit transition/compact-history coverage.
+          for f in Path('test').glob('*.mjs'):
+              x=f.read_text(encoding='utf-8')
+              x=x.replace("const maxTokens=fastTurn\\?600:1200", "const maxTokens=fastTurn\\?600:850")
+              x=x.replace("Math\\.max\\(Number\\(body\\.max_tokens\\) \\|\\| 0, 1200\\)", "Math\\.max\\(Number\\(body\\.max_tokens\\) \\|\\| 0, 850\\)")
+              x=x.replace("const LOCAL_CHOICE_DELAY_MS=450", "const CHOICE_FADE_MS=220")
+              x=x.replace("await sleep\\(LOCAL_CHOICE_DELAY_MS\\)", "await fadeChoicesOut\\(\\)")
+              f.write_text(x,encoding='utf-8')
+
+          t=Path('test/worker.test.mjs')
+          x=t.read_text(encoding='utf-8')
+          marker="test('guided flow adds a short beat and uses a compact final-only prompt', async () => {"
+          extra="""test('guided choices fade immediately instead of waiting idle before replacement', async () => {\n  const js = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');\n  const css = await readFile(new URL('../public/assets/css/main.css', import.meta.url), 'utf8');\n  assert.match(js, /const CHOICE_FADE_MS=220/);\n  assert.match(js, /async function fadeChoicesOut\\(\\)/);\n  assert.doesNotMatch(js, /LOCAL_CHOICE_DELAY_MS/);\n  assert.match(css, /\\.choices\\.leaving\\{opacity:0;transform:translateY\\(-5px\\);pointer-events:none;\\}/);\n});\n\ntest('guided final recommendation sends only route and selected answers', async () => {\n  const js = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');\n  assert.match(js, /const completedFlow=\\{route:localFlow\\.route,answers:\\[\\.\\.\\.localFlow\\.answers\\]\\}/);\n  assert.match(js, /callAPI\\(null,true,completedFlow\\)/);\n  assert.match(js, /const messages=forceRecommend&&flowSummary\\?\\[\\{role:'user',content:`route=\\$\\{flowSummary\\.route\\}; answers=\\$\\{flowSummary\\.answers\\.join\\(' \\/ '\\)\\}`\\}\\]:chatHistory/);\n  assert.match(js, /cocktail=カクテルのみ/);\n});\n\n"""
+          if 'guided choices fade immediately instead of waiting idle' not in x:
+              if marker not in x: raise SystemExit('worker test marker missing')
+              x=x.replace(marker,extra+marker,1)
+          t.write_text(x,encoding='utf-8')
+          PY
+      - name: Run tests
+        run: |
+          npm ci
+          npm test
+          npm run validate:drink-master-v1.9
+      - name: Commit patch and remove one-off workflow
+        run: |
+          rm -f .github/workflows/oneoff-fade-final-latency-v3.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Smooth guided transitions and trim final request"
+          git push origin HEAD:ux/fade-and-final-latency-v3
