@@ -1,0 +1,52 @@
+name: One-off fade 350ms
+on:
+  push:
+    branches:
+      - ux/fade-350ms
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ux/fade-350ms
+      - name: Patch fade duration
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('public/assets/js/main.js')
+          s=p.read_text(encoding='utf-8')
+          if 'const CHOICE_FADE_MS=220;' not in s: raise SystemExit('JS fade anchor missing')
+          s=s.replace('const CHOICE_FADE_MS=220;','const CHOICE_FADE_MS=350;',1)
+          p.write_text(s,encoding='utf-8')
+
+          p=Path('public/assets/css/main.css')
+          s=p.read_text(encoding='utf-8')
+          old='transition:opacity 0.22s ease,transform 0.22s ease;'
+          new='transition:opacity 0.35s ease,transform 0.35s ease;'
+          if old not in s: raise SystemExit('CSS fade anchor missing')
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+
+          for p in Path('test').glob('*.mjs'):
+              s=p.read_text(encoding='utf-8')
+              s=s.replace('CHOICE_FADE_MS=220','CHOICE_FADE_MS=350')
+              s=s.replace('opacity 0.22s ease,transform 0.22s ease','opacity 0.35s ease,transform 0.35s ease')
+              p.write_text(s,encoding='utf-8')
+          PY
+      - name: Test
+        run: |
+          npm ci
+          npm test
+          npm run validate:drink-master-v1.9
+      - name: Commit
+        run: |
+          rm -f .github/workflows/oneoff-fade-350ms.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Tune guided choice fade to 350ms"
+          git push origin HEAD:ux/fade-350ms
