@@ -709,10 +709,11 @@ async function handleLocalChoice(text){
   }
   const completedFlow={route:localFlow.route,answers:[...localFlow.answers]};
   localFlow=null;
+  const finalRequest=callAPI(null,true,completedFlow);
   await fadeChoicesOut();
   showLoading();
   try{
-    const r=await callAPI(null,true,completedFlow);
+    const r=await finalRequest;
     if(r.type==='question'){
       setPanda(r.emotion||'think');showMsg(r.message);showChoices(r.choices);
     }else{showRec(r);}
