@@ -269,7 +269,7 @@ test('frontend final recommendation parser tolerates wrapped JSON and allows eno
   const js = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');
   assert.match(js, /function parseAssistantJson\(data\)/);
   assert.match(js, /blocks\.find\(b=>b&&b\.type==='text'/);
-  assert.match(js, /const maxTokens=fastTurn\?600:850/);
+  assert.match(js, /const maxTokens=forceRecommend\?320:\(fastTurn\?600:850\)/);
   const callApi = js.match(/async function callAPI\(userMsg,forceRecommend=false,flowSummary=null\)\{[\s\S]*?\n\}/)?.[0] || '';
   assert.match(callApi, /parseAssistantJson\(data\)/);
   assert.doesNotMatch(callApi, /data\.content\[0\]\.text/);
@@ -312,7 +312,7 @@ test('guided flow uses a visible fade transition and a compact final-only prompt
   assert.match(js, /const CHOICE_FADE_OUT_MS=320/);
   assert.equal((js.match(/await fadeChoicesOut\(\)/g)||[]).length, 3);
   assert.match(js, /function getFinalSystem\(\)/);
-  assert.match(js, /const system=forceRecommend\?getFinalSystem\(\)/);
+  assert.match(js, /const system=forceRecommend\?getSelectionSystem\(\)/);
   assert.match(js, /今夜の一杯を1つだけ選んでください/);
 
   const css = await readFile(new URL('../public/assets/css/main.css', import.meta.url), 'utf8');
