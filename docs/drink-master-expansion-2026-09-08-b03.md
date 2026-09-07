@@ -8,7 +8,7 @@ Scope: initial 400-book-index source, Batch 01, Batch 02 remain unchanged; this 
 
 | masterKey | 日本語名 | availability | rarity | confidence | 主な成立制約 |
 |---|---|---:|---:|---:|---|
-| Clover Club | クローバー・クラブ | 55 | 45 | 0.88 | ラズベリーシロップ・卵白運用 |
+| Spicy Fifty | スパイシー・フィフティ | 36 | 64 | 0.88 | バニラウォッカ・エルダーフラワー・唐辛子 |
 | Pisco Sour | ピスコ・サワー | 45 | 55 | 0.88 | ピスコ・ビターズ・卵白常備 |
 | Trinidad Sour | トリニダード・サワー | 28 | 72 | 0.88 | Angostura 45ml・オルジェ・ライ |
 | South Side | サウスサイド | 48 | 52 | 0.87 | 国内名称認知・ミント・卵白運用 |
@@ -20,7 +20,7 @@ Scope: initial 400-book-index source, Batch 01, Batch 02 remain unchanged; this 
 
 ## 主な実在性・標準レシピ根拠
 
-- Clover Club – IBA: https://iba-world.com/iba-cocktail/clover-club/
+- Spicy Fifty – IBA: https://iba-world.com/iba-cocktail/spicy-fifty/
 - Pisco Sour – IBA: https://iba-world.com/iba-cocktail/pisco-sour/
 - Trinidad Sour – IBA: https://iba-world.com/iba-cocktail/trinidad-sour/
 - South Side – IBA: https://iba-world.com/iba-cocktail/south-side/
@@ -28,11 +28,11 @@ Scope: initial 400-book-index source, Batch 01, Batch 02 remain unchanged; this 
 
 ## 日本BAR成立性の主な根拠
 
-### Clover Club
-- DRINK PLANET: https://www.drinkplanet.jp/cocktail_todays/view/24
-- Bar Leaf: https://barleaf2020.com/menu/
+### Spicy Fifty
+- IBA: https://iba-world.com/iba-cocktail/spicy-fifty/
+- Bar domingo: https://www.hotpepper.jp/strJ000868031/drink/
 
-国内BARメニューで現行掲載があり、材料も概ね一般的。ただしラズベリーシロップと卵白運用で店差が出るためavailability 55。
+IBA公式レシピと国内BARの現行メニュー掲載を確認。バニラウォッカまたはバニラ運用、エルダーフラワー、蜂蜜、唐辛子が必要で一般BARでは店差が大きいためavailability 36。
 
 ### Pisco Sour
 - DRINK PLANET / Bar Super Nova: https://www.drinkplanet.jp/cocktail_todays/view/2042
