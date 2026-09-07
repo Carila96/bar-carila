@@ -1,0 +1,96 @@
+name: One-off full recommendation latency pass
+on:
+  push:
+    branches: [perf/full-recommendation-latency-pass]
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: perf/full-recommendation-latency-pass
+      - name: Apply latency fixes
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('public/assets/js/main.js')
+          s=p.read_text(encoding='utf-8')
+          old="  await fadeChoicesOut();\n  showLoading();\n  try{\n    const r=await callAPI(null,true,completedFlow);"
+          new="  const finalRequest=callAPI(null,true,completedFlow);\n  await fadeChoicesOut();\n  showLoading();\n  try{\n    const r=await finalRequest;"
+          if old not in s: raise SystemExit('frontend final request anchor missing')
+          s=s.replace(old,new,1)
+          if "  const maxTokens=fastTurn?600:850;" not in s: raise SystemExit('frontend token anchor missing')
+          s=s.replace("  const maxTokens=fastTurn?600:850;", "  const maxTokens=fastTurn?600:600;", 1)
+          s=s.replace('"analysis":"今夜の気分を2〜3文で表す1行の文章"', '"analysis":"今夜の気分を短い1文で表す文章"', 1)
+          s=s.replace('"description":"60字以内の説明1文"', '"description":"45字以内の説明1文"', 1)
+          s=s.replace('"trivia":"80字以内の豆知識またはBARでの楽しみ方"', '"trivia":"60字以内の豆知識またはBARでの楽しみ方"', 1)
+          p.write_text(s,encoding='utf-8')
+
+          p=Path('src/worker.mjs')
+          s=p.read_text(encoding='utf-8')
+          old="""  const useDrinkMasterLeanOutput = (body.model === 'claude-sonnet-5' || body.model === 'claude-sonnet-4-6') && Boolean(env.DRINK_DB);\n  if (useDrinkMasterLeanOutput) {\n    ensureDrinkMasterTables(env).catch((error) => console.error('D1 drink master preflight failed', error));\n  }\n  const effectiveSystem = useDrinkMasterLeanOutput && typeof body.system === 'string'\n    ? body.system + '\\n\\n' + barCarilaLeanOutputInstruction()\n    : body.system;\n"""
+          new="""  // Recommendation generation must stay independent from D1 latency.\n  const effectiveSystem = body.system;\n"""
+          if old not in s: raise SystemExit('base chat D1 anchor missing')
+          s=s.replace(old,new,1)
+          if "  const upstream = await fetch(ANTHROPIC_ENDPOINT, {" not in s: raise SystemExit('upstream anchor missing')
+          s=s.replace("  const upstream = await fetch(ANTHROPIC_ENDPOINT, {", "  const upstreamStarted = Date.now();\n  const upstream = await fetch(ANTHROPIC_ENDPOINT, {", 1)
+          old2="""  const data = await upstream.json();\n  await enrichBarCarilaRecommendation(data, env);\n  return json(data, upstream.status);\n"""
+          new2="""  const data = await upstream.json();\n  return json(data, upstream.status, { 'server-timing': `anthropic;dur=${Date.now() - upstreamStarted}` });\n"""
+          if old2 not in s: raise SystemExit('base post-response D1 anchor missing')
+          s=s.replace(old2,new2,1)
+          p.write_text(s,encoding='utf-8')
+
+          p=Path('src/worker-v1.9.mjs')
+          s=p.read_text(encoding='utf-8')
+          if "    body.max_tokens = Math.max(Number(body.max_tokens) || 0, 850);" not in s: raise SystemExit('v1.9 token anchor missing')
+          s=s.replace("    body.max_tokens = Math.max(Number(body.max_tokens) || 0, 850);", "    body.max_tokens = Math.max(Number(body.max_tokens) || 0, 600);", 1)
+          old3="""  body.system += '\\n\\n【BarCarila固定マスター照合】最終回答が recommendation の場合、drink.masterKey にそのカクテルの標準的な英語名を必ず入れてください（例: Gin and Tonic, Moscow Mule）。同名で別レシピが存在する場合はベースまで含めた固定キーを使ってください。アカプルコは必ず Acapulco (Rum) または Acapulco (Tequila) のどちらかにしてください。コープスリバイバーNo.2は masterKey を Corpse Reviver としてください。既存フィールドは変更しないでください。';\n  if (body.model === 'claude-sonnet-5') body.system += '\\n\\n【最終JSON安定化】Claude Sonnet 5では前置き・後書き・Markdownコードフェンスを付けず、必要項目だけの簡潔なJSONオブジェクトを1個だけ返してください。description・trivia等をD1から補完する対象では、それらを重複生成しないでください。';\n"""
+          new3="""  body.system += '\\n\\n【最終推薦の固定キー】recommendationではdrink.masterKeyに標準的な英語名を入れ、JSONオブジェクト1個だけを簡潔に返してください。AcapulcoはAcapulco (Rum)またはAcapulco (Tequila)、コープスリバイバーNo.2はCorpse Reviverを使ってください。前置き・後書き・Markdownは禁止です。';\n"""
+          if old3 not in s: raise SystemExit('v1.9 prompt anchor missing')
+          s=s.replace(old3,new3,1)
+          if 'async function enrichV19Response(response, env) {' not in s: raise SystemExit('v1.9 enrich signature missing')
+          s=s.replace('async function enrichV19Response(response, env) {', 'async function enrichV19Response(response, env, allowD1 = true) {', 1)
+          old4="""    const candidates = [parsed.drink.masterKey, parsed.drink.name].filter(Boolean);\n    let d1Row = null;\n    for (const candidate of candidates) {\n      d1Row = await readV19FromD1(env, candidate);\n      if (d1Row) break;\n    }\n\n    if (d1Row) {\n      parsed.drink.rarity = d1Row.japan_rarity_score;\n      parsed.drink.rarityLabel = d1Row.japan_rarity_label || rarityLabel(d1Row.japan_rarity_score);\n      parsed.drink.rarityConfidence = d1Row.japan_rarity_confidence;\n      parsed.drink.rarityReason = d1Row.rarity_reason || rarityReason(d1Row.japan_availability_score);\n      parsed.drink.masterSource = 'd1';\n      parsed.drink.evidenceVersion = d1Row.evidence_version;\n    } else {\n      let embeddedRow = null;\n      for (const candidate of candidates) {\n        embeddedRow = V19_BY_KEY.get(canonicalLookupKey(candidate));\n        if (embeddedRow) break;\n      }\n      if (embeddedRow) {\n        const [, availability, rarity, confidence] = embeddedRow;\n        parsed.drink.rarity = rarity;\n        parsed.drink.rarityLabel = rarityLabel(rarity);\n        parsed.drink.rarityConfidence = confidence;\n        parsed.drink.rarityReason = rarityReason(availability);\n        parsed.drink.masterSource = 'embedded-v1.9';\n        parsed.drink.evidenceVersion = EVIDENCE_VERSION;\n      }\n    }\n"""
+          new4="""    const candidates = [parsed.drink.masterKey, parsed.drink.name].filter(Boolean);\n    let embeddedRow = null;\n    for (const candidate of candidates) {\n      embeddedRow = V19_BY_KEY.get(canonicalLookupKey(candidate));\n      if (embeddedRow) break;\n    }\n    if (embeddedRow) {\n      const [, availability, rarity, confidence] = embeddedRow;\n      parsed.drink.rarity = rarity;\n      parsed.drink.rarityLabel = rarityLabel(rarity);\n      parsed.drink.rarityConfidence = confidence;\n      parsed.drink.rarityReason = rarityReason(availability);\n      parsed.drink.masterSource = 'embedded-v1.9';\n      parsed.drink.evidenceVersion = EVIDENCE_VERSION;\n    } else if (allowD1) {\n      let d1Row = null;\n      for (const candidate of candidates) {\n        d1Row = await readV19FromD1(env, candidate);\n        if (d1Row) break;\n      }\n      if (d1Row) {\n        parsed.drink.rarity = d1Row.japan_rarity_score;\n        parsed.drink.rarityLabel = d1Row.japan_rarity_label || rarityLabel(d1Row.japan_rarity_score);\n        parsed.drink.rarityConfidence = d1Row.japan_rarity_confidence;\n        parsed.drink.rarityReason = d1Row.rarity_reason || rarityReason(d1Row.japan_availability_score);\n        parsed.drink.masterSource = 'd1';\n        parsed.drink.evidenceVersion = d1Row.evidence_version;\n      }\n    }\n"""
+          if old4 not in s: raise SystemExit('v1.9 enrichment anchor missing')
+          s=s.replace(old4,new4,1)
+          old5="""    const seedPromise = ensureV19Seed(env).catch((error) => {\n      console.error('v1.9 D1 seed failed', error);\n    });\n    const effectiveRequest = await addMasterKeyInstruction(request);\n    const response = await baseWorker.fetch(effectiveRequest, env, context);\n    await seedPromise;\n    return enrichV19Response(response, env);\n"""
+          new5="""    const effectiveRequest = await addMasterKeyInstruction(request);\n    const response = await baseWorker.fetch(effectiveRequest, env, context);\n    // v1.9 is already embedded; never seed or query D1 on the recommendation critical path.\n    return enrichV19Response(response, env, false);\n"""
+          if old5 not in s: raise SystemExit('v1.9 fetch critical path anchor missing')
+          s=s.replace(old5,new5,1)
+          p.write_text(s,encoding='utf-8')
+
+          p=Path('test/drink-master-output.test.mjs')
+          x=p.read_text(encoding='utf-8')
+          old="""  assert.match(source, /const useDrinkMasterLeanOutput = .*Boolean\\(env\\.DRINK_DB\\)/);\n  assert.match(source, /ensureDrinkMasterTables\\(env\\)\\.catch/);\n  assert.doesNotMatch(source, /useDrinkMasterLeanOutput = await ensureDrinkMasterTables/);\n  assert.match(source, /effectiveSystem/);\n"""
+          new="""  assert.match(source, /const effectiveSystem = body\\.system/);\n  assert.doesNotMatch(source, /useDrinkMasterLeanOutput/);\n  assert.doesNotMatch(source, /await enrichBarCarilaRecommendation\\(data, env\\)/);\n  assert.match(source, /server-timing/);\n"""
+          if old not in x: raise SystemExit('drink-master-output test anchor missing')
+          x=x.replace(old,new,1)
+          p.write_text(x,encoding='utf-8')
+
+          p=Path('test/worker.test.mjs')
+          x=p.read_text(encoding='utf-8')
+          old="""test('final recommendation starts Anthropic without awaiting D1 master preflight', async () => {\n  const source = await readFile(new URL('../src/worker.mjs', import.meta.url), 'utf8');\n  assert.match(source, /const useDrinkMasterLeanOutput = .*Boolean\\(env\\.DRINK_DB\\)/);\n  assert.match(source, /ensureDrinkMasterTables\\(env\\)\\.catch/);\n  assert.doesNotMatch(source, /useDrinkMasterLeanOutput = await ensureDrinkMasterTables\\(env\\)/);\n});\n"""
+          new="""test('chat critical path is independent from D1 drink-master work', async () => {\n  const source = await readFile(new URL('../src/worker.mjs', import.meta.url), 'utf8');\n  assert.match(source, /const effectiveSystem = body\\.system/);\n  assert.doesNotMatch(source, /useDrinkMasterLeanOutput/);\n  assert.doesNotMatch(source, /await enrichBarCarilaRecommendation\\(data, env\\)/);\n});\n"""
+          if old not in x: raise SystemExit('worker stale latency test anchor missing')
+          x=x.replace(old,new,1)
+          x += "\n\ntest('production v1.9 chat avoids D1 seed and D1 lookup on the critical path', async () => {\n  const source = await readFile(new URL('../src/worker-v1.9.mjs', import.meta.url), 'utf8');\n  const fetchBlock = source.slice(source.indexOf('export default {'));\n  assert.doesNotMatch(fetchBlock, /seedPromise|await ensureV19Seed/);\n  assert.match(fetchBlock, /enrichV19Response\\(response, env, false\\)/);\n});\n\ntest('final local flow overlaps the choice fade with the Sonnet request', async () => {\n  const source = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');\n  assert.match(source, /const finalRequest=callAPI\\(null,true,completedFlow\\);\\n  await fadeChoicesOut\\(\\);/);\n  assert.match(source, /const maxTokens=fastTurn\\?600:600/);\n});\n"
+          p.write_text(x,encoding='utf-8')
+          PY
+      - name: Test
+        run: |
+          npm ci
+          npm test
+          npm run validate:drink-master-v1.9
+      - name: Commit clean patch
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/oneoff-full-latency-pass.yml
+          git add public/assets/js/main.js src/worker.mjs src/worker-v1.9.mjs test/drink-master-output.test.mjs test/worker.test.mjs
+          git commit -m 'Remove recommendation latency bottlenecks'
+          git push origin HEAD:perf/full-recommendation-latency-pass
