@@ -8,7 +8,9 @@ test('Sonnet can omit D1-backed fixed copy before model output', () => {
   assert.match(source, /barCarilaLeanOutputInstruction/);
   assert.match(source, /drink\.rarity・drink\.description・drink\.trivia は出力しない/);
   assert.match(source, /DRINK_COPY_SEED\.map/);
-  assert.match(source, /useDrinkMasterLeanOutput = await ensureDrinkMasterTables/);
+  assert.match(source, /const useDrinkMasterLeanOutput = .*Boolean\(env\.DRINK_DB\)/);
+  assert.match(source, /ensureDrinkMasterTables\(env\)\.catch/);
+  assert.doesNotMatch(source, /useDrinkMasterLeanOutput = await ensureDrinkMasterTables/);
   assert.match(source, /effectiveSystem/);
 });
 
