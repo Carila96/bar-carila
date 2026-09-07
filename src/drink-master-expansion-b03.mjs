@@ -30,7 +30,7 @@ export const DRINK_MASTER_EXPANSION_B03 = [
     evidence: [
       { type: 'international_professional_reference', title: 'Spicy Fifty – IBA', url: 'https://iba-world.com/iba-cocktail/spicy-fifty/', note: 'IBA公式レシピで実在性・標準構成を確認。' },
       { type: 'jp_bar_reference', title: 'Bar domingo ドリンクメニュー', url: 'https://www.hotpepper.jp/strJ000868031/drink/', note: '国内BARでSpicy Fiftyの現行メニュー掲載と材料構成を確認。' },
-      { type: 'jp_menu_reference', title: 'Bar domingo IBA official cocktail menu', url: 'https://www.hotpepper.jp/strJ000868031/drink/', note: 'IBA公認カクテル群の一つとして日本語名・英語名双方で注文可能な実例を確認。' },
+      { type: 'jp_recipe_reference', title: 'Spicy Fifty – Pocket Bartender', url: 'https://pocketbartender.app/ja/recipes/spicy-fifty/', note: '日本語レシピカタログで名称、材料、作り方の国内向け認知を補助確認。' },
     ],
   },
   {

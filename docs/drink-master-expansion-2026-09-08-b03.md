@@ -31,6 +31,7 @@ Scope: initial 400-book-index source, Batch 01, Batch 02 remain unchanged; this 
 ### Spicy Fifty
 - IBA: https://iba-world.com/iba-cocktail/spicy-fifty/
 - Bar domingo: https://www.hotpepper.jp/strJ000868031/drink/
+- Pocket Bartender: https://pocketbartender.app/ja/recipes/spicy-fifty/
 
 IBA公式レシピと国内BARの現行メニュー掲載を確認。バニラウォッカまたはバニラ運用、エルダーフラワー、蜂蜜、唐辛子が必要で一般BARでは店差が大きいためavailability 36。
 
