@@ -1,0 +1,30 @@
+name: One-off fix batch 02 aliases
+on:
+  push:
+    branches: [data/drink-master-expansion-b02]
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: data/drink-master-expansion-b02
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: python scripts/fix-b02-aliases.py
+      - run: npm test
+      - run: npm run validate:drink-master-v1.9
+      - name: Commit fix and remove one-off files
+        if: always()
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          rm -f .github/workflows/oneoff-fix-b02-aliases.yml scripts/fix-b02-aliases.py
+          git add -A
+          git commit -m 'Normalize batch 02 aliases' || true
+          git push origin HEAD:data/drink-master-expansion-b02 || true
