@@ -214,9 +214,9 @@ export default {
     const seedPromise = ensureV19Seed(env).catch((error) => {
       console.error('v1.9 D1 seed failed', error);
     });
+    if (context?.waitUntil) context.waitUntil(seedPromise);
     const effectiveRequest = await addMasterKeyInstruction(request);
     const response = await baseWorker.fetch(effectiveRequest, env, context);
-    await seedPromise;
     return enrichV19Response(response, env);
   }
 };
