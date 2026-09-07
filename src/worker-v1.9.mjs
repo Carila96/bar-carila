@@ -5,10 +5,11 @@ import { DRINK_MASTER_EXPANSION_B02, DRINK_MASTER_EXPANSION_B02_SEED_ROWS, DRINK
 import { DRINK_MASTER_EXPANSION_B03, DRINK_MASTER_EXPANSION_B03_SEED_ROWS, DRINK_MASTER_EXPANSION_B03_ALIAS_ENTRIES, DRINK_MASTER_EXPANSION_B03_EVIDENCE_VERSION, DRINK_MASTER_EXPANSION_B03_EVALUATED_AT } from './drink-master-expansion-b03.mjs';
 import { DRINK_MASTER_EXPANSION_B04, DRINK_MASTER_EXPANSION_B04_SEED_ROWS, DRINK_MASTER_EXPANSION_B04_ALIAS_ENTRIES, DRINK_MASTER_EXPANSION_B04_EVIDENCE_VERSION, DRINK_MASTER_EXPANSION_B04_EVALUATED_AT } from './drink-master-expansion-b04.mjs';
 import { DRINK_MASTER_EXPANSION_B05, DRINK_MASTER_EXPANSION_B05_SEED_ROWS, DRINK_MASTER_EXPANSION_B05_ALIAS_ENTRIES, DRINK_MASTER_EXPANSION_B05_EVIDENCE_VERSION, DRINK_MASTER_EXPANSION_B05_EVALUATED_AT } from './drink-master-expansion-b05.mjs';
+import { DRINK_MASTER_EXPANSION_B06, DRINK_MASTER_EXPANSION_B06_SEED_ROWS, DRINK_MASTER_EXPANSION_B06_ALIAS_ENTRIES, DRINK_MASTER_EXPANSION_B06_EVIDENCE_VERSION, DRINK_MASTER_EXPANSION_B06_EVALUATED_AT } from './drink-master-expansion-b06.mjs';
 
 const EVIDENCE_VERSION = 'jp-rarity-v1.9';
 const EVALUATED_AT = '2026-09-05';
-const V19_BY_KEY = new Map([...JP_RARITY_V19_SEED_ROWS, ...DRINK_MASTER_EXPANSION_B01_SEED_ROWS, ...DRINK_MASTER_EXPANSION_B02_SEED_ROWS, ...DRINK_MASTER_EXPANSION_B03_SEED_ROWS, ...DRINK_MASTER_EXPANSION_B04_SEED_ROWS, ...DRINK_MASTER_EXPANSION_B05_SEED_ROWS].map((row) => [normalizeDrinkV19Key(row[0]), row]));
+const V19_BY_KEY = new Map([...JP_RARITY_V19_SEED_ROWS, ...DRINK_MASTER_EXPANSION_B01_SEED_ROWS, ...DRINK_MASTER_EXPANSION_B02_SEED_ROWS, ...DRINK_MASTER_EXPANSION_B03_SEED_ROWS, ...DRINK_MASTER_EXPANSION_B04_SEED_ROWS, ...DRINK_MASTER_EXPANSION_B05_SEED_ROWS, ...DRINK_MASTER_EXPANSION_B06_SEED_ROWS].map((row) => [normalizeDrinkV19Key(row[0]), row]));
 const LOOKUP_ALIASES = new Map([
   [normalizeDrinkV19Key('Corpse Reviver No.2'), normalizeDrinkV19Key('Corpse Reviver')],
   [normalizeDrinkV19Key('Corpse Reviver No 2'), normalizeDrinkV19Key('Corpse Reviver')],
@@ -31,7 +32,10 @@ for (const [alias, masterKey] of DRINK_MASTER_EXPANSION_B04_ALIAS_ENTRIES) {
 for (const [alias, masterKey] of DRINK_MASTER_EXPANSION_B05_ALIAS_ENTRIES) {
   LOOKUP_ALIASES.set(normalizeDrinkV19Key(alias), normalizeDrinkV19Key(masterKey));
 }
-const ACCEPTED_EVIDENCE_VERSIONS = new Set([EVIDENCE_VERSION, DRINK_MASTER_EXPANSION_B01_EVIDENCE_VERSION, DRINK_MASTER_EXPANSION_B02_EVIDENCE_VERSION, DRINK_MASTER_EXPANSION_B03_EVIDENCE_VERSION, DRINK_MASTER_EXPANSION_B04_EVIDENCE_VERSION, DRINK_MASTER_EXPANSION_B05_EVIDENCE_VERSION]);
+for (const [alias, masterKey] of DRINK_MASTER_EXPANSION_B06_ALIAS_ENTRIES) {
+  LOOKUP_ALIASES.set(normalizeDrinkV19Key(alias), normalizeDrinkV19Key(masterKey));
+}
+const ACCEPTED_EVIDENCE_VERSIONS = new Set([EVIDENCE_VERSION, DRINK_MASTER_EXPANSION_B01_EVIDENCE_VERSION, DRINK_MASTER_EXPANSION_B02_EVIDENCE_VERSION, DRINK_MASTER_EXPANSION_B03_EVIDENCE_VERSION, DRINK_MASTER_EXPANSION_B04_EVIDENCE_VERSION, DRINK_MASTER_EXPANSION_B05_EVIDENCE_VERSION, DRINK_MASTER_EXPANSION_B06_EVIDENCE_VERSION]);
 let v19Ready;
 
 function rarityLabel(rarity) {
@@ -483,6 +487,71 @@ async function seedExpansionB05(env) {
   }
 }
 
+async function hasExpansionB06Seed(env) {
+  if (!env?.DRINK_DB) return false;
+  try {
+    const row = await env.DRINK_DB.prepare(`SELECT COUNT(*) AS count FROM drinks WHERE evidence_version = ?`)
+      .bind(DRINK_MASTER_EXPANSION_B06_EVIDENCE_VERSION).first();
+    return Number(row?.count || 0) >= DRINK_MASTER_EXPANSION_B06.length;
+  } catch {
+    return false;
+  }
+}
+
+async function seedExpansionB06(env) {
+  if (!env?.DRINK_DB) return;
+  await ensureV19Tables(env);
+  const statements = DRINK_MASTER_EXPANSION_B06.map((drink) => {
+    const key = normalizeDrinkV19Key(drink.masterKey);
+    return env.DRINK_DB.prepare(`INSERT INTO drinks (
+      canonical_key, name_ja, name_en, category, base_spirit, drink_kind,
+      japan_availability_score, japan_rarity_score, japan_rarity_label, japan_rarity_confidence,
+      rarity_reason, evidence_version, evaluated_at, short_description, order_hint, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+    ON CONFLICT(canonical_key) DO UPDATE SET
+      name_ja = excluded.name_ja,
+      name_en = excluded.name_en,
+      category = excluded.category,
+      base_spirit = excluded.base_spirit,
+      drink_kind = excluded.drink_kind,
+      japan_availability_score = excluded.japan_availability_score,
+      japan_rarity_score = excluded.japan_rarity_score,
+      japan_rarity_label = excluded.japan_rarity_label,
+      japan_rarity_confidence = excluded.japan_rarity_confidence,
+      rarity_reason = excluded.rarity_reason,
+      evidence_version = excluded.evidence_version,
+      evaluated_at = excluded.evaluated_at,
+      short_description = excluded.short_description,
+      order_hint = excluded.order_hint,
+      updated_at = datetime('now')`)
+      .bind(key, drink.nameJa, drink.masterKey, drink.category, drink.baseSpirit, drink.drinkKind,
+        drink.availability, drink.rarity, drink.rarityLabel, drink.confidence, drink.rarityReason,
+        DRINK_MASTER_EXPANSION_B06_EVIDENCE_VERSION, DRINK_MASTER_EXPANSION_B06_EVALUATED_AT,
+        drink.shortDescription, drink.orderHint);
+  });
+  if (statements.length) await env.DRINK_DB.batch(statements);
+  for (const drink of DRINK_MASTER_EXPANSION_B06) {
+    const key = normalizeDrinkV19Key(drink.masterKey);
+    const row = await env.DRINK_DB.prepare(`SELECT id FROM drinks WHERE canonical_key = ? LIMIT 1`).bind(key).first();
+    if (!row?.id) continue;
+    const aliasStatements = [drink.nameJa, ...drink.aliases].map((alias) => env.DRINK_DB.prepare(`INSERT INTO drink_aliases (
+      alias_key, drink_id, alias_text, language
+    ) VALUES (?, ?, ?, ?)
+    ON CONFLICT(alias_key) DO UPDATE SET drink_id = excluded.drink_id, alias_text = excluded.alias_text, language = excluded.language`)
+      .bind(normalizeDrinkV19Key(alias), row.id, alias, /[\u3040-\u30ff\u3400-\u9fff]/.test(alias) ? 'ja' : 'en'));
+    if (aliasStatements.length) await env.DRINK_DB.batch(aliasStatements);
+    for (const evidence of drink.evidence) {
+      const exists = await env.DRINK_DB.prepare(`SELECT id FROM drink_evidence WHERE drink_id = ? AND source_url = ? LIMIT 1`)
+        .bind(row.id, evidence.url).first();
+      if (exists?.id) continue;
+      await env.DRINK_DB.prepare(`INSERT INTO drink_evidence (
+        drink_id, evidence_type, source_title, source_url, source_note, observed_at, weight
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)`)
+        .bind(row.id, evidence.type, evidence.title, evidence.url, evidence.note, DRINK_MASTER_EXPANSION_B06_EVALUATED_AT, 'supporting').run();
+    }
+  }
+}
+
 async function seedV19IfNeeded(env) {
   if (!env?.DRINK_DB) return;
   if (!(await hasCurrentV19Seed(env))) await seedV19(env);
@@ -491,6 +560,7 @@ async function seedV19IfNeeded(env) {
   if (!(await hasExpansionB03Seed(env))) await seedExpansionB03(env);
   if (!(await hasExpansionB04Seed(env))) await seedExpansionB04(env);
   if (!(await hasExpansionB05Seed(env))) await seedExpansionB05(env);
+  if (!(await hasExpansionB06Seed(env))) await seedExpansionB06(env);
 }
 
 function ensureV19Seed(env) {
@@ -580,7 +650,7 @@ async function enrichV19Response(response, env) {
   return new Response(JSON.stringify(data), { status: response.status, headers });
 }
 
-export { JP_RARITY_V19_SEED_ROWS as V19_ROWS, rarityLabel, rarityReason, canonicalLookupKey, enrichV19Response, hasCurrentV19Seed, hasExpansionB01Seed, hasExpansionB02Seed, hasExpansionB03Seed, hasExpansionB04Seed, hasExpansionB05Seed };
+export { JP_RARITY_V19_SEED_ROWS as V19_ROWS, rarityLabel, rarityReason, canonicalLookupKey, enrichV19Response, hasCurrentV19Seed, hasExpansionB01Seed, hasExpansionB02Seed, hasExpansionB03Seed, hasExpansionB04Seed, hasExpansionB05Seed, hasExpansionB06Seed };
 
 export default {
   async fetch(request, env, context) {
