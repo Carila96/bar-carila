@@ -17,7 +17,7 @@ export const DRINK_MASTER_EXPANSION_B07 = [
     ]
   },
   {
-    masterKey: 'Gin Gin Mule', nameJa: 'ジン・ジン・ミュール', aliases: ['Gin-Gin Mule','ジンジンミュール'],
+    masterKey: 'Gin Gin Mule', nameJa: 'ジン・ジン・ミュール', aliases: [],
     category: 'cocktail', baseSpirit: 'gin', drinkKind: 'cocktail', availability: 38, rarity: 62, rarityLabel: '珍しい', confidence: 0.86,
     rarityReason: 'Audrey Saunders由来のモダンクラシックとして国際的に確立し、日本語の業界媒体でも紹介されている。ジン、ライム、ミント、ジンジャービアは国内調達可能だが、生ミント常備と名称認知の点で一般BARでは店差が大きい。',
     shortDescription: 'ジン、ライム、ミント、ジンジャービアを合わせる、モヒートとモスコミュールの長所を重ねた爽快なロングカクテル。',
