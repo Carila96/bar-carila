@@ -5,7 +5,7 @@ export const DRINK_MASTER_EXPANSION_B02 = [
   {
     masterKey: "Bee's Knees",
     nameJa: 'ビーズニーズ',
-    aliases: ["Bee's Knees", 'Bees Knees', 'ビーズ・ニーズ'],
+    aliases: ["Bee's Knees", 'Bees Knees'],
     category: 'cocktail',
     baseSpirit: 'gin',
     drinkKind: 'cocktail',
@@ -65,7 +65,7 @@ export const DRINK_MASTER_EXPANSION_B02 = [
   {
     masterKey: 'Jungle Bird',
     nameJa: 'ジャングルバード',
-    aliases: ['Jungle Bird', 'ジャングル・バード'],
+    aliases: ['Jungle Bird'],
     category: 'cocktail',
     baseSpirit: 'rum',
     drinkKind: 'cocktail',
@@ -96,7 +96,7 @@ export const DRINK_MASTER_EXPANSION_B02 = [
   {
     masterKey: 'Hanky Panky',
     nameJa: 'ハンキー・パンキー',
-    aliases: ['Hanky Panky', 'Hankey Pankey', 'ハンキーパンキー'],
+    aliases: ['Hanky Panky', 'Hankey Pankey'],
     category: 'cocktail',
     baseSpirit: 'gin',
     drinkKind: 'cocktail',
