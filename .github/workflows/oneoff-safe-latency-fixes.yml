@@ -1,0 +1,56 @@
+name: One-off safe latency fixes
+on:
+  push:
+    branches: [perf/safe-latency-fixes]
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: perf/safe-latency-fixes
+      - name: Apply safe latency fixes
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p=Path('public/assets/js/main.js')
+          s=p.read_text(encoding='utf-8')
+          old="  await fadeChoicesOut();\n  showLoading();\n  try{\n    const r=await callAPI(null,true,completedFlow);"
+          new="  const finalRequest=callAPI(null,true,completedFlow);\n  await fadeChoicesOut();\n  showLoading();\n  try{\n    const r=await finalRequest;"
+          if old not in s:
+              raise SystemExit('frontend final request anchor missing')
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+
+          p=Path('src/worker.mjs')
+          s=p.read_text(encoding='utf-8')
+          old="  const upstream = await fetch(ANTHROPIC_ENDPOINT, {"
+          new="  const upstreamStarted = Date.now();\n  const upstream = await fetch(ANTHROPIC_ENDPOINT, {"
+          if old not in s:
+              raise SystemExit('upstream fetch anchor missing')
+          s=s.replace(old,new,1)
+          old2="  const data = await upstream.json();\n  await enrichBarCarilaRecommendation(data, env);\n  return json(data, upstream.status);"
+          new2="  const data = await upstream.json();\n  await enrichBarCarilaRecommendation(data, env);\n  return json(data, upstream.status, { 'server-timing': `anthropic;dur=${Date.now() - upstreamStarted}` });"
+          if old2 not in s:
+              raise SystemExit('upstream response anchor missing')
+          s=s.replace(old2,new2,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Test
+        run: |
+          npm ci
+          npm test
+          npm run validate:drink-master-v1.9
+      - name: Commit clean patch
+        shell: bash
+        run: |
+          rm .github/workflows/oneoff-safe-latency-fixes.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/assets/js/main.js src/worker.mjs .github/workflows/oneoff-safe-latency-fixes.yml
+          git commit -m "Apply safe recommendation latency fixes"
+          git push origin HEAD:perf/safe-latency-fixes
