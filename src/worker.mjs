@@ -110,8 +110,9 @@ async function ensureDrinkMasterTables(env) {
   return drinkMasterReady;
 }
 
-async function readDrinkMaster(env, name) {
-  if (!name || !await ensureDrinkMasterTables(env)) return null;
+async function readDrinkMaster(env, name, ensureReady = true) {
+  if (!name || !env?.DRINK_DB) return null;
+  if (ensureReady && !await ensureDrinkMasterTables(env)) return null;
   const key = normalizeDrinkMasterKey(name);
   let row = await env.DRINK_DB.prepare(`SELECT id, name_ja, name_en, category, base_spirit, drink_kind,
       japan_availability_score, japan_rarity_score, japan_rarity_label, japan_rarity_confidence,
@@ -254,7 +255,7 @@ async function enrichBarCarilaRecommendation(data, env) {
   try { parsed = JSON.parse(textItem.text.replace(/```json|```/g, '').trim()); } catch { return data; }
   if (parsed?.type !== 'recommendation' || !parsed?.drink?.name) return data;
   let row;
-  try { row = await readDrinkMaster(env, parsed.drink.name); } catch (error) {
+  try { row = await readDrinkMaster(env, parsed.drink.name, false); } catch (error) {
     console.error('D1 drink master enrichment failed', error);
     return data;
   }
