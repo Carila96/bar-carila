@@ -8,18 +8,35 @@ import { DRINK_MASTER_EXPANSION_B03 } from '../src/drink-master-expansion-b03.mj
 import { DRINK_MASTER_EXPANSION_B04 } from '../src/drink-master-expansion-b04.mjs';
 import { DRINK_MASTER_EXPANSION_B05, DRINK_MASTER_EXPANSION_B05_ALIAS_ENTRIES, DRINK_MASTER_EXPANSION_B05_EVIDENCE_VERSION } from '../src/drink-master-expansion-b05.mjs';
 
+const PRIOR_EXPANSIONS = [DRINK_MASTER_EXPANSION_B01, DRINK_MASTER_EXPANSION_B02, DRINK_MASTER_EXPANSION_B03, DRINK_MASTER_EXPANSION_B04];
+
 test('expansion batch 05 is additive and does not duplicate the initial 400 or prior batches', () => {
   assert.equal(DRINK_MASTER_EXPANSION_B05.length, 5);
   const occupied = new Set([
     ...BOOK_INDEX_V19_ROWS.map(({ name }) => normalizeDrinkV19Key(name)),
-    ...DRINK_MASTER_EXPANSION_B01.map((drink) => normalizeDrinkV19Key(drink.masterKey)),
-    ...DRINK_MASTER_EXPANSION_B02.map((drink) => normalizeDrinkV19Key(drink.masterKey)),
-    ...DRINK_MASTER_EXPANSION_B03.map((drink) => normalizeDrinkV19Key(drink.masterKey)),
-    ...DRINK_MASTER_EXPANSION_B04.map((drink) => normalizeDrinkV19Key(drink.masterKey)),
+    ...PRIOR_EXPANSIONS.flatMap((batch) => batch.map((drink) => normalizeDrinkV19Key(drink.masterKey))),
   ]);
   const keys = DRINK_MASTER_EXPANSION_B05.map((drink) => normalizeDrinkV19Key(drink.masterKey));
   assert.equal(new Set(keys).size, keys.length);
   for (const key of keys) assert.equal(occupied.has(key), false, `duplicate known master key: ${key}`);
+});
+
+test('expansion batch 05 does not collide with normalized names or aliases already known', () => {
+  const occupiedAliases = new Map();
+  for (const { name } of BOOK_INDEX_V19_ROWS) occupiedAliases.set(normalizeDrinkV19Key(name), normalizeDrinkV19Key(name));
+  for (const batch of PRIOR_EXPANSIONS) {
+    for (const drink of batch) {
+      const target = normalizeDrinkV19Key(drink.masterKey);
+      for (const alias of [drink.masterKey, drink.nameJa, ...(drink.aliases || [])]) occupiedAliases.set(normalizeDrinkV19Key(alias), target);
+    }
+  }
+  for (const drink of DRINK_MASTER_EXPANSION_B05) {
+    const target = normalizeDrinkV19Key(drink.masterKey);
+    for (const alias of [drink.masterKey, drink.nameJa, ...(drink.aliases || [])]) {
+      const normalized = normalizeDrinkV19Key(alias);
+      assert.equal(occupiedAliases.has(normalized), false, `cross-batch alias collision: ${normalized}=>${target}`);
+    }
+  }
 });
 
 test('expansion batch 05 has complete normalized aliases, recipes, rarity and evidence', () => {
