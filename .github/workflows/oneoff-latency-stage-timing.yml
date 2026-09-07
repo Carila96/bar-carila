@@ -1,7 +1,8 @@
 name: One-off latency stage timing
-on:
+"on":
   push:
-    branches: [perf/latency-stage-timing]
+    branches:
+      - "perf/latency-stage-timing"
 permissions:
   contents: write
 jobs:
@@ -10,59 +11,37 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: perf/latency-stage-timing
+          ref: "perf/latency-stage-timing"
       - name: Add stage timing without changing recommendation behavior
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
+          p = Path('src/worker.mjs')
+          s = p.read_text(encoding='utf-8')
+          old = "  const upstreamStarted = Date.now();\n  const upstream = await fetch(ANTHROPIC_ENDPOINT, {"
+          new = "  const apiStarted = Date.now();\n  const upstreamStarted = Date.now();\n  const upstream = await fetch(ANTHROPIC_ENDPOINT, {"
+          if old not in s:
+              raise SystemExit('worker upstream timing anchor missing')
+          s = s.replace(old, new, 1)
+          old2 = "  const data = await upstream.json();\n  await enrichBarCarilaRecommendation(data, env);\n  return json(data, upstream.status, { 'server-timing': `anthropic;dur=${Date.now() - upstreamStarted}` });\n"
+          new2 = "  const data = await upstream.json();\n  const anthropicMs = Date.now() - upstreamStarted;\n  const baseEnrichStarted = Date.now();\n  await enrichBarCarilaRecommendation(data, env);\n  const baseEnrichMs = Date.now() - baseEnrichStarted;\n  return json(data, upstream.status, { 'server-timing': `anthropic;dur=${anthropicMs}, base-enrich;dur=${baseEnrichMs}, api;dur=${Date.now() - apiStarted}` });\n"
+          if old2 not in s:
+              raise SystemExit('worker response timing anchor missing')
+          p.write_text(s.replace(old2, new2, 1), encoding='utf-8')
 
-          p=Path('src/worker.mjs')
-          s=p.read_text(encoding='utf-8')
-          old="""  const upstreamStarted = Date.now();
-  const upstream = await fetch(ANTHROPIC_ENDPOINT, {"""
-          new="""  const apiStarted = Date.now();
-  const upstreamStarted = Date.now();
-  const upstream = await fetch(ANTHROPIC_ENDPOINT, {"""
-          if old not in s: raise SystemExit('worker upstream timing anchor missing')
-          s=s.replace(old,new,1)
-          old2="""  const data = await upstream.json();
-  await enrichBarCarilaRecommendation(data, env);
-  return json(data, upstream.status, { 'server-timing': `anthropic;dur=${Date.now() - upstreamStarted}` });
-"""
-          new2="""  const data = await upstream.json();
-  const anthropicMs = Date.now() - upstreamStarted;
-  const baseEnrichStarted = Date.now();
-  await enrichBarCarilaRecommendation(data, env);
-  const baseEnrichMs = Date.now() - baseEnrichStarted;
-  return json(data, upstream.status, { 'server-timing': `anthropic;dur=${anthropicMs}, base-enrich;dur=${baseEnrichMs}, api;dur=${Date.now() - apiStarted}` });
-"""
-          if old2 not in s: raise SystemExit('worker response timing anchor missing')
-          s=s.replace(old2,new2,1)
-          p.write_text(s,encoding='utf-8')
-
-          p=Path('src/worker-v1.9.mjs')
-          s=p.read_text(encoding='utf-8')
-          old3="""async function enrichV19Response(response, env) {
-  if (!response.ok || !String(response.headers.get('content-type') || '').includes('application/json')) return response;"""
-          new3="""async function enrichV19Response(response, env) {
-  const v19EnrichStarted = Date.now();
-  if (!response.ok || !String(response.headers.get('content-type') || '').includes('application/json')) return response;"""
-          if old3 not in s: raise SystemExit('v19 enrich start anchor missing')
-          s=s.replace(old3,new3,1)
-          old4="""  const headers = new Headers(response.headers);
-  headers.set('content-type', 'application/json; charset=utf-8');
-  return new Response(JSON.stringify(data), { status: response.status, headers });
-}"""
-          new4="""  const headers = new Headers(response.headers);
-  headers.set('content-type', 'application/json; charset=utf-8');
-  const currentTiming = headers.get('server-timing');
-  headers.set('server-timing', [currentTiming, `v19-enrich;dur=${Date.now() - v19EnrichStarted}`].filter(Boolean).join(', '));
-  return new Response(JSON.stringify(data), { status: response.status, headers });
-}"""
-          if old4 not in s: raise SystemExit('v19 enrich header anchor missing')
-          s=s.replace(old4,new4,1)
-          p.write_text(s,encoding='utf-8')
+          p = Path('src/worker-v1.9.mjs')
+          s = p.read_text(encoding='utf-8')
+          old3 = "async function enrichV19Response(response, env) {\n  if (!response.ok || !String(response.headers.get('content-type') || '').includes('application/json')) return response;"
+          new3 = "async function enrichV19Response(response, env) {\n  const v19EnrichStarted = Date.now();\n  if (!response.ok || !String(response.headers.get('content-type') || '').includes('application/json')) return response;"
+          if old3 not in s:
+              raise SystemExit('v19 enrich start anchor missing')
+          s = s.replace(old3, new3, 1)
+          old4 = "  const headers = new Headers(response.headers);\n  headers.set('content-type', 'application/json; charset=utf-8');\n  return new Response(JSON.stringify(data), { status: response.status, headers });\n}"
+          new4 = "  const headers = new Headers(response.headers);\n  headers.set('content-type', 'application/json; charset=utf-8');\n  const currentTiming = headers.get('server-timing');\n  headers.set('server-timing', [currentTiming, `v19-enrich;dur=${Date.now() - v19EnrichStarted}`].filter(Boolean).join(', '));\n  return new Response(JSON.stringify(data), { status: response.status, headers });\n}"
+          if old4 not in s:
+              raise SystemExit('v19 enrich header anchor missing')
+          p.write_text(s.replace(old4, new4, 1), encoding='utf-8')
           PY
       - name: Test
         shell: bash
