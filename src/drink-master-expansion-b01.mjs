@@ -35,7 +35,7 @@ export const DRINK_MASTER_EXPANSION_B01 = [
   {
     masterKey: 'Last Word',
     nameJa: 'ラストワード',
-    aliases: ['Last Word', 'The Last Word', 'ラスト・ワード'],
+    aliases: ['Last Word', 'The Last Word'],
     category: 'cocktail',
     baseSpirit: 'gin',
     drinkKind: 'cocktail',
@@ -65,7 +65,7 @@ export const DRINK_MASTER_EXPANSION_B01 = [
   {
     masterKey: 'Boulevardier',
     nameJa: 'ブールヴァルディエ',
-    aliases: ['Boulevardier', 'ブールバルディエ', 'ブールヴァルディエ'],
+    aliases: ['Boulevardier', 'ブールバルディエ'],
     category: 'cocktail',
     baseSpirit: 'whisky',
     drinkKind: 'cocktail',
@@ -94,7 +94,7 @@ export const DRINK_MASTER_EXPANSION_B01 = [
   {
     masterKey: 'Espresso Martini',
     nameJa: 'エスプレッソマティーニ',
-    aliases: ['Espresso Martini', 'エスプレッソ・マティーニ'],
+    aliases: ['Espresso Martini'],
     category: 'cocktail',
     baseSpirit: 'vodka',
     drinkKind: 'cocktail',
