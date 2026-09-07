@@ -156,6 +156,7 @@ async function readV19FromD1(env, lookup) {
 }
 
 async function enrichV19Response(response, env) {
+  const v19EnrichStarted = Date.now();
   if (!response.ok || !String(response.headers.get('content-type') || '').includes('application/json')) return response;
   let data;
   try { data = await response.clone().json(); } catch { return response; }
@@ -201,6 +202,8 @@ async function enrichV19Response(response, env) {
   data.content = [{ type: 'text', text: JSON.stringify(parsed) }];
   const headers = new Headers(response.headers);
   headers.set('content-type', 'application/json; charset=utf-8');
+  const currentTiming = headers.get('server-timing');
+  headers.set('server-timing', [currentTiming, `v19-enrich;dur=${Date.now() - v19EnrichStarted}`].filter(Boolean).join(', '));
   return new Response(JSON.stringify(data), { status: response.status, headers });
 }
 
