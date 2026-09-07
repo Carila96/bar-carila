@@ -1,0 +1,166 @@
+export const DRINK_MASTER_EXPANSION_B02_EVIDENCE_VERSION = 'jp-rarity-expansion-2026-09-08-b02';
+export const DRINK_MASTER_EXPANSION_B02_EVALUATED_AT = '2026-09-08';
+
+export const DRINK_MASTER_EXPANSION_B02 = [
+  {
+    masterKey: "Bee's Knees",
+    nameJa: 'ビーズニーズ',
+    aliases: ["Bee's Knees", 'Bees Knees'],
+    category: 'cocktail',
+    baseSpirit: 'gin',
+    drinkKind: 'cocktail',
+    availability: 58,
+    rarity: 42,
+    rarityLabel: 'やや珍しい',
+    confidence: 0.86,
+    rarityReason: '国内BARで現行提供例があり、材料もジン・柑橘・蜂蜜と一般的。名称注文の定着度はマティーニ等より低いため店差を見込む。',
+    shortDescription: 'ジンに蜂蜜と柑橘を合わせる、甘酸っぱく滑らかな禁酒法時代のクラシック。',
+    orderHint: '蜂蜜を使ったジン・サワー系として伝えると通じやすい。',
+    imageQuery: 'Bees Knees cocktail gin honey lemon',
+    recipe: {
+      ingredients: [
+        { name: 'Dry Gin', amount: '52.5ml' },
+        { name: 'Honey Syrup', amount: '2 tsp' },
+        { name: 'Fresh Lemon Juice', amount: '22.5ml' },
+        { name: 'Fresh Orange Juice', amount: '22.5ml' },
+      ],
+      method: '蜂蜜を柑橘果汁に溶かし、ジンと氷を加えてシェイクし、冷やしたカクテルグラスへストレインする。',
+    },
+    evidence: [
+      { type: 'international_professional_reference', title: "Bee’s Knees – IBA", url: 'https://iba-world.com/iba-cocktail/bees-knees/', note: 'IBA公式レシピで実在性・標準構成を確認。' },
+      { type: 'jp_bar_reference', title: "ビーズニーズ Bee's Knees – Bar彩月庵", url: 'https://ameblo.jp/bar-saigetsuan/entry-12793113885.html', note: '大宮の現行BARによる提供・レシピ紹介を確認。' },
+      { type: 'jp_recipe_reference', title: 'ビーズニーズ カクテルレシピ – Recitail', url: 'https://www.recitail.com/ja/cocktails/%E3%83%93%E3%83%BC%E3%82%BA%E3%83%8B%E3%83%BC%E3%82%BA', note: '国内向け日本語レシピ掲載で名称定着を補助確認。' },
+    ],
+  },
+  {
+    masterKey: 'Bramble',
+    nameJa: 'ブランブル',
+    aliases: ['Bramble', 'ブランブル・カクテル'],
+    category: 'cocktail',
+    baseSpirit: 'gin',
+    drinkKind: 'cocktail',
+    availability: 47,
+    rarity: 53,
+    rarityLabel: 'やや珍しい',
+    confidence: 0.82,
+    rarityReason: '国内でレシピ認知は確認でき、基本材料も一般的だが、クレーム・ド・ミュールの常備とクラッシュアイス運用で店差が出る。',
+    shortDescription: 'ジン・レモン・糖にブラックベリーリキュールを重ねる、甘酸っぱいモダンクラシック。',
+    orderHint: 'クレーム・ド・ミュールの有無を確認すると確実。',
+    imageQuery: 'Bramble cocktail gin blackberry crushed ice',
+    recipe: {
+      ingredients: [
+        { name: 'Gin', amount: '50ml' },
+        { name: 'Fresh Lemon Juice', amount: '25ml' },
+        { name: 'Sugar Syrup', amount: '12.5ml' },
+        { name: 'Crème de Mûre', amount: '15ml' },
+      ],
+      method: 'ミュール以外をシェイクしてクラッシュアイス入りロックグラスへ注ぎ、最後にクレーム・ド・ミュールを回しかける。',
+    },
+    evidence: [
+      { type: 'international_professional_reference', title: 'Bramble – IBA', url: 'https://iba-world.com/iba-cocktail/bramble/', note: 'IBA公式レシピで実在性・標準構成を確認。' },
+      { type: 'jp_manufacturer_reference', title: 'スプリングブランブル – ジョニーウォーカー JP', url: 'https://www.johnniewalker.com/ja-jp/whisky-cocktails/cocktails/the-spiced-citrus-bramble-cocktail', note: '日本向けメーカー公式でBramble系の材料・名称認知を確認。' },
+      { type: 'jp_recipe_reference', title: 'カクテル「ブランブル」と「クレーム・ド・ミュール」の話', url: 'https://ameblo.jp/blanco-tequila/entry-12889267673.html', note: '国内日本語圏で標準構成と材料事情を確認。' },
+    ],
+  },
+  {
+    masterKey: 'Jungle Bird',
+    nameJa: 'ジャングルバード',
+    aliases: ['Jungle Bird'],
+    category: 'cocktail',
+    baseSpirit: 'rum',
+    drinkKind: 'cocktail',
+    availability: 42,
+    rarity: 58,
+    rarityLabel: '珍しい',
+    confidence: 0.82,
+    rarityReason: '国内BARで紹介・提供文脈は確認できるが、ブラックストラップラムやデメララシロップの常備が一般BARでは制約になる。',
+    shortDescription: 'ラム、カンパリ、パイナップル、ライムを合わせる、苦味の効いたトロピカルカクテル。',
+    orderHint: 'ティキ系やラムに強いBARで頼むと成立しやすい。',
+    imageQuery: 'Jungle Bird cocktail rum campari pineapple',
+    recipe: {
+      ingredients: [
+        { name: 'Blackstrap Rum', amount: '45ml' },
+        { name: 'Campari', amount: '22.5ml' },
+        { name: 'Pineapple Juice', amount: '45ml' },
+        { name: 'Fresh Lime Juice', amount: '15ml' },
+        { name: 'Demerara Sugar Syrup', amount: '15ml' },
+      ],
+      method: '全材料を氷とともにシェイクし、氷を入れたロックグラスへストレインする。',
+    },
+    evidence: [
+      { type: 'international_professional_reference', title: 'Jungle Bird – IBA', url: 'https://iba-world.com/iba-cocktail/jungle-bird/', note: 'IBA公式レシピで実在性・標準構成を確認。' },
+      { type: 'origin_reference', title: 'Aviary Bar – Hilton Kuala Lumpur', url: 'https://www.hilton.com/ja/hotels/kulhihi-hilton-kuala-lumpur/dining/', note: '発祥地側ホテル公式がJungle Birdの本拠地と明記。' },
+      { type: 'jp_bar_reference', title: 'ジャングルバード – Bar彩月庵', url: 'https://ameblo.jp/bar-saigetsuan/entry-12798957757.html', note: '大宮のBARによる国内紹介・レシピ文脈を確認。' },
+    ],
+  },
+  {
+    masterKey: 'Hanky Panky',
+    nameJa: 'ハンキー・パンキー',
+    aliases: ['Hanky Panky', 'Hankey Pankey'],
+    category: 'cocktail',
+    baseSpirit: 'gin',
+    drinkKind: 'cocktail',
+    availability: 38,
+    rarity: 62,
+    rarityLabel: '珍しい',
+    confidence: 0.84,
+    rarityReason: '国内BARで実提供例が確認できるが、日本では馴染みが薄いとの業界記事もあり、Fernet常備と名称認知が制約。',
+    shortDescription: 'ジンとスイートベルモットにフェルネットを効かせる、苦味とハーブ香のクラシック。',
+    orderHint: 'フェルネットを常備するオーセンティックBARで確認すると確実。',
+    imageQuery: 'Hanky Panky cocktail gin vermouth fernet',
+    recipe: {
+      ingredients: [
+        { name: 'London Dry Gin', amount: '45ml' },
+        { name: 'Sweet Red Vermouth', amount: '45ml' },
+        { name: 'Fernet', amount: '7.5ml' },
+      ],
+      method: '全材料を氷入りミキシンググラスでステアし、冷やしたカクテルグラスへストレインする。',
+    },
+    evidence: [
+      { type: 'international_professional_reference', title: 'Hanky Panky – IBA', url: 'https://iba-world.com/iba-cocktail/hanky-panky/', note: 'IBA公式レシピで実在性・標準構成を確認。' },
+      { type: 'jp_bar_reference', title: 'Hanky Panky – DRINK PLANET / Bar Rose Garden', url: 'https://www.drinkplanet.jp/cocktail_todays/view/918', note: '国内BARで味わえる店として八戸Bar Rose Garden掲載を確認。' },
+      { type: 'jp_industry_reference', title: 'Tip Top BEEF EATER – BAR TIMES', url: 'https://www.bar-times.com/contents/2555/', note: '日本では馴染みが薄い一方、海外ではポピュラーとの業界記事をavailability評価に反映。' },
+    ],
+  },
+  {
+    masterKey: 'Martinez',
+    nameJa: 'マルティネス',
+    aliases: ['Martinez', 'マルチネス'],
+    category: 'cocktail',
+    baseSpirit: 'gin',
+    drinkKind: 'cocktail',
+    availability: 44,
+    rarity: 56,
+    rarityLabel: '珍しい',
+    confidence: 0.85,
+    rarityReason: '国内オーセンティックBARで現行メニュー掲載があるが、マティーニより名称定着が低く、マラスキーノとオレンジビターズ常備で店差が出る。',
+    shortDescription: 'ジン、スイートベルモット、マラスキーノ、ビターズをステアするマティーニの祖先格。',
+    orderHint: 'クラシックカクテルに強いBARで「マルティネス」と確認するのが確実。',
+    imageQuery: 'Martinez cocktail gin vermouth maraschino bitters',
+    recipe: {
+      ingredients: [
+        { name: 'London Dry Gin', amount: '45ml' },
+        { name: 'Sweet Red Vermouth', amount: '45ml' },
+        { name: 'Maraschino Luxardo', amount: '1 bar spoon' },
+        { name: 'Orange Bitters', amount: '2 dashes' },
+      ],
+      method: '全材料を氷入りミキシンググラスでステアし、冷やしたカクテルグラスへストレインする。',
+    },
+    evidence: [
+      { type: 'international_professional_reference', title: 'Martinez – IBA', url: 'https://iba-world.com/iba-cocktail/martinez/', note: 'IBA公式レシピで実在性・標準構成を確認。' },
+      { type: 'jp_bar_reference', title: 'Jerry Thomas Martinez – Cocktail Bar Tinkle', url: 'https://www.bar-tinkle.com/', note: '名古屋の現行オーセンティックBARでMartinez系をメニュー掲載。' },
+      { type: 'jp_bar_reference', title: 'マティーニ ～カクテルの王様～ – BarMahalo', url: 'https://www.barmahalo.com/1292/', note: '国内BARがMartinezをMartiniの有力な起源として紹介し名称認知を確認。' },
+    ],
+  },
+];
+
+export const DRINK_MASTER_EXPANSION_B02_SEED_ROWS = DRINK_MASTER_EXPANSION_B02.map((drink) => [
+  drink.masterKey,
+  drink.availability,
+  drink.rarity,
+  drink.confidence,
+]);
+
+export const DRINK_MASTER_EXPANSION_B02_ALIAS_ENTRIES = DRINK_MASTER_EXPANSION_B02.flatMap((drink) =>
+  [drink.nameJa, ...drink.aliases].map((alias) => [alias, drink.masterKey])
+);
