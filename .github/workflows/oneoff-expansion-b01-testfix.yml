@@ -1,0 +1,45 @@
+name: One-off expansion batch 01 test fix
+on:
+  push:
+    branches: [data/drink-master-expansion-b01]
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: data/drink-master-expansion-b01
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Remove normalized duplicate aliases
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('src/drink-master-expansion-b01.mjs')
+          s=p.read_text()
+          replacements={
+            "aliases: ['Last Word', 'The Last Word', 'ラスト・ワード']":"aliases: ['Last Word', 'The Last Word']",
+            "aliases: ['Boulevardier', 'ブールバルディエ', 'ブールヴァルディエ']":"aliases: ['Boulevardier', 'ブールバルディエ']",
+            "aliases: ['Espresso Martini', 'エスプレッソ・マティーニ']":"aliases: ['Espresso Martini']",
+          }
+          for old,new in replacements.items():
+            if old not in s: raise SystemExit(f'marker not found: {old}')
+            s=s.replace(old,new,1)
+          p.write_text(s)
+          PY
+      - run: npm test
+      - run: npm run validate:drink-master-v1.9
+      - name: Commit clean fix
+        if: always()
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          rm -f .github/workflows/oneoff-expansion-b01-testfix.yml
+          git add -A
+          git commit -m 'Normalize expansion batch 01 aliases' || true
+          git push origin HEAD:data/drink-master-expansion-b01 || true
