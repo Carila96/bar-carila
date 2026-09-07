@@ -308,6 +308,9 @@ test('guided flow uses a visible fade transition and a compact final-only prompt
   assert.match(js, /function getFinalSystem\(\)/);
   assert.match(js, /const system=forceRecommend\?getFinalSystem\(\)/);
   assert.match(js, /今夜の一杯を1つだけ選んでください/);
+
+  const css = await readFile(new URL('../public/assets/css/main.css', import.meta.url), 'utf8');
+  assert.match(css, /animation:choiceFadeIn 0\.8s/);
 });
 
 test('drink image API v3 prefers the explicit visual query and invalidates old results', async () => {
