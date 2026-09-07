@@ -3,7 +3,7 @@ export const DRINK_MASTER_EXPANSION_B06_EVALUATED_AT = '2026-09-08';
 
 export const DRINK_MASTER_EXPANSION_B06 = [
   {
-    masterKey: 'Enzoni', nameJa: 'エンゾーニ', aliases: ['Enzoni'],
+    masterKey: 'Enzoni', nameJa: 'エンゾーニ', aliases: [],
     category: 'cocktail', baseSpirit: 'gin', drinkKind: 'cocktail', availability: 34, rarity: 66, rarityLabel: '珍しい', confidence: 0.92,
     rarityReason: '2000年代のモダンクラシックとして国際的に定着し、横浜の現行BARで実提供も確認できる。ジン、カンパリ、レモン、糖は一般的だが、生の白葡萄を常備する必要があり一般BARでは店差が大きい。',
     shortDescription: 'ジンとカンパリの苦味にレモンと白葡萄の果実味を重ねる、ネグローニとサワーの中間的なモダンクラシック。',
@@ -17,7 +17,7 @@ export const DRINK_MASTER_EXPANSION_B06 = [
     ]
   },
   {
-    masterKey: 'Breakfast Martini', nameJa: 'ブレックファースト・マティーニ', aliases: ['Breakfast Martini','ブレックファーストマティーニ'],
+    masterKey: 'Breakfast Martini', nameJa: 'ブレックファースト・マティーニ', aliases: [],
     category: 'cocktail', baseSpirit: 'gin', drinkKind: 'cocktail', availability: 41, rarity: 59, rarityLabel: '珍しい', confidence: 0.90,
     rarityReason: '1990年代以降のモダンクラシックとして国際的に定着し、国内BARの現行メニュー掲載も確認できる。ジン、オレンジリキュール、レモンは一般的だが、オレンジマーマレードをカクテル用に扱う運用が提供店を選ぶ。',
     shortDescription: 'ジン、オレンジリキュール、レモンにマーマレードを溶かし込む、柑橘の甘苦さが特徴のモダンクラシック。',
@@ -31,7 +31,7 @@ export const DRINK_MASTER_EXPANSION_B06 = [
     ]
   },
   {
-    masterKey: 'Chartreuse Swizzle', nameJa: 'シャルトリューズ・スウィズル', aliases: ['Chartreuse Swizzle','シャルトリューズスウィズル'],
+    masterKey: 'Chartreuse Swizzle', nameJa: 'シャルトリューズ・スウィズル', aliases: [],
     category: 'cocktail', baseSpirit: 'liqueur', drinkKind: 'cocktail', availability: 22, rarity: 78, rarityLabel: 'かなり珍しい', confidence: 0.90,
     rarityReason: 'IBA公式カクテルとして国際的に確立している一方、日本の一般BARではGreen ChartreuseとFalernumの同時常備、パイナップルジュース、クラッシュアイス運用が必要で成立店が限られる。両リキュール自体は国内流通を確認できる。',
     shortDescription: 'Green Chartreuse、Falernum、パイナップル、ライムをクラッシュアイスで仕上げる、濃密なハーブ香のスウィズル。',
