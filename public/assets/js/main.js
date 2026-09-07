@@ -271,7 +271,7 @@ function applyDrinkMetaToCard(data,card){
     .catch(()=>{});
 }
 
-function showRec(data){
+function showRec(data,skipHistory=false){
   collapsePanda();
   const cat=(data.drink.category||'').toLowerCase();
   if(cat.includes('カクテル')||cat.includes('モクテル')||cat.includes('ノンアル'))setPanda('bartender');
@@ -281,7 +281,7 @@ function showRec(data){
 
   const area=document.getElementById('choicesArea');
   area.innerHTML='';
-  saveToHistory(data.drink);
+  if(!skipHistory)saveToHistory(data.drink);
 
   const siteUrl=encodeURIComponent(location.href);
   const sanitize=s=>(s||'').replace(/[^\u0000-\u007E\u3000-\u9FFF\uF900-\uFAFF\uFF00-\uFFEF\u30A0-\u30FF\u3040-\u309F\u4E00-\u9FFF]/g,'').trim();
@@ -309,7 +309,7 @@ function showRec(data){
         <span>${data.drink.category}</span>${data.drink.abv?`<span style="color:var(--amber);font-size:10px;border:1px solid var(--amber-dim);padding:1px 7px;border-radius:10px;">${t().abvLabel}${data.drink.abv}</span>`:''}
         ${data.drink.rarity!=null?`<span class="rarity-wrap"><span class="rarity-label">${t().rarityLabel}</span><span class="rarity-bar"><span class="rarity-fill" style="width:${data.drink.rarity}%"></span></span><span class="rarity-val">${data.drink.rarity}%</span><span class="rarity-tag" style="font-size:10px;white-space:nowrap;">${rarityTagLabel}</span></span>`:''}
       </div>
-      <div class="rec-desc">${data.drink.description}</div>
+      ${data.drink.description?`<div class="rec-desc">${data.drink.description}</div>`:''}
       ${triviaHTML}
       ${recipeHTML}
       <div class="bar-notice">${t().barNotice(data.drink.name)}</div>
@@ -611,6 +611,16 @@ function getFinalSystem(){return `あなたはBar Carilaのバーテンダーで
 ・カクテル／モクテルはrecipe必須。単体酒のみrecipe:null可。
 ・rarityは0〜100の整数で日本の一般BARで見つけにくいほど高くする。固定マスター対象はサーバー側で上書きされる。
 ・emotionはカクテル／モクテル=bartender、洋酒=relax、珍しい提案=curiousを基本にする。`+(I18N[lang].langRule||'');}
+function getSelectionSystem(){return `あなたはBar Carilaのバーテンダーです。今夜の一杯を1つだけ選んでください。
+
+【最重要】既知マスターは参考情報であり推薦候補の上限ではありません。マスター外を含む実在する酒すべてから、ユーザー条件に最も合う一杯を選んでください。マスター内へ無理に寄せないでください。
+【選定専用ターン】質問、長い説明、レシピ生成はしません。酒の選定精度だけに集中してください。route制約と度数希望は必ず守ってください。
+【JSONのみ】{"type":"recommendation","emotion":"bartender or relax or counter or curious","message":"短い一言","drink":{"name":"正式名称","masterKey":"標準的な英語名","imageQuery":"写真検索用の英語8語以内","category":"カテゴリ","abv":"約8%のような推定値"}}
+前置き・後書き・Markdownは禁止。`+(I18N[lang].langRule||'');}
+function getDetailSystem(selection){return `あなたはBar Carilaのバーテンダーです。すでに推薦する一杯は確定しています。酒の選び直しは絶対にせず、その一杯の表示用詳細だけを完成させてください。
+確定酒: ${selection.name} / masterKey=${selection.masterKey||''}
+【JSONのみ】{"type":"recommendation","emotion":"bartender or relax or counter or curious","message":"短い一言","analysis":"今夜の気分を2〜3文で表す1行の文章","drink":{"name":"${selection.name}","masterKey":"${selection.masterKey||''}","imageQuery":"写真検索用の英語8語以内","category":"カテゴリ","abv":"推定値","rarity":0,"description":"60字以内の説明1文","trivia":"80字以内の豆知識またはBARでの楽しみ方","recipe":{"ingredients":[{"name":"材料","amount":"分量"}],"method":"作り方1文"},"tags":["タグ1","タグ2","タグ3"]}}
+カクテル／モクテルはrecipe必須、単体酒のみrecipe:null可。前置き・後書き・Markdownは禁止。`+(I18N[lang].langRule||'');}
 function initialAssistantPayload(){return {type:'question',emotion:'counter',message:t().initialMsg,choices:t().initialChoices};}
 function initialHistory(){return [{role:'user',content:t().startMsg},{role:'assistant',content:JSON.stringify(initialAssistantPayload())}];}
 
@@ -740,14 +750,35 @@ async function callAPI(userMsg,forceRecommend=false,flowSummary=null){
   const userTurns=chatHistory.filter(m=>m.role==='user').length;
   const fastTurn=!forceRecommend&&userTurns<4;
   const model=fastTurn?FAST_MODEL:RECOMMEND_MODEL;
-  const maxTokens=fastTurn?600:850;
-  const system=forceRecommend?getFinalSystem():(fastTurn?getFastSystem():getSystem());
+  const maxTokens=forceRecommend?320:(fastTurn?600:850);
+  const system=forceRecommend?getSelectionSystem():(fastTurn?getFastSystem():getSystem());
   const messages=forceRecommend&&flowSummary?[{role:'user',content:`route=${flowSummary.route}; answers=${flowSummary.answers.join(' / ')}`}]:chatHistory;
-  const res=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model,max_tokens:maxTokens,system,messages})});
+  const res=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model,max_tokens:maxTokens,system,messages,barCarilaStage:forceRecommend?'selection':undefined})});
   const data=await readAPIResponse(res);
   const parsed=parseAssistantJson(data);
   chatHistory.push({role:'assistant',content:JSON.stringify(parsed)});
+  if(forceRecommend&&parsed?.type==='recommendation'&&parsed?.drink?.name){
+    parsed.__progressiveSelection=true;
+    void hydrateRecommendationDetails(parsed,flowSummary);
+  }
   return parsed;
+}
+
+async function hydrateRecommendationDetails(selection,flowSummary){
+  try{
+    const selectedName=selection?.drink?.name;
+    if(!selectedName)return;
+    const messages=[{role:'user',content:`route=${flowSummary?.route||'recommend'}; answers=${(flowSummary?.answers||[]).join(' / ')}; selectedDrink=${selectedName}`}];
+    const res=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:RECOMMEND_MODEL,max_tokens:850,system:getDetailSystem(selection.drink),messages,barCarilaStage:'details'})});
+    const data=await readAPIResponse(res);
+    const full=parseAssistantJson(data);
+    if(full?.type!=='recommendation'||!full?.drink?.name)return;
+    if(full.drink.name!==selectedName)return;
+    const current=document.querySelector('.rec-name');
+    if(!current||current.textContent.trim()!==selectedName)return;
+    full.__progressiveDetail=true;
+    showRec(full,true);
+  }catch(error){console.warn('Recommendation detail hydration failed',error);}
 }
 
 function parseAssistantJson(data){

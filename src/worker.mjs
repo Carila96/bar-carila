@@ -343,7 +343,9 @@ async function chat(request, env) {
     return json({ error: 'Invalid Anthropic Messages request' }, 400);
   }
 
-  const useDrinkMasterLeanOutput = (body.model === 'claude-sonnet-5' || body.model === 'claude-sonnet-4-6') && Boolean(env.DRINK_DB);
+  const barCarilaStage = typeof body.barCarilaStage === 'string' ? body.barCarilaStage : '';
+  delete body.barCarilaStage;
+  const useDrinkMasterLeanOutput = barCarilaStage !== 'selection' && (body.model === 'claude-sonnet-5' || body.model === 'claude-sonnet-4-6') && Boolean(env.DRINK_DB);
   if (useDrinkMasterLeanOutput) {
     ensureDrinkMasterTables(env).catch((error) => console.error('D1 drink master preflight failed', error));
   }
