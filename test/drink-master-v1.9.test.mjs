@@ -129,11 +129,12 @@ test('runtime entry keeps English canonical identity separate from Japanese disp
   assert.match(source, /\.bind\(key, japaneseName, name,/);
 });
 
-test('runtime entry overlaps seed preflight with the Anthropic request', async () => {
+test('runtime entry keeps v1.9 seed maintenance off the chat critical path', async () => {
   const source = await readFile(new URL('../src/worker-v1.9.mjs', import.meta.url), 'utf8');
   assert.match(source, /const seedPromise = ensureV19Seed\(env\)/);
+  assert.match(source, /context\?\.waitUntil/);
   assert.match(source, /const response = await baseWorker\.fetch\(effectiveRequest, env, context\)/);
-  assert.match(source, /await seedPromise;\n    return enrichV19Response/);
+  assert.doesNotMatch(source, /await seedPromise;\n    return enrichV19Response/);
   assert.match(source, /hasCurrentV19Seed/);
 });
 
