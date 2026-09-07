@@ -16,6 +16,12 @@ npm run dev
 `public/` と `/api/*` は同一Cloudflare Worker・同一originで配信されます。
 `GET /health` は外部APIを呼ばない無料の死活確認です。
 
+## ドリンク推薦・マスター運用
+
+既知ドリンクマスターは推薦可能な酒の上限ではありません。現在の400杯を既知マスターとして活用しつつ、マスター外の酒も最適なら推薦できる **Open Recommendation + Growing Known Master** 方針で運用します。
+
+新しい酒の追加基準、重複確認、日本BAR基準のレア度評価、変更管理、高速化時に候補空間を閉じないルールは [`docs/drink-master-expansion-policy.md`](./docs/drink-master-expansion-policy.md) を正とします。
+
 ## バーテンダーCarila Phase 1
 
 `/carila/` は既存のお酒提案画面から分離した、テキスト会話検証用ページです。
