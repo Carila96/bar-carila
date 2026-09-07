@@ -1,0 +1,197 @@
+export const DRINK_MASTER_EXPANSION_B01_EVIDENCE_VERSION = 'jp-rarity-expansion-2026-09-08-b01';
+export const DRINK_MASTER_EXPANSION_B01_EVALUATED_AT = '2026-09-08';
+
+export const DRINK_MASTER_EXPANSION_B01 = [
+  {
+    masterKey: 'Paper Plane',
+    nameJa: 'ペーパープレイン',
+    aliases: ['Paper Plane', 'Paper Airplane', 'ペーパープレーン'],
+    category: 'cocktail',
+    baseSpirit: 'whisky',
+    drinkKind: 'cocktail',
+    availability: 35,
+    rarity: 65,
+    rarityLabel: '珍しい',
+    confidence: 0.84,
+    rarityReason: '国内でもメーカー公式レシピとBAR提供例を確認できるが、アマーロ・ノニーノの常備が大きな制約。',
+    shortDescription: 'バーボン、アペロール、アマーロ、レモンを等量で合わせる苦甘酸っぱいモダンクラシック。',
+    orderHint: 'アマーロ・ノニーノの有無を確認すると確実。代替アマーロでは味が変わる。',
+    imageQuery: 'Paper Plane cocktail bourbon aperol amaro lemon',
+    recipe: {
+      ingredients: [
+        { name: 'Bourbon Whiskey', amount: '30ml' },
+        { name: 'Amaro Nonino', amount: '30ml' },
+        { name: 'Aperol', amount: '30ml' },
+        { name: 'Fresh Lemon Juice', amount: '30ml' },
+      ],
+      method: '氷とともにシェイクし、冷やしたカクテルグラスへストレインする。',
+    },
+    evidence: [
+      { type: 'international_professional_reference', title: 'Paper Plane – IBA', url: 'https://iba-world.com/iba-cocktail/paper-plane/', note: 'IBA公式レシピで実在性・標準構成を確認。' },
+      { type: 'jp_manufacturer_reference', title: 'ペーパープレイン｜バカルディ ジャパン', url: 'https://www.bacardijapan.jp/cocktails/recipe/paper-plane/', note: '日本法人の現行カクテルレシピ掲載を確認。' },
+      { type: 'jp_bar_reference', title: 'cocktail: paper plane – bar miyako', url: 'https://bar-miyako.com/2019/11/24/cocktail-paper-plane/', note: '国内BARで提供例を確認。同店がAmaro Noninoの日本での入手難を明記しており成立率評価に反映。' },
+    ],
+  },
+  {
+    masterKey: 'Last Word',
+    nameJa: 'ラストワード',
+    aliases: ['Last Word', 'The Last Word', 'ラスト・ワード'],
+    category: 'cocktail',
+    baseSpirit: 'gin',
+    drinkKind: 'cocktail',
+    availability: 34,
+    rarity: 66,
+    rarityLabel: '珍しい',
+    confidence: 0.82,
+    rarityReason: '国内のオーセンティックBARで現行提供例はあるが、グリーン・シャルトリューズとマラスキーノの常備に依存する。',
+    shortDescription: 'ジン、グリーン・シャルトリューズ、マラスキーノ、ライムを等量で合わせるハーバルなクラシック。',
+    orderHint: 'シャルトリューズとマラスキーノを常備するカクテルBARでの注文が確実。',
+    imageQuery: 'Last Word cocktail gin chartreuse maraschino lime',
+    recipe: {
+      ingredients: [
+        { name: 'Gin', amount: '22.5ml' },
+        { name: 'Green Chartreuse', amount: '22.5ml' },
+        { name: 'Maraschino Luxardo', amount: '22.5ml' },
+        { name: 'Fresh Lime Juice', amount: '22.5ml' },
+      ],
+      method: '全材料を氷とともにシェイクし、冷やしたカクテルグラスへストレインする。',
+    },
+    evidence: [
+      { type: 'international_professional_reference', title: 'Last Word – IBA', url: 'https://iba-world.com/iba-cocktail/last-word/', note: 'IBA公式レシピで実在性・標準構成を確認。' },
+      { type: 'jp_bar_reference', title: 'カクテル・ディクショナリー No.11 ラストワード – BAR CIEL', url: 'https://www.ikebukurobarcher.com/fcblog/2025/05/12/%E3%82%AB%E3%82%AF%E3%83%86%E3%83%AB%E3%83%BB%E3%83%87%E3%82%A3%E3%82%AF%E3%82%B7%E3%83%A7%E3%83%8A%E3%83%AA%E3%83%BC%E3%80%80no-%EF%BC%91%EF%BC%91%E3%80%80%E3%83%A9%E3%82%B9%E3%83%88%E3%83%AF/', note: '池袋の現行BARによる国内紹介・提供文脈を確認。' },
+      { type: 'jp_bar_reference', title: '最後の言葉は…カクテル「ラスト・ワード」 – BAR ALBA', url: 'https://baralba.jp/last-word/', note: '国内BARでの現行注文・提供例を確認。' },
+    ],
+  },
+  {
+    masterKey: 'Boulevardier',
+    nameJa: 'ブールヴァルディエ',
+    aliases: ['Boulevardier', 'ブールバルディエ', 'ブールヴァルディエ'],
+    category: 'cocktail',
+    baseSpirit: 'whisky',
+    drinkKind: 'cocktail',
+    availability: 55,
+    rarity: 45,
+    rarityLabel: 'やや珍しい',
+    confidence: 0.87,
+    rarityReason: '国内メーカー公式レシピとホテルBARでの派生提供があり、主要材料も一般的だが名称注文の定番度は中程度。',
+    shortDescription: 'バーボンまたはライ、カンパリ、スイートベルモットを合わせる、ウイスキー版ネグローニ系の一杯。',
+    orderHint: 'バーボンまたはライのどちらで作るか好みがあれば伝えるとよい。',
+    imageQuery: 'Boulevardier cocktail bourbon campari sweet vermouth',
+    recipe: {
+      ingredients: [
+        { name: 'Bourbon or Rye Whiskey', amount: '45ml' },
+        { name: 'Campari', amount: '30ml' },
+        { name: 'Sweet Red Vermouth', amount: '30ml' },
+      ],
+      method: '氷を入れたミキシンググラスでステアし、冷やしたカクテルグラスへストレインする。',
+    },
+    evidence: [
+      { type: 'international_professional_reference', title: 'Boulevardier – IBA', url: 'https://iba-world.com/iba-cocktail/boulevardier/', note: 'IBA公式レシピで実在性・標準構成を確認。' },
+      { type: 'jp_manufacturer_reference', title: 'ブールバルディエ – ワイルドターキー', url: 'https://www.wildturkeybourbon.com/ja-jp/cocktails/boulevardier/', note: '日本向けメーカー公式ページでレシピ掲載を確認。' },
+      { type: 'jp_hotel_bar_reference', title: 'ジョニーウォーカー ブルーラベル ボンボンショコラ – MHD', url: 'https://prtimes.jp/main/html/rd/p/000000079.000024545.html', note: 'ホテルニューオータニ東京のバーでBoulevardier派生カクテル提供実績を確認。' },
+    ],
+  },
+  {
+    masterKey: 'Espresso Martini',
+    nameJa: 'エスプレッソマティーニ',
+    aliases: ['Espresso Martini', 'エスプレッソ・マティーニ'],
+    category: 'cocktail',
+    baseSpirit: 'vodka',
+    drinkKind: 'cocktail',
+    availability: 52,
+    rarity: 48,
+    rarityLabel: 'やや珍しい',
+    confidence: 0.86,
+    rarityReason: '国内でホテルBARや専門店の提供例が明確にある一方、エスプレッソ抽出設備・運用の有無で一般BARの成立率に店差が出る。',
+    shortDescription: 'ウォッカ、コーヒーリキュール、エスプレッソをシェイクする、香ばしくほろ苦い現代定番。',
+    orderHint: 'エスプレッソを抽出できる店か、コーヒーカクテル対応のある店で頼むと確実。',
+    imageQuery: 'Espresso Martini cocktail vodka coffee crema beans',
+    recipe: {
+      ingredients: [
+        { name: 'Vodka', amount: '50ml' },
+        { name: 'Kahlua', amount: '30ml' },
+        { name: 'Sugar Syrup', amount: '10ml' },
+        { name: 'Strong Espresso', amount: '1 shot' },
+      ],
+      method: '全材料を氷とともに強くシェイクし、冷やしたカクテルグラスへストレインする。',
+    },
+    evidence: [
+      { type: 'international_professional_reference', title: 'Espresso Martini – IBA', url: 'https://iba-world.com/iba-cocktail/espresso-martini/', note: 'IBA公式レシピで実在性・標準構成を確認。' },
+      { type: 'jp_menu_reference', title: 'スターバックス リザーブ エスプレッソ マティーニ フライト', url: 'https://menu.starbucks.co.jp/4524785497283', note: '日本国内の現行提供商品として複数フレーバーのEspresso Martiniを確認。' },
+      { type: 'jp_hotel_bar_reference', title: 'ジョニーウォーカー ブルーラベル ボンボンショコラ – MHD', url: 'https://prtimes.jp/main/html/rd/p/000000079.000024545.html', note: 'ホテルニューオータニ東京のバーでEspresso Martini派生カクテル提供実績を確認。' },
+    ],
+  },
+  {
+    masterKey: 'Penicillin',
+    nameJa: 'ペニシリン',
+    aliases: ['Penicillin', 'ペニシリン・カクテル'],
+    category: 'cocktail',
+    baseSpirit: 'whisky',
+    drinkKind: 'cocktail',
+    availability: 36,
+    rarity: 64,
+    rarityLabel: '珍しい',
+    confidence: 0.83,
+    rarityReason: '国内の現行BARで提供例があり世界的定番として扱われるが、蜂蜜・生姜の仕込みとアイラモルトのフロートが一般BARでは制約になる。',
+    shortDescription: 'ブレンデッドスコッチ、レモン、蜂蜜、生姜にアイラモルトを浮かべる、スモーキーで爽やかな一杯。',
+    orderHint: '生姜と蜂蜜の仕込みが必要なため、クラフトカクテル対応のBARで確認するとよい。',
+    imageQuery: 'Penicillin cocktail scotch ginger honey lemon rocks',
+    recipe: {
+      ingredients: [
+        { name: 'Blended Scotch Whisky', amount: '60ml' },
+        { name: 'Islay Single Malt Whisky', amount: '7.5ml' },
+        { name: 'Fresh Lemon Juice', amount: '22.5ml' },
+        { name: 'Honey Syrup', amount: '22.5ml' },
+        { name: 'Fresh Ginger', amount: '2-3 slices' },
+      ],
+      method: '生姜をマドルし、アイラモルト以外を氷とシェイクしてロックグラスへ注ぎ、最後にアイラモルトをフロートする。',
+    },
+    evidence: [
+      { type: 'international_professional_reference', title: 'Penicillin – IBA', url: 'https://iba-world.com/iba-cocktail/penicillin/', note: 'IBA公式レシピで実在性・標準構成を確認。' },
+      { type: 'jp_bar_reference', title: 'カクテル ペニシリン – BAR ALBA', url: 'https://baralba.jp/penicillin/', note: '国内BARでの提供例と実レシピを確認。' },
+      { type: 'jp_hotel_bar_reference', title: '世界のスタンダードカクテル、ペニシリン – パレスホテル東京 ロイヤル バー紹介', url: 'https://trilltrill.jp/articles/4504260', note: 'パレスホテル東京メインバーで世界のスタンダードとして提供される文脈を確認。' },
+    ],
+  },
+  {
+    masterKey: 'Vesper',
+    nameJa: 'ヴェスパー',
+    aliases: ['Vesper', 'Vesper Martini', 'ヴェスパー・マティーニ', 'ベスパー'],
+    category: 'cocktail',
+    baseSpirit: 'gin',
+    drinkKind: 'cocktail',
+    availability: 45,
+    rarity: 55,
+    rarityLabel: 'やや珍しい',
+    confidence: 0.84,
+    rarityReason: '国内BARで複数の現行提供例があり知名度もあるが、Lillet Blancの常備とジン・ウォッカ併用により全店共通の定番まではいかない。',
+    shortDescription: 'ジン、ウォッカ、リレ・ブランをシェイクする、007由来で知られる力強くドライなカクテル。',
+    orderHint: 'リレ・ブランを常備しているか確認すると確実。',
+    imageQuery: 'Vesper Martini cocktail gin vodka Lillet lemon twist',
+    recipe: {
+      ingredients: [
+        { name: 'Gin', amount: '45ml' },
+        { name: 'Vodka', amount: '15ml' },
+        { name: 'Lillet Blanc', amount: '7.5ml' },
+      ],
+      method: '全材料を氷とともにシェイクし、冷やしたカクテルグラスへストレインしてレモンゼストを添える。',
+    },
+    evidence: [
+      { type: 'international_professional_reference', title: 'Vesper – IBA', url: 'https://iba-world.com/iba-cocktail/vesper/', note: 'IBA公式レシピで実在性・標準構成を確認。' },
+      { type: 'jp_bar_reference', title: 'ヴェスパー マティーニ – BAR ALBA', url: 'https://baralba.jp/vespermartini/', note: '国内BARでの現行提供レシピを確認。' },
+      { type: 'jp_bar_reference', title: '「ヴェスパー」できます – Bar OZ.', url: 'https://www.bar-oz.jp/article/1586', note: '国内別地域BARでの提供例を確認。' },
+    ],
+  },
+];
+
+export const DRINK_MASTER_EXPANSION_B01_SEED_ROWS = DRINK_MASTER_EXPANSION_B01.map((drink) => [
+  drink.masterKey,
+  drink.availability,
+  drink.rarity,
+  drink.confidence,
+]);
+
+export const DRINK_MASTER_EXPANSION_B01_ALIAS_ENTRIES = DRINK_MASTER_EXPANSION_B01.flatMap((drink) =>
+  [drink.nameJa, ...drink.aliases].map((alias) => [alias, drink.masterKey])
+);
+
+export const DRINK_MASTER_EXPANSION_B01_BY_KEY = new Map(DRINK_MASTER_EXPANSION_B01.map((drink) => [drink.masterKey, drink]));
