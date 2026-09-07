@@ -1,0 +1,29 @@
+name: One-off verify drink master batch 06
+on:
+  push:
+    branches: [data/drink-master-expansion-b06]
+permissions:
+  contents: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: data/drink-master-expansion-b06
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run validate:drink-master-v1.9
+      - name: Cleanup verifier
+        if: always()
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          rm -f .github/workflows/oneoff-verify-drink-master-b06.yml
+          git add -A
+          git commit -m 'Remove one-off batch 06 verifier' || true
+          git push origin HEAD:data/drink-master-expansion-b06 || true
