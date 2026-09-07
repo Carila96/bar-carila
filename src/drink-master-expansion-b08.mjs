@@ -3,7 +3,7 @@ export const DRINK_MASTER_EXPANSION_B08_EVALUATED_AT = '2026-09-08';
 
 export const DRINK_MASTER_EXPANSION_B08 = [
   {
-    masterKey: "Queen's Park Swizzle", nameJa: 'クイーンズ・パーク・スウィズル', aliases: ['Queens Park Swizzle','クイーンズパーク・スウィズル'],
+    masterKey: "Queen's Park Swizzle", nameJa: 'クイーンズ・パーク・スウィズル', aliases: [],
     category: 'cocktail', baseSpirit: 'rum', drinkKind: 'cocktail', availability: 28, rarity: 72, rarityLabel: 'かなり珍しい', confidence: 0.86,
     rarityReason: 'トリニダードのQueen’s Park Hotelに由来する確立したラム・クラシック。デメララ系ラム、ライム、ミント、アンゴスチュラで再現でき、主要材料は国内調達可能だが、名称定着とスウィズル技法、クラッシュアイス運用の点で一般BARでは店差が大きい。',
     shortDescription: 'ラム、ライム、ミント、糖、アンゴスチュラをクラッシュアイスでスウィズルする、香り高く冷涼なトリニダード・クラシック。',
@@ -17,7 +17,7 @@ export const DRINK_MASTER_EXPANSION_B08 = [
     ]
   },
   {
-    masterKey: 'Suffering Bastard', nameJa: 'サファリング・バスタード', aliases: ['Suffering Bastard Cocktail','サファリングバスタード'],
+    masterKey: 'Suffering Bastard', nameJa: 'サファリング・バスタード', aliases: ['Suffering Bastard Cocktail'],
     category: 'cocktail', baseSpirit: 'gin', drinkKind: 'cocktail', availability: 32, rarity: 68, rarityLabel: '珍しい', confidence: 0.88,
     rarityReason: '1942年にカイロのShepheard’s HotelでJoe Scialomが考案した確立済みクラシック。ジン、ブランデー系、ライム、アンゴスチュラ、ジンジャービアで再現でき、材料は国内調達可能だが、日本の一般BARでは名称認知が低く店差が大きい。',
     shortDescription: 'ジンとブランデーにライム、ビターズ、ジンジャービアを合わせる、スパイシーで爽快な戦時期生まれのロングカクテル。',
