@@ -13,7 +13,7 @@ export const DRINK_MASTER_EXPANSION_B08 = [
     evidence: [
       {type:'international_professional_reference',title:"Queen's Park Swizzle – Difford’s Guide",url:'https://www.diffordsguide.com/cocktails/recipe/2740/queens-park-swizzle',note:'Queen’s Park Hotel由来の来歴とラム、ライム、糖、ミント、アンゴスチュラを使う代表構成を確認。'},
       {type:'jp_material_reference',title:'エルドラド デメララ 15年 – ビック酒販',url:'https://www.biccamera.com/bc/item/12845394/',note:'デメララ系ラムが日本国内の大手酒販流通に存在することを確認。'},
-      {type:'jp_material_reference',title:'アンゴスチュラ アロマティックビターズ – 日本国内流通確認',url:'https://www.suntory.co.jp/wnb/products/0000000022/0000000158.html',note:'主要副材料アンゴスチュラ・ビターズの国内流通を確認するための国内商品情報。'}
+      {type:'jp_material_reference',title:'アンゴスチュラ ビターズ 200ml – ビック酒販',url:'https://www.biccamera.com/bc/item/1854665/',note:'主要副材料アンゴスチュラ・ビターズが日本国内の大手酒販で現行販売されていることを確認。'}
     ]
   },
   {
@@ -26,7 +26,7 @@ export const DRINK_MASTER_EXPANSION_B08 = [
     recipe: { ingredients: [{name:'London Dry Gin',amount:'30ml'},{name:'Cognac or Brandy',amount:'30ml'},{name:'Fresh Lime Juice',amount:'15ml'},{name:'Angostura Bitters',amount:'2 dashes'},{name:'Ginger Beer',amount:'top up'}], method:'ジン、ブランデー、ライム、ビターズを氷とシェイクして氷入りグラスへ注ぎ、ジンジャービアで満たす。' },
     evidence: [
       {type:'international_professional_reference',title:'Suffering Bastard – Difford’s Guide',url:'https://www.diffordsguide.com/cocktails/recipe/2588/suffering-bastard',note:'Joe Scialom、1942年Shepheard’s Hotelの来歴とジン、コニャック、ライム、ビターズ、ジンジャービアの代表構成を確認。'},
-      {type:'jp_professional_reference',title:'サファリング・バスタード – Sorso Scelto Stasera',url:'https://sorso-scelto-stasera.com/',note:'日本語圏で独立したクラシックカクテルとして紹介・レシピ解説されていることを確認。'},
+      {type:'jp_professional_reference',title:'サファリング・バスタード – Sorso Scelto Stasera',url:'https://sorso-scelto-stasera.com/suffering-bastard/',note:'日本語圏で独立したクラシックカクテルとして紹介され、国内向けレシピ解説も確認。'},
       {type:'jp_material_reference',title:'FEVER-TREE PREMIUM GINGER BEER – &SPIRITS',url:'https://shop.andspirits.com/en/products/fever-tree-premium-ginger-beer-%E3%83%95%E3%82%A3%E3%83%BC%E3%83%90%E3%83%BC%E3%83%84%E3%83%AA%E3%83%BC-%E3%83%97%E3%83%AC%E3%83%9F%E3%82%A2%E3%83%A0-%E3%82%B8%E3%83%B3%E3%82%B8%E3%83%A3%E3%83%BC%E3%83%93%E3%82%A2',note:'主要ミキサーであるジンジャービアの日本国内販売を確認。'}
     ]
   },
