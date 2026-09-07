@@ -3,110 +3,75 @@ export const DRINK_MASTER_EXPANSION_B04_EVALUATED_AT = '2026-09-08';
 
 export const DRINK_MASTER_EXPANSION_B04 = [
   {
-    masterKey: 'Monkey Gland',
-    nameJa: 'モンキー・グランド',
-    aliases: ['Monkey Gland'],
-    category: 'cocktail',
-    baseSpirit: 'gin',
-    drinkKind: 'cocktail',
-    availability: 38,
-    rarity: 62,
-    rarityLabel: '珍しい',
-    confidence: 0.88,
+    masterKey: 'Monkey Gland', nameJa: 'モンキー・グランド', aliases: ['Monkey Gland'],
+    category: 'cocktail', baseSpirit: 'gin', drinkKind: 'cocktail', availability: 38, rarity: 62, rarityLabel: '珍しい', confidence: 0.88,
     rarityReason: 'IBA公認で国内BARの現行IBAメニュー掲載を確認できる一方、アブサン常備と名称認知に店差が大きく、一般的な日本のBARでの注文成立率は定番より低い。',
     shortDescription: 'ジンとオレンジにグレナデンの甘み、アブサンのアニス香を重ねる1920年代のクラシック。',
     orderHint: '「ジン、オレンジ、グレナデンにアブサンを使うモンキー・グランド」と補足すると伝わりやすい。',
     imageQuery: 'Monkey Gland cocktail gin orange absinthe grenadine',
-    recipe: { ingredients: [
-      { name: 'Dry Gin', amount: '45ml' }, { name: 'Fresh Orange Juice', amount: '45ml' },
-      { name: 'Absinthe', amount: '1 tablespoon' }, { name: 'Grenadine Syrup', amount: '1 tablespoon' },
-    ], method: '全材料を氷とともにシェイクし、冷やしたカクテルグラスへストレインする。' },
+    recipe: { ingredients: [{name:'Dry Gin',amount:'45ml'},{name:'Fresh Orange Juice',amount:'45ml'},{name:'Absinthe',amount:'1 tablespoon'},{name:'Grenadine Syrup',amount:'1 tablespoon'}], method:'全材料を氷とともにシェイクし、冷やしたカクテルグラスへストレインする。' },
     evidence: [
-      { type: 'international_professional_reference', title: 'Monkey Gland – IBA', url: 'https://iba-world.com/iba-cocktail/monkey-gland/', note: 'IBA公式レシピで実在性・標準構成を確認。' },
-      { type: 'jp_bar_reference', title: 'Bar domingo IBA cocktail menu', url: 'https://r.gnavi.co.jp/2p1ujyer0000/menu2/', note: '国内BARの現行IBA公認カクテルメニューでモンキー・グランド提供を確認。' },
-      { type: 'jp_recipe_reference', title: 'Bar K Yokohama – ヨコハマとモンキー・グランド', url: 'https://bar.kanato9796.com/yokohama/', note: '日本語BAR資料でジン、オレンジ、グレナデン、アブサンを使う近縁クラシックとして構成を確認。' },
-    ],
+      {type:'international_professional_reference',title:'Monkey Gland – IBA',url:'https://iba-world.com/iba-cocktail/monkey-gland/',note:'IBA公式レシピで実在性・標準構成を確認。'},
+      {type:'jp_bar_reference',title:'Bar domingo IBA cocktail menu',url:'https://r.gnavi.co.jp/2p1ujyer0000/menu2/',note:'国内BARの現行IBAメニューでモンキー・グランド提供を確認。'},
+      {type:'international_professional_reference',title:'Monkey Gland – Difford’s Guide',url:'https://www.diffordsguide.com/cocktails/recipe/1349/monkey-gland',note:'国際的プロ向け資料で歴史と代表構成を補助確認。'}
+    ]
   },
   {
-    masterKey: 'Between the Sheets',
-    nameJa: 'ビトウィーン・ザ・シーツ',
-    aliases: ['Between the Sheets'],
-    category: 'cocktail', baseSpirit: 'cognac-rum', drinkKind: 'cocktail',
-    availability: 50, rarity: 50, rarityLabel: 'やや珍しい', confidence: 0.9,
-    rarityReason: 'IBA公認で国内BARのIBAメニューにも掲載され、コニャック・ホワイトラム・トリプルセック・柑橘という材料も専門BARでは一般的。名称注文の定着は最上位定番より低い。',
-    shortDescription: 'コニャック、ホワイトラム、トリプルセック、レモンを合わせる力強いクラシック。',
-    orderHint: 'サイドカー系のクラシックとして、コニャックとラムを使う一杯と伝えると確実。',
-    imageQuery: 'Between the Sheets cocktail cognac rum triple sec',
-    recipe: { ingredients: [
-      { name: 'White Rum', amount: '30ml' }, { name: 'Cognac', amount: '30ml' },
-      { name: 'Triple Sec', amount: '30ml' }, { name: 'Fresh Lemon Juice', amount: '20ml' },
-    ], method: '全材料を氷とともにシェイクし、冷やしたカクテルグラスへストレインする。' },
+    masterKey: 'Illegal', nameJa: 'イリーガル', aliases: ['Illegal'],
+    category: 'cocktail', baseSpirit: 'mezcal-rum', drinkKind: 'cocktail', availability: 30, rarity: 70, rarityLabel: '珍しい', confidence: 0.9,
+    rarityReason: 'IBA公認で国内BARの現行メニュー掲載を確認できるが、メスカル、オーバープルーフ・ジャマイカラム、ファレルナム、マラスキーノを同時に要し、一般BARでは材料常備率が低い。',
+    shortDescription: 'メスカルと高濃度ジャマイカラムにファレルナム、マラスキーノ、ライムを重ねる複雑なサワー。',
+    orderHint: 'メスカルを軸にファレルナムとマラスキーノを使うIBAのイリーガルと伝えると確実。',
+    imageQuery: 'Illegal cocktail mezcal rum falernum maraschino lime',
+    recipe: { ingredients: [{name:'Espadin Mezcal',amount:'30ml'},{name:'Jamaica Overproof White Rum',amount:'15ml'},{name:'Falernum',amount:'15ml'},{name:'Maraschino Luxardo',amount:'1 bar spoon'},{name:'Fresh Lime Juice',amount:'22.5ml'},{name:'Simple Syrup',amount:'15ml'},{name:'Egg White',amount:'few drops optional'}], method:'全材料を氷とともに強くシェイクし、冷やしたカクテルグラスへストレインする。' },
     evidence: [
-      { type: 'international_professional_reference', title: 'Between the Sheets – IBA', url: 'https://iba-world.com/iba-cocktail/between-the-sheets/', note: 'IBA公式レシピで実在性・標準構成を確認。' },
-      { type: 'jp_bar_reference', title: 'Bar domingo IBA cocktail menu', url: 'https://r.gnavi.co.jp/2p1ujyer0000/menu2/', note: '国内BARのIBA公認カクテルメニューで現行掲載を確認。' },
-      { type: 'jp_bar_reference', title: 'BAR DECE – ビトウィーン・ザ・シーツ', url: 'https://dece.tokyo/blog/1774', note: '東京のBARによる提供・レシピ文脈を確認。' },
-    ],
+      {type:'international_professional_reference',title:'Illegal – IBA',url:'https://iba-world.com/iba-cocktail/illegal/',note:'IBA公式レシピで実在性・標準構成を確認。'},
+      {type:'jp_bar_reference',title:'Bar domingo IBA cocktail menu',url:'https://r.gnavi.co.jp/2p1ujyer0000/menu2/',note:'国内BARの現行IBAメニューでイリーガル提供を確認。'},
+      {type:'international_professional_reference',title:'Illegal Margarita – Difford’s Guide',url:'https://www.diffordsguide.com/cocktails/recipe/17623/illegal-margarita',note:'プロ向け資料で代表構成を補助確認。'}
+    ]
   },
   {
-    masterKey: 'Blood and Sand',
-    nameJa: 'ブラッド・アンド・サンド',
-    aliases: ['Blood and Sand', 'Blood & Sand'],
-    category: 'cocktail', baseSpirit: 'scotch', drinkKind: 'cocktail',
-    availability: 46, rarity: 54, rarityLabel: 'やや珍しい', confidence: 0.88,
-    rarityReason: '国内のオーセンティックBARで現行提供を複数確認でき、スコッチ・スイートベルモット・オレンジは一般的。ただしチェリーリキュール常備と名称認知で店差がある。',
-    shortDescription: 'スコッチ、チェリーリキュール、スイートベルモット、オレンジを等分で合わせる古典。',
-    orderHint: 'チェリーリキュールを使うスコッチベースのクラシックとして確認すると伝わりやすい。',
-    imageQuery: 'Blood and Sand cocktail scotch cherry orange vermouth',
-    recipe: { ingredients: [
-      { name: 'Blended Scotch Whisky', amount: '22.5ml' }, { name: 'Cherry Liqueur', amount: '22.5ml' },
-      { name: 'Sweet Vermouth', amount: '22.5ml' }, { name: 'Fresh Orange Juice', amount: '22.5ml' },
-    ], method: '全材料を氷とともにシェイクし、冷やしたクープまたはカクテルグラスへストレインする。' },
+    masterKey: 'Naked and Famous', nameJa: 'ネイキッド・アンド・フェイマス', aliases: ['Naked and Famous','Naked & Famous'],
+    category: 'cocktail', baseSpirit: 'mezcal', drinkKind: 'cocktail', availability: 36, rarity: 64, rarityLabel: '珍しい', confidence: 0.92,
+    rarityReason: 'IBA公認で国内BARの現行メニューにも掲載される現代クラシックだが、メスカルとイエローシャルトリューズの双方を必要とし、一般的な日本のBARでは材料常備に店差がある。',
+    shortDescription: 'メスカル、イエローシャルトリューズ、アペロール、ライムを等量で合わせるスモーキーな現代クラシック。',
+    orderHint: 'メスカルとイエローシャルトリューズを等量で使うネイキッド・アンド・フェイマスと伝えると確実。',
+    imageQuery: 'Naked and Famous cocktail mezcal Chartreuse Aperol lime',
+    recipe: { ingredients: [{name:'Mezcal',amount:'22.5ml'},{name:'Yellow Chartreuse',amount:'22.5ml'},{name:'Aperol',amount:'22.5ml'},{name:'Fresh Lime Juice',amount:'22.5ml'}], method:'全材料を氷とともにシェイクし、冷やしたカクテルグラスへストレインする。' },
     evidence: [
-      { type: 'international_professional_reference', title: 'Blood and Sand – Difford’s Guide', url: 'https://www.diffordsguide.com/cocktails/recipe/556/blood-and-sand-diffords-recipe', note: '国際的なプロ向け資料でクラシックの実在性、基本構成、歴史を確認。' },
-      { type: 'jp_bar_reference', title: 'BAR WHITE OAK – ブラッド・アンド・サンド', url: 'https://whiteoak-bar.com/cocktail/20230920182148/', note: '銀座のオーセンティックBARで現行提供を確認。' },
-      { type: 'jp_bar_reference', title: 'Bar Zolddich – Blood and Sand', url: 'https://bar-zolddich.com/archives/8336', note: '国内BARで等分構成の現行提供例を確認。' },
-    ],
+      {type:'international_professional_reference',title:'Naked and Famous – IBA',url:'https://iba-world.com/iba-cocktail/naked-and-famous/',note:'IBA公式レシピで実在性・標準構成を確認。'},
+      {type:'jp_bar_reference',title:'Bar domingo IBA cocktail menu',url:'https://r.gnavi.co.jp/2p1ujyer0000/menu2/',note:'国内BARの現行IBAメニューでネイキッド・アンド・フェイマス提供を確認。'},
+      {type:'international_professional_reference',title:'Naked & Famous – Difford’s Guide',url:'https://www.diffordsguide.com/cocktails/recipe/3640/naked-and-famous',note:'国際的プロ向け資料で成立史と代表構成を補助確認。'}
+    ]
   },
   {
-    masterKey: 'Bobby Burns',
-    nameJa: 'ボビー・バーンズ',
-    aliases: ['Bobby Burns', 'Robert Burns'],
-    category: 'cocktail', baseSpirit: 'scotch', drinkKind: 'cocktail',
-    availability: 40, rarity: 60, rarityLabel: '珍しい', confidence: 0.86,
-    rarityReason: '国内BARでクラシックとして実提供例を確認でき、スコッチとスイートベルモットは一般的だが、ベネディクティン常備と名称認知が一般BARでは制約になる。',
-    shortDescription: 'スコッチとスイートベルモットにベネディクティンを加える、芳香豊かなクラシック。',
-    orderHint: 'ロブ・ロイにベネディクティンを加える系統のクラシックとして確認すると通じやすい。',
-    imageQuery: 'Bobby Burns cocktail scotch vermouth Benedictine lemon',
-    recipe: { ingredients: [
-      { name: 'Blended Scotch Whisky', amount: '45ml' }, { name: 'Sweet Vermouth', amount: '45ml' },
-      { name: 'Benedictine D.O.M.', amount: '7.5ml' },
-    ], method: '全材料を氷とともにステアし、冷やしたクープへストレインしてレモンピールを香らせる。' },
+    masterKey: 'Old Cuban', nameJa: 'オールド・キューバン', aliases: ['Old Cuban'],
+    category: 'cocktail', baseSpirit: 'aged-rum', drinkKind: 'cocktail', availability: 44, rarity: 56, rarityLabel: 'やや珍しい', confidence: 0.92,
+    rarityReason: 'IBA公認で国内BARの現行メニュー掲載も確認でき、熟成ラム、ライム、ミント、ビターズは比較的揃えやすい。スパークリングワイン常備と仕込み運用のため定番群より提供店は限られる。',
+    shortDescription: '熟成ラム、ライム、ミント、ビターズをシェイクし、ブリュットの泡で仕上げる華やかな現代クラシック。',
+    orderHint: '熟成ラムとミントを使い、最後にシャンパンかプロセッコで仕上げるオールド・キューバンと伝えると確実。',
+    imageQuery: 'Old Cuban cocktail aged rum mint champagne lime',
+    recipe: { ingredients: [{name:'Mint Leaves',amount:'6-8 leaves'},{name:'Aged Rum',amount:'45ml'},{name:'Fresh Lime Juice',amount:'22.5ml'},{name:'Simple Syrup',amount:'30ml'},{name:'Angostura Bitters',amount:'2 dashes'},{name:'Brut Champagne or Prosecco',amount:'60ml'}], method:'スパークリングワイン以外を氷とともにシェイクして冷やしたグラスへストレインし、ブリュットの泡を注いでミントを飾る。' },
     evidence: [
-      { type: 'international_professional_reference', title: 'Bobby Burns – Difford’s Guide', url: 'https://www.diffordsguide.com/cocktails/recipe/280/bobby-burns-craddocks-recipe', note: 'Savoy由来の代表レシピと歴史をプロ向け資料で確認。' },
-      { type: 'jp_bar_reference', title: 'Bar foxy – ボビー・バーンズ', url: 'https://bar-foxy.com/2022/10/bobby_burns/', note: '国内BARでスコッチ、ベルモット、ベネディクティンの実提供例を確認。' },
-      { type: 'jp_recipe_reference', title: 'Jazz＆Cocktail – ボビー・バーンズ', url: 'https://jazzandcocktail.com/bobby-burns/', note: '日本語レシピ資料で国内向け名称・構成認知を補助確認。' },
-    ],
+      {type:'international_professional_reference',title:'Old Cuban – IBA',url:'https://iba-world.com/iba-cocktail/old-cuban/',note:'IBA公式レシピで実在性・標準構成を確認。'},
+      {type:'jp_bar_reference',title:'Bar domingo IBA cocktail menu',url:'https://r.gnavi.co.jp/2p1ujyer0000/menu2/',note:'国内BARの現行IBAメニューでオールド・キューバン提供を確認。'},
+      {type:'international_brand_reference',title:'Old Cuban – BACARDÍ',url:'https://www.bacardi.com/rum-cocktails/old-cuban/',note:'ラムブランド公式レシピで現代クラシックとしての構成を補助確認。'}
+    ]
   },
   {
-    masterKey: "Horse's Neck",
-    nameJa: 'ホーセズ・ネック',
-    aliases: ["Horse's Neck", 'Horses Neck'],
-    category: 'cocktail', baseSpirit: 'cognac', drinkKind: 'cocktail',
-    availability: 58, rarity: 42, rarityLabel: 'やや珍しい', confidence: 0.9,
-    rarityReason: 'IBA公認で日本の古い標準カクテル文献にも収載され、コニャックとジンジャーエールは一般的。長いレモンピールの調製と名称注文の頻度で定番群より店差がある。',
-    shortDescription: 'コニャックをジンジャーエールで伸ばし、長い螺旋のレモンピールを飾るクラシックハイボール。',
-    orderHint: '長いレモンピールを使うブランデーのホーセズ・ネックと伝えると確実。',
-    imageQuery: "Horse's Neck cocktail cognac ginger ale lemon spiral",
-    recipe: { ingredients: [
-      { name: 'Cognac', amount: '40ml' }, { name: 'Ginger Ale', amount: '120ml' },
-      { name: 'Angostura Bitters', amount: '1 dash optional' }, { name: 'Lemon Peel', amount: '1 long spiral' },
-    ], method: '氷を入れたハイボールグラスへコニャックとジンジャーエールを注いで軽くステアし、好みでビターズを加え長いレモンピールを飾る。' },
+    masterKey: 'Tipperary', nameJa: 'ティペラリー', aliases: ['Tipperary'],
+    category: 'cocktail', baseSpirit: 'irish-whiskey', drinkKind: 'cocktail', availability: 35, rarity: 65, rarityLabel: '珍しい', confidence: 0.9,
+    rarityReason: 'IBA公認で国内BARの現行メニュー掲載を確認でき、アイリッシュウイスキーとスイートベルモットは一般的。一方グリーンシャルトリューズ常備と名称認知が一般BARでの制約になる。',
+    shortDescription: 'アイリッシュウイスキー、スイートベルモット、グリーンシャルトリューズをステアする芳香豊かなクラシック。',
+    orderHint: 'アイリッシュウイスキーとグリーンシャルトリューズを使うティペラリーと伝えると通じやすい。',
+    imageQuery: 'Tipperary cocktail Irish whiskey vermouth green Chartreuse',
+    recipe: { ingredients: [{name:'Irish Whiskey',amount:'50ml'},{name:'Sweet Red Vermouth',amount:'25ml'},{name:'Green Chartreuse',amount:'15ml'},{name:'Angostura Bitters',amount:'2 dashes'}], method:'全材料を氷とともにステアし、冷やしたカクテルグラスへストレインしてオレンジを添える。' },
     evidence: [
-      { type: 'international_professional_reference', title: 'Horse’s Neck – IBA', url: 'https://iba-world.com/iba-cocktail/horses-neck/', note: 'IBA公式レシピで実在性・標準構成を確認。' },
-      { type: 'jp_professional_reference', title: '老舗BAR講座 – ホーセズ・ネック', url: 'https://bar-school.com/cocktail-recipe/brandy/horsesneck.html', note: '創業60年の国内BAR講座で標準レシピと国内認知を確認。' },
-      { type: 'jp_historical_reference', title: 'Bar UK – Horse’s Neck 日本初出資料', url: 'https://plaza.rakuten.co.jp/pianobarez/diary/201703110001/', note: '1907年・1936年の日本側文献への収載が紹介され、長期の国内認知を補助確認。' },
-    ],
-  },
+      {type:'international_professional_reference',title:'Tipperary – IBA',url:'https://iba-world.com/iba-cocktail/tipperary/',note:'IBA公式レシピで実在性・標準構成を確認。'},
+      {type:'jp_bar_reference',title:'Bar domingo IBA cocktail menu',url:'https://r.gnavi.co.jp/2p1ujyer0000/menu2/',note:'国内BARの現行IBAメニューでティペラリー提供を確認。'},
+      {type:'international_professional_reference',title:'Tipperary – Liquor.com',url:'https://www.liquor.com/recipes/tipperary/',note:'国際的カクテル資料で歴史と代表構成を補助確認。'}
+    ]
+  }
 ];
 
 export const DRINK_MASTER_EXPANSION_B04_SEED_ROWS = DRINK_MASTER_EXPANSION_B04.map((drink) => [drink.masterKey, drink.availability, drink.rarity, drink.confidence]);
