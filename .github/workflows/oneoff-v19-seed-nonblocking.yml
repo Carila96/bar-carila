@@ -1,0 +1,46 @@
+name: One-off v1.9 nonblocking seed
+on:
+  push:
+    branches: [perf/v19-seed-nonblocking]
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: perf/v19-seed-nonblocking
+      - name: Apply safe D1 latency fix
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/worker-v1.9.mjs')
+          s = p.read_text(encoding='utf-8')
+          old = """    const seedPromise = ensureV19Seed(env).catch((error) => {\n      console.error('v1.9 D1 seed failed', error);\n    });\n    const effectiveRequest = await addMasterKeyInstruction(request);\n    const response = await baseWorker.fetch(effectiveRequest, env, context);\n    await seedPromise;\n    return enrichV19Response(response, env);\n"""
+          new = """    const seedPromise = ensureV19Seed(env).catch((error) => {\n      console.error('v1.9 D1 seed failed', error);\n    });\n    if (context?.waitUntil) context.waitUntil(seedPromise);\n    const effectiveRequest = await addMasterKeyInstruction(request);\n    const response = await baseWorker.fetch(effectiveRequest, env, context);\n    return enrichV19Response(response, env);\n"""
+          if old not in s: raise SystemExit('v1.9 fetch anchor missing')
+          p.write_text(s.replace(old, new, 1), encoding='utf-8')
+
+          p = Path('test/drink-master-v1.9.test.mjs')
+          s = p.read_text(encoding='utf-8')
+          old = """test('runtime entry overlaps seed preflight with the Anthropic request', async () => {\n  const source = await readFile(new URL('../src/worker-v1.9.mjs', import.meta.url), 'utf8');\n  assert.match(source, /const seedPromise = ensureV19Seed\\(env\\)/);\n  assert.match(source, /const response = await baseWorker\\.fetch\\(effectiveRequest, env, context\\)/);\n  assert.match(source, /await seedPromise;\\n    return enrichV19Response/);\n  assert.match(source, /hasCurrentV19Seed/);\n});\n"""
+          new = """test('runtime entry keeps v1.9 seed maintenance off the chat critical path', async () => {\n  const source = await readFile(new URL('../src/worker-v1.9.mjs', import.meta.url), 'utf8');\n  assert.match(source, /const seedPromise = ensureV19Seed\\(env\\)/);\n  assert.match(source, /context\\?\\.waitUntil/);\n  assert.match(source, /const response = await baseWorker\\.fetch\\(effectiveRequest, env, context\\)/);\n  assert.doesNotMatch(source, /await seedPromise;\\n    return enrichV19Response/);\n  assert.match(source, /hasCurrentV19Seed/);\n});\n"""
+          if old not in s: raise SystemExit('v1.9 test anchor missing')
+          p.write_text(s.replace(old, new, 1), encoding='utf-8')
+          PY
+      - name: Test
+        run: |
+          npm ci
+          npm test
+          npm run validate:drink-master-v1.9
+      - name: Remove one-off workflow and commit
+        shell: bash
+        run: |
+          rm .github/workflows/oneoff-v19-seed-nonblocking.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Keep v1.9 seed off recommendation critical path"
+          git push origin HEAD:perf/v19-seed-nonblocking
