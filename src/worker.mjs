@@ -350,6 +350,7 @@ async function chat(request, env) {
     ? body.system + '\n\n' + barCarilaLeanOutputInstruction()
     : body.system;
 
+  const upstreamStarted = Date.now();
   const upstream = await fetch(ANTHROPIC_ENDPOINT, {
     method: 'POST',
     headers: {
@@ -378,7 +379,7 @@ async function chat(request, env) {
 
   const data = await upstream.json();
   await enrichBarCarilaRecommendation(data, env);
-  return json(data, upstream.status);
+  return json(data, upstream.status, { 'server-timing': `anthropic;dur=${Date.now() - upstreamStarted}` });
 }
 
 async function carilaChat(request, env) {
