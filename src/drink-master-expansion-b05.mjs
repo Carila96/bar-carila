@@ -3,7 +3,7 @@ export const DRINK_MASTER_EXPANSION_B05_EVALUATED_AT = '2026-09-08';
 
 export const DRINK_MASTER_EXPANSION_B05 = [
   {
-    masterKey: 'Gin Basil Smash', nameJa: 'ジン・バジル・スマッシュ', aliases: ['Gin Basil Smash','Gin Pesto','ジンバジルスマッシュ'],
+    masterKey: 'Gin Basil Smash', nameJa: 'ジン・バジル・スマッシュ', aliases: ['Gin Basil Smash','Gin Pesto'],
     category: 'cocktail', baseSpirit: 'gin', drinkKind: 'cocktail', availability: 60, rarity: 40, rarityLabel: 'やや珍しい', confidence: 0.94,
     rarityReason: '21世紀のモダンクラシックとして国内業界媒体で定着が確認でき、国内BARの現行メニュー掲載も複数確認できる。ジン・レモン・糖は一般的だが、十分量のフレッシュバジル常備が提供可否を左右する。',
     shortDescription: 'ジン、レモン、糖にたっぷりの生バジルを合わせる、鮮烈な緑色とハーブ香が特徴のモダンクラシック。',
@@ -17,7 +17,7 @@ export const DRINK_MASTER_EXPANSION_B05 = [
     ]
   },
   {
-    masterKey: 'White Negroni', nameJa: 'ホワイト・ネグローニ', aliases: ['White Negroni','ホワイトネグローニ'],
+    masterKey: 'White Negroni', nameJa: 'ホワイト・ネグローニ', aliases: ['White Negroni'],
     category: 'cocktail', baseSpirit: 'gin', drinkKind: 'cocktail', availability: 42, rarity: 58, rarityLabel: '珍しい', confidence: 0.91,
     rarityReason: '国内銀座BARで提供実績があり業界媒体でも独立したカクテルとして確認できる。ジンは一般的だが、Suze等のゲンチアナ系リキュールとLillet Blancの同時常備に店差が大きい。',
     shortDescription: 'ジン、Suze、Lillet Blancを合わせ、ネグローニの苦味をより淡色でドライに再構成したモダンクラシック。',
@@ -31,7 +31,7 @@ export const DRINK_MASTER_EXPANSION_B05 = [
     ]
   },
   {
-    masterKey: 'Division Bell', nameJa: 'ディヴィジョン・ベル', aliases: ['Division Bell','ディヴィジョンベル'],
+    masterKey: 'Division Bell', nameJa: 'ディヴィジョン・ベル', aliases: ['Division Bell'],
     category: 'cocktail', baseSpirit: 'mezcal', drinkKind: 'cocktail', availability: 33, rarity: 67, rarityLabel: '珍しい', confidence: 0.93,
     rarityReason: '国際的に確立した2009年のモダンクラシックで国内BARでの実提供も確認できるが、メスカルとマラスキーノの常備、名称認知の双方で一般的な日本のBARでは店差が大きい。',
     shortDescription: 'メスカル、アペロール、マラスキーノ、ライムを合わせる、スモーキーでビターシトラスな現代クラシック。',
@@ -45,7 +45,7 @@ export const DRINK_MASTER_EXPANSION_B05 = [
     ]
   },
   {
-    masterKey: 'Oaxaca Old Fashioned', nameJa: 'オアハカ・オールド・ファッションド', aliases: ['Oaxaca Old Fashioned','Oaxacan Old Fashioned','オアハカオールドファッションド','オアハカン・オールド・ファッションド'],
+    masterKey: 'Oaxaca Old Fashioned', nameJa: 'オアハカ・オールド・ファッションド', aliases: ['Oaxaca Old Fashioned','Oaxacan Old Fashioned','オアハカン・オールド・ファッションド'],
     category: 'cocktail', baseSpirit: 'tequila-mezcal', drinkKind: 'cocktail', availability: 45, rarity: 55, rarityLabel: 'やや珍しい', confidence: 0.94,
     rarityReason: '世界的なモダンクラシックとして確立し、国内メスカル専門性の高い店舗で現行提供を確認できる。レポサドテキーラ、メスカル、アガベ、ビターズは専門BARでは揃う一方、一般BARではメスカル常備に店差がある。',
     shortDescription: 'レポサドテキーラとメスカルをアガベ、ビターズでまとめる、スモーキーなオールドファッションドの現代版。',
@@ -59,7 +59,7 @@ export const DRINK_MASTER_EXPANSION_B05 = [
     ]
   },
   {
-    masterKey: 'Yellow Bird', nameJa: 'イエロー・バード', aliases: ['Yellow Bird','イエローバード'],
+    masterKey: 'Yellow Bird', nameJa: 'イエロー・バード', aliases: ['Yellow Bird'],
     category: 'cocktail', baseSpirit: 'rum', drinkKind: 'cocktail', availability: 37, rarity: 63, rarityLabel: '珍しい', confidence: 0.86,
     rarityReason: '国際的に確立したラムカクテルで国内日本語資料でも長く認知される一方、国内では複数レシピが流通し、IBA系のGalliano・Triple Sec版を指定した場合はGalliano常備が提供上の主な制約になる。',
     shortDescription: 'ホワイトラム、Galliano、Triple Sec、ライムをシェイクする、ハーブと柑橘が重なる明るいカリビアンカクテル。',
