@@ -1,0 +1,46 @@
+name: One-off single-call latency matrix
+on:
+  push:
+    branches: [bench/single-call-latency-matrix]
+permissions:
+  contents: write
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: bench/single-call-latency-matrix
+      - name: Benchmark one-call Sonnet prompt/output variants
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL='https://bar.carilaworks.com/api/chat'
+          msg='route=cocktail; answers=カクテルを探したい / ビール・チューハイくらい / さっぱり・軽やか / ゆったりリラックスしたい'
+          compact='あなたはBar Carilaのバーテンダー。条件に最適な実在する酒を1つ選ぶ。既知マスターは候補の上限ではない。JSONのみ返す。{"type":"recommendation","drink":{"name":"正式名称","masterKey":"英語標準名"}}'
+          full='あなたはBar Carilaのバーテンダー。条件に最適な実在する酒を1つだけ選ぶ。既知マスターは候補の上限ではなく、マスター外も候補に含める。質問は返さない。JSONのみ。{"type":"recommendation","emotion":"bartender","message":"短い一言","analysis":"2〜3文","drink":{"name":"正式名称","masterKey":"英語標準名","imageQuery":"英語8語以内","category":"カテゴリ","abv":"推定値","rarity":0,"description":"60字以内","trivia":"80字以内","recipe":{"ingredients":[{"name":"材料","amount":"分量"}],"method":"作り方1文"},"tags":["タグ1","タグ2","タグ3"]}}'
+          verbose='あなたはBar Carilaのバーテンダーです。今夜の気分、味、アルコール度数、シーンを総合し、日本の一般的なBARで現実に注文できるかも考慮しつつ、最も条件に合う実在する一杯を1つだけ提案してください。既知ドリンクマスターは補完情報であり推薦可能な酒の上限ではありません。マスターに存在しない酒も条件に最適なら積極的に選んでください。質問は返さず必ず推薦してください。前置き・Markdownは禁止しJSONオブジェクトを1個だけ返してください。analysisはユーザーの選択肢をそのまま反復せず今夜の気分を2〜3文で表現。descriptionは60字以内。triviaは80字以内。カクテルはrecipe必須。単体酒のみrecipe:null可。imageQueryは写真検索向け英語8語以内。masterKeyは標準的な英語名。{"type":"recommendation","emotion":"bartender or relax or counter or curious","message":"短い一言","analysis":"2〜3文","drink":{"name":"正式名称","masterKey":"英語標準名","imageQuery":"英語8語以内","category":"カテゴリ","abv":"推定値","rarity":0,"description":"60字以内","trivia":"80字以内","recipe":{"ingredients":[{"name":"材料","amount":"分量"}],"method":"作り方1文"},"tags":["タグ1","タグ2","タグ3"]}}'
+          run_case(){
+            label="$1"; tokens="$2"; system="$3"
+            for i in 1 2 3; do
+              payload=$(jq -nc --arg s "$system" --arg m "$msg" --argjson t "$tokens" '{model:"claude-sonnet-5",max_tokens:$t,system:$s,messages:[{role:"user",content:$m}]}')
+              headers=$(mktemp); body=$(mktemp)
+              metrics=$(curl -sS -D "$headers" -o "$body" -w 'status=%{http_code} total=%{time_total} ttfb=%{time_starttransfer}' -H 'content-type: application/json' --data "$payload" "$URL")
+              timing=$(awk 'BEGIN{IGNORECASE=1} /^server-timing:/{sub(/\r$/,"",$0); sub(/^[^:]+:[[:space:]]*/,"",$0); print; exit}' "$headers")
+              name=$(jq -r '.content[]? | select(.type=="text") | .text' "$body" 2>/dev/null | sed -n 's/.*"name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)
+              echo "$label run=$i $metrics server_timing=${timing:-missing} name=${name:-unparsed}"
+              rm -f "$headers" "$body"
+            done
+          }
+          run_case compact 180 "$compact"
+          run_case full 850 "$full"
+          run_case verbose 850 "$verbose"
+      - name: Remove one-off workflow
+        if: always()
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          rm -f .github/workflows/oneoff-single-call-latency-matrix.yml
+          git add -A
+          git commit -m 'Remove one-off single-call latency benchmark' || true
+          git push origin HEAD:bench/single-call-latency-matrix || true
