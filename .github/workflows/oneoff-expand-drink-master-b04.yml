@@ -1,0 +1,337 @@
+name: One-off expand drink master batch 04
+on:
+  push:
+    branches: [expand/drink-master-b04]
+permissions:
+  contents: write
+jobs:
+  expand:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: expand/drink-master-b04
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Add batch 04 and wire runtime
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          b04 = r'''export const DRINK_MASTER_EXPANSION_B04_EVIDENCE_VERSION = 'jp-rarity-expansion-2026-09-08-b04';
+export const DRINK_MASTER_EXPANSION_B04_EVALUATED_AT = '2026-09-08';
+
+export const DRINK_MASTER_EXPANSION_B04 = [
+  {
+    masterKey: 'Mary Pickford',
+    nameJa: 'メアリー・ピックフォード',
+    aliases: ['Mary Pickford'],
+    category: 'cocktail',
+    baseSpirit: 'rum',
+    drinkKind: 'cocktail',
+    availability: 52,
+    rarity: 48,
+    rarityLabel: 'やや珍しい',
+    confidence: 0.9,
+    rarityReason: 'IBA公認のクラシックで国内BARの現行メニュー掲載も確認でき、ラム・パイナップル・グレナデンは一般的。一方でマラスキーノ常備と名称認知には店差がある。',
+    shortDescription: 'ホワイトラム、パイナップル、マラスキーノ、グレナデンを合わせる華やかなクラシック。',
+    orderHint: '「ラムとパイナップルのメアリー・ピックフォード」と補足すると伝わりやすい。',
+    imageQuery: 'Mary Pickford cocktail rum pineapple maraschino grenadine',
+    recipe: {
+      ingredients: [
+        { name: 'White Rum', amount: '45ml' },
+        { name: 'Fresh Pineapple Juice', amount: '45ml' },
+        { name: 'Maraschino Luxardo', amount: '7.5ml' },
+        { name: 'Grenadine Syrup', amount: '5ml' },
+      ],
+      method: '全材料を氷とともによくシェイクし、冷やしたカクテルグラスへストレインする。',
+    },
+    evidence: [
+      { type: 'international_professional_reference', title: 'Mary Pickford – IBA', url: 'https://iba-world.com/iba-cocktail/mary-pickford/', note: 'IBA公式レシピで実在性・標準構成を確認。' },
+      { type: 'jp_bar_reference', title: 'Bar hohshin MENU', url: 'https://bar.hohshin.net/menu/', note: '国内BARの現行メニューでメアリーピックフォード提供を確認。' },
+      { type: 'jp_bar_reference', title: 'Bar Shake Drip – メアリー・ピックフォード', url: 'https://ameblo.jp/barshakedrip/entry-12949096229.html', note: '広島のBARで現行提供されるクラシックとして確認。' },
+    ],
+  },
+  {
+    masterKey: 'Between the Sheets',
+    nameJa: 'ビトウィーン・ザ・シーツ',
+    aliases: ['Between the Sheets'],
+    category: 'cocktail',
+    baseSpirit: 'cognac-rum',
+    drinkKind: 'cocktail',
+    availability: 50,
+    rarity: 50,
+    rarityLabel: 'やや珍しい',
+    confidence: 0.9,
+    rarityReason: 'IBA公認で国内BARのIBAメニューにも掲載され、コニャック・ホワイトラム・トリプルセック・柑橘という材料も専門BARでは一般的。名称注文の定着は最上位定番より低い。',
+    shortDescription: 'コニャック、ホワイトラム、トリプルセック、レモンを合わせる力強いクラシック。',
+    orderHint: 'サイドカー系のクラシックとして、コニャックとラムを使う一杯と伝えると確実。',
+    imageQuery: 'Between the Sheets cocktail cognac rum triple sec',
+    recipe: {
+      ingredients: [
+        { name: 'White Rum', amount: '30ml' },
+        { name: 'Cognac', amount: '30ml' },
+        { name: 'Triple Sec', amount: '30ml' },
+        { name: 'Fresh Lemon Juice', amount: '20ml' },
+      ],
+      method: '全材料を氷とともにシェイクし、冷やしたカクテルグラスへストレインする。',
+    },
+    evidence: [
+      { type: 'international_professional_reference', title: 'Between the Sheets – IBA', url: 'https://iba-world.com/iba-cocktail/between-the-sheets/', note: 'IBA公式レシピで実在性・標準構成を確認。' },
+      { type: 'jp_bar_reference', title: 'Bar domingo IBA cocktail menu', url: 'https://r.gnavi.co.jp/2p1ujyer0000/menu2/', note: '国内BARのIBA公認カクテルメニューで現行掲載を確認。' },
+      { type: 'jp_bar_reference', title: 'BAR DECE – ビトウィーン・ザ・シーツ', url: 'https://dece.tokyo/blog/1774', note: '東京のBARによる提供・レシピ文脈を確認。' },
+    ],
+  },
+  {
+    masterKey: 'Blood and Sand',
+    nameJa: 'ブラッド・アンド・サンド',
+    aliases: ['Blood and Sand', 'Blood & Sand'],
+    category: 'cocktail',
+    baseSpirit: 'scotch',
+    drinkKind: 'cocktail',
+    availability: 46,
+    rarity: 54,
+    rarityLabel: 'やや珍しい',
+    confidence: 0.88,
+    rarityReason: '国内のオーセンティックBARで現行提供を複数確認でき、スコッチ・スイートベルモット・オレンジは一般的。ただしチェリーリキュール常備と名称認知で店差がある。',
+    shortDescription: 'スコッチ、チェリーリキュール、スイートベルモット、オレンジを等分で合わせる古典。',
+    orderHint: 'チェリーリキュールを使うスコッチベースのクラシックとして確認すると伝わりやすい。',
+    imageQuery: 'Blood and Sand cocktail scotch cherry orange vermouth',
+    recipe: {
+      ingredients: [
+        { name: 'Blended Scotch Whisky', amount: '22.5ml' },
+        { name: 'Cherry Liqueur', amount: '22.5ml' },
+        { name: 'Sweet Vermouth', amount: '22.5ml' },
+        { name: 'Fresh Orange Juice', amount: '22.5ml' },
+      ],
+      method: '全材料を氷とともにシェイクし、冷やしたクープまたはカクテルグラスへストレインする。',
+    },
+    evidence: [
+      { type: 'international_professional_reference', title: 'Blood and Sand – Difford’s Guide', url: 'https://www.diffordsguide.com/cocktails/recipe/556/blood-and-sand-diffords-recipe', note: '国際的なプロ向け資料でクラシックの実在性、基本構成、歴史を確認。' },
+      { type: 'jp_bar_reference', title: 'BAR WHITE OAK – ブラッド・アンド・サンド', url: 'https://whiteoak-bar.com/cocktail/20230920182148/', note: '銀座のオーセンティックBARで現行提供を確認。' },
+      { type: 'jp_bar_reference', title: 'Bar Zolddich – Blood and Sand', url: 'https://bar-zolddich.com/archives/8336', note: '国内BARで等分構成の現行提供例を確認。' },
+    ],
+  },
+  {
+    masterKey: 'Bobby Burns',
+    nameJa: 'ボビー・バーンズ',
+    aliases: ['Bobby Burns', 'Robert Burns'],
+    category: 'cocktail',
+    baseSpirit: 'scotch',
+    drinkKind: 'cocktail',
+    availability: 40,
+    rarity: 60,
+    rarityLabel: '珍しい',
+    confidence: 0.86,
+    rarityReason: '国内BARでクラシックとして実提供例を確認でき、スコッチとスイートベルモットは一般的だが、ベネディクティン常備と名称認知が一般BARでは制約になる。',
+    shortDescription: 'スコッチとスイートベルモットにベネディクティンを加える、芳香豊かなクラシック。',
+    orderHint: 'ロブ・ロイにベネディクティンを加える系統のクラシックとして確認すると通じやすい。',
+    imageQuery: 'Bobby Burns cocktail scotch vermouth Benedictine lemon',
+    recipe: {
+      ingredients: [
+        { name: 'Blended Scotch Whisky', amount: '45ml' },
+        { name: 'Sweet Vermouth', amount: '45ml' },
+        { name: 'Benedictine D.O.M.', amount: '7.5ml' },
+      ],
+      method: '全材料を氷とともにステアし、冷やしたクープへストレインしてレモンピールを香らせる。',
+    },
+    evidence: [
+      { type: 'international_professional_reference', title: 'Bobby Burns – Difford’s Guide', url: 'https://www.diffordsguide.com/cocktails/recipe/280/bobby-burns-craddocks-recipe', note: 'Savoy由来の代表レシピと歴史をプロ向け資料で確認。' },
+      { type: 'jp_bar_reference', title: 'Bar foxy – ボビー・バーンズ', url: 'https://bar-foxy.com/2022/10/bobby_burns/', note: '国内BARでスコッチ、ベルモット、ベネディクティンの実提供例を確認。' },
+      { type: 'jp_recipe_reference', title: 'Jazz＆Cocktail – ボビー・バーンズ', url: 'https://jazzandcocktail.com/bobby-burns/', note: '日本語レシピ資料で国内向け名称・構成認知を補助確認。' },
+    ],
+  },
+  {
+    masterKey: "Horse's Neck",
+    nameJa: 'ホーセズ・ネック',
+    aliases: ["Horse's Neck", 'Horses Neck'],
+    category: 'cocktail',
+    baseSpirit: 'cognac',
+    drinkKind: 'cocktail',
+    availability: 58,
+    rarity: 42,
+    rarityLabel: 'やや珍しい',
+    confidence: 0.9,
+    rarityReason: 'IBA公認で日本の古い標準カクテル文献にも収載され、コニャックとジンジャーエールは一般的。長いレモンピールの調製と名称注文の頻度で定番群より店差がある。',
+    shortDescription: 'コニャックをジンジャーエールで伸ばし、長い螺旋のレモンピールを飾るクラシックハイボール。',
+    orderHint: '長いレモンピールを使うブランデーのホーセズ・ネックと伝えると確実。',
+    imageQuery: "Horse's Neck cocktail cognac ginger ale lemon spiral",
+    recipe: {
+      ingredients: [
+        { name: 'Cognac', amount: '40ml' },
+        { name: 'Ginger Ale', amount: '120ml' },
+        { name: 'Angostura Bitters', amount: '1 dash optional' },
+        { name: 'Lemon Peel', amount: '1 long spiral' },
+      ],
+      method: '氷を入れたハイボールグラスへコニャックとジンジャーエールを注いで軽くステアし、好みでビターズを加え長いレモンピールを飾る。',
+    },
+    evidence: [
+      { type: 'international_professional_reference', title: 'Horse’s Neck – IBA', url: 'https://iba-world.com/iba-cocktail/horses-neck/', note: 'IBA公式レシピで実在性・標準構成を確認。' },
+      { type: 'jp_professional_reference', title: '老舗BAR講座 – ホーセズ・ネック', url: 'https://bar-school.com/cocktail-recipe/brandy/horsesneck.html', note: '創業60年の国内BAR講座で標準レシピと国内認知を確認。' },
+      { type: 'jp_historical_reference', title: 'Bar UK – Horse’s Neck 日本初出資料', url: 'https://plaza.rakuten.co.jp/pianobarez/diary/201703110001/', note: '1907年・1936年の日本側文献への収載が紹介され、長期の国内認知を補助確認。' },
+    ],
+  },
+];
+
+export const DRINK_MASTER_EXPANSION_B04_SEED_ROWS = DRINK_MASTER_EXPANSION_B04.map((drink) => [
+  drink.masterKey,
+  drink.availability,
+  drink.rarity,
+  drink.confidence,
+]);
+
+export const DRINK_MASTER_EXPANSION_B04_ALIAS_ENTRIES = DRINK_MASTER_EXPANSION_B04.flatMap((drink) =>
+  [drink.nameJa, ...drink.aliases].map((alias) => [alias, drink.masterKey])
+);
+'''
+          Path('src/drink-master-expansion-b04.mjs').write_text(b04)
+
+          test = r'''import test from 'node:test';
+import assert from 'node:assert/strict';
+import { BOOK_INDEX_V19_ROWS } from '../src/drink-master-v1.9-book-index.mjs';
+import { normalizeDrinkV19Key } from '../src/drink-master-v1.9-master.mjs';
+import { DRINK_MASTER_EXPANSION_B01 } from '../src/drink-master-expansion-b01.mjs';
+import { DRINK_MASTER_EXPANSION_B02 } from '../src/drink-master-expansion-b02.mjs';
+import { DRINK_MASTER_EXPANSION_B03 } from '../src/drink-master-expansion-b03.mjs';
+import { DRINK_MASTER_EXPANSION_B04, DRINK_MASTER_EXPANSION_B04_ALIAS_ENTRIES, DRINK_MASTER_EXPANSION_B04_EVIDENCE_VERSION } from '../src/drink-master-expansion-b04.mjs';
+
+test('expansion batch 04 is additive and does not duplicate the initial 400 or prior batches', () => {
+  assert.equal(DRINK_MASTER_EXPANSION_B04.length, 5);
+  const occupied = new Set([
+    ...BOOK_INDEX_V19_ROWS.map(({ name }) => normalizeDrinkV19Key(name)),
+    ...DRINK_MASTER_EXPANSION_B01.map((drink) => normalizeDrinkV19Key(drink.masterKey)),
+    ...DRINK_MASTER_EXPANSION_B02.map((drink) => normalizeDrinkV19Key(drink.masterKey)),
+    ...DRINK_MASTER_EXPANSION_B03.map((drink) => normalizeDrinkV19Key(drink.masterKey)),
+  ]);
+  const keys = DRINK_MASTER_EXPANSION_B04.map((drink) => normalizeDrinkV19Key(drink.masterKey));
+  assert.equal(new Set(keys).size, keys.length);
+  for (const key of keys) assert.equal(occupied.has(key), false, `duplicate known master key: ${key}`);
+});
+
+test('expansion batch 04 has complete normalized aliases, recipes, rarity and evidence', () => {
+  const aliasKeys = new Set();
+  for (const drink of DRINK_MASTER_EXPANSION_B04) {
+    assert.ok(drink.masterKey && drink.nameJa);
+    assert.equal(drink.availability + drink.rarity, 100);
+    assert.ok(Number.isInteger(drink.availability) && Number.isInteger(drink.rarity));
+    assert.ok(drink.confidence >= 0.7 && drink.confidence <= 1);
+    assert.ok(drink.shortDescription.length > 0 && drink.orderHint.length > 0);
+    assert.ok(drink.recipe?.ingredients?.length >= 3 && drink.recipe?.method);
+    assert.ok(drink.evidence?.length >= 3);
+    assert.ok(drink.evidence.some((item) => item.type === 'international_professional_reference'));
+    assert.ok(drink.evidence.some((item) => item.type.startsWith('jp_')));
+    for (const item of drink.evidence) assert.match(item.url, /^https:\/\//);
+  }
+  for (const [alias, masterKey] of DRINK_MASTER_EXPANSION_B04_ALIAS_ENTRIES) {
+    const signature = `${normalizeDrinkV19Key(alias)}=>${normalizeDrinkV19Key(masterKey)}`;
+    assert.equal(aliasKeys.has(signature), false, `duplicate alias mapping: ${signature}`);
+    aliasKeys.add(signature);
+  }
+  assert.equal(DRINK_MASTER_EXPANSION_B04_EVIDENCE_VERSION, 'jp-rarity-expansion-2026-09-08-b04');
+});
+
+test('runtime is wired to seed and read batch 04', async () => {
+  const source = await import('node:fs/promises').then(({ readFile }) => readFile(new URL('../src/worker-v1.9.mjs', import.meta.url), 'utf8'));
+  assert.match(source, /DRINK_MASTER_EXPANSION_B04/);
+  assert.match(source, /seedExpansionB04/);
+  assert.match(source, /hasExpansionB04Seed/);
+  assert.match(source, /DRINK_MASTER_EXPANSION_B04_EVIDENCE_VERSION/);
+});
+'''
+          Path('test/drink-master-expansion-b04.test.mjs').write_text(test)
+
+          p = Path('src/worker-v1.9.mjs')
+          s = p.read_text()
+          s = s.replace("import { DRINK_MASTER_EXPANSION_B03, DRINK_MASTER_EXPANSION_B03_SEED_ROWS, DRINK_MASTER_EXPANSION_B03_ALIAS_ENTRIES, DRINK_MASTER_EXPANSION_B03_EVIDENCE_VERSION, DRINK_MASTER_EXPANSION_B03_EVALUATED_AT } from './drink-master-expansion-b03.mjs';", "import { DRINK_MASTER_EXPANSION_B03, DRINK_MASTER_EXPANSION_B03_SEED_ROWS, DRINK_MASTER_EXPANSION_B03_ALIAS_ENTRIES, DRINK_MASTER_EXPANSION_B03_EVIDENCE_VERSION, DRINK_MASTER_EXPANSION_B03_EVALUATED_AT } from './drink-master-expansion-b03.mjs';\nimport { DRINK_MASTER_EXPANSION_B04, DRINK_MASTER_EXPANSION_B04_SEED_ROWS, DRINK_MASTER_EXPANSION_B04_ALIAS_ENTRIES, DRINK_MASTER_EXPANSION_B04_EVIDENCE_VERSION, DRINK_MASTER_EXPANSION_B04_EVALUATED_AT } from './drink-master-expansion-b04.mjs';")
+          s = s.replace("...DRINK_MASTER_EXPANSION_B03_SEED_ROWS].map", "...DRINK_MASTER_EXPANSION_B03_SEED_ROWS, ...DRINK_MASTER_EXPANSION_B04_SEED_ROWS].map")
+          marker = "for (const [alias, masterKey] of DRINK_MASTER_EXPANSION_B03_ALIAS_ENTRIES) {\n  LOOKUP_ALIASES.set(normalizeDrinkV19Key(alias), normalizeDrinkV19Key(masterKey));\n}\n"
+          s = s.replace(marker, marker + "for (const [alias, masterKey] of DRINK_MASTER_EXPANSION_B04_ALIAS_ENTRIES) {\n  LOOKUP_ALIASES.set(normalizeDrinkV19Key(alias), normalizeDrinkV19Key(masterKey));\n}\n")
+          s = s.replace("DRINK_MASTER_EXPANSION_B03_EVIDENCE_VERSION]);", "DRINK_MASTER_EXPANSION_B03_EVIDENCE_VERSION, DRINK_MASTER_EXPANSION_B04_EVIDENCE_VERSION]);")
+          insert_marker = "async function seedV19IfNeeded(env) {"
+          b04_funcs = r'''async function hasExpansionB04Seed(env) {
+  if (!env?.DRINK_DB) return false;
+  try {
+    const row = await env.DRINK_DB.prepare(`SELECT COUNT(*) AS count FROM drinks WHERE evidence_version = ?`)
+      .bind(DRINK_MASTER_EXPANSION_B04_EVIDENCE_VERSION).first();
+    return Number(row?.count || 0) >= DRINK_MASTER_EXPANSION_B04.length;
+  } catch {
+    return false;
+  }
+}
+
+async function seedExpansionB04(env) {
+  if (!env?.DRINK_DB) return;
+  await ensureV19Tables(env);
+  const statements = DRINK_MASTER_EXPANSION_B04.map((drink) => {
+    const key = normalizeDrinkV19Key(drink.masterKey);
+    return env.DRINK_DB.prepare(`INSERT INTO drinks (
+      canonical_key, name_ja, name_en, category, base_spirit, drink_kind,
+      japan_availability_score, japan_rarity_score, japan_rarity_label, japan_rarity_confidence,
+      rarity_reason, evidence_version, evaluated_at, short_description, order_hint, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+    ON CONFLICT(canonical_key) DO UPDATE SET
+      name_ja = excluded.name_ja,
+      name_en = excluded.name_en,
+      category = excluded.category,
+      base_spirit = excluded.base_spirit,
+      drink_kind = excluded.drink_kind,
+      japan_availability_score = excluded.japan_availability_score,
+      japan_rarity_score = excluded.japan_rarity_score,
+      japan_rarity_label = excluded.japan_rarity_label,
+      japan_rarity_confidence = excluded.japan_rarity_confidence,
+      rarity_reason = excluded.rarity_reason,
+      evidence_version = excluded.evidence_version,
+      evaluated_at = excluded.evaluated_at,
+      short_description = excluded.short_description,
+      order_hint = excluded.order_hint,
+      updated_at = datetime('now')`)
+      .bind(key, drink.nameJa, drink.masterKey, drink.category, drink.baseSpirit, drink.drinkKind,
+        drink.availability, drink.rarity, drink.rarityLabel, drink.confidence, drink.rarityReason,
+        DRINK_MASTER_EXPANSION_B04_EVIDENCE_VERSION, DRINK_MASTER_EXPANSION_B04_EVALUATED_AT,
+        drink.shortDescription, drink.orderHint);
+  });
+  if (statements.length) await env.DRINK_DB.batch(statements);
+  for (const drink of DRINK_MASTER_EXPANSION_B04) {
+    const key = normalizeDrinkV19Key(drink.masterKey);
+    const row = await env.DRINK_DB.prepare(`SELECT id FROM drinks WHERE canonical_key = ? LIMIT 1`).bind(key).first();
+    if (!row?.id) continue;
+    const aliasStatements = [drink.nameJa, ...drink.aliases].map((alias) => env.DRINK_DB.prepare(`INSERT INTO drink_aliases (
+      alias_key, drink_id, alias_text, language
+    ) VALUES (?, ?, ?, ?)
+    ON CONFLICT(alias_key) DO UPDATE SET drink_id = excluded.drink_id, alias_text = excluded.alias_text, language = excluded.language`)
+      .bind(normalizeDrinkV19Key(alias), row.id, alias, /[\u3040-\u30ff\u3400-\u9fff]/.test(alias) ? 'ja' : 'en'));
+    if (aliasStatements.length) await env.DRINK_DB.batch(aliasStatements);
+    for (const evidence of drink.evidence) {
+      const exists = await env.DRINK_DB.prepare(`SELECT id FROM drink_evidence WHERE drink_id = ? AND source_url = ? LIMIT 1`)
+        .bind(row.id, evidence.url).first();
+      if (exists?.id) continue;
+      await env.DRINK_DB.prepare(`INSERT INTO drink_evidence (
+        drink_id, evidence_type, source_title, source_url, source_note, observed_at, weight
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)`)
+        .bind(row.id, evidence.type, evidence.title, evidence.url, evidence.note, DRINK_MASTER_EXPANSION_B04_EVALUATED_AT, 'supporting').run();
+    }
+  }
+}
+
+'''
+          if insert_marker not in s:
+              raise SystemExit('seedV19IfNeeded marker not found')
+          s = s.replace(insert_marker, b04_funcs + insert_marker, 1)
+          s = s.replace("  if (!(await hasExpansionB03Seed(env))) await seedExpansionB03(env);", "  if (!(await hasExpansionB03Seed(env))) await seedExpansionB03(env);\n  if (!(await hasExpansionB04Seed(env))) await seedExpansionB04(env);")
+          s = s.replace("hasExpansionB02Seed, hasExpansionB03Seed };", "hasExpansionB02Seed, hasExpansionB03Seed, hasExpansionB04Seed };")
+          p.write_text(s)
+          PY
+      - run: npm test
+      - run: npm run validate:drink-master-v1.9
+      - name: Commit batch and remove one-off workflow
+        if: always()
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          rm -f .github/workflows/oneoff-expand-drink-master-b04.yml
+          git add -A
+          git commit -m 'Expand known drink master: batch 04 (+5)' || true
+          git push origin HEAD:expand/drink-master-b04 || true
