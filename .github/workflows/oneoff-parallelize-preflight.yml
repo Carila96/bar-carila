@@ -1,0 +1,47 @@
+name: One-off parallelize drink master preflight
+on:
+  push:
+    branches: [perf/parallelize-drink-master-preflight]
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: perf/parallelize-drink-master-preflight
+      - name: Apply patch
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('src/worker.mjs')
+          s=p.read_text(encoding='utf-8')
+          old="""  let useDrinkMasterLeanOutput = false;\n  if ((body.model === 'claude-sonnet-5' || body.model === 'claude-sonnet-4-6') && env.DRINK_DB) {\n    try { useDrinkMasterLeanOutput = await ensureDrinkMasterTables(env); }\n    catch (error) { console.error('D1 drink master preflight failed', error); }\n  }\n"""
+          new="""  const useDrinkMasterLeanOutput = (body.model === 'claude-sonnet-5' || body.model === 'claude-sonnet-4-6') && Boolean(env.DRINK_DB);\n  if (useDrinkMasterLeanOutput) {\n    ensureDrinkMasterTables(env).catch((error) => console.error('D1 drink master preflight failed', error));\n  }\n"""
+          if old not in s:
+            raise SystemExit('chat preflight anchor missing')
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+          t=Path('test/worker.test.mjs')
+          x=t.read_text(encoding='utf-8')
+          add="""\n\ntest('final recommendation starts Anthropic without awaiting D1 master preflight', async () => {\n  const source = await readFile(new URL('../src/worker.mjs', import.meta.url), 'utf8');\n  assert.match(source, /const useDrinkMasterLeanOutput = .*Boolean\\(env\\.DRINK_DB\\)/);\n  assert.match(source, /ensureDrinkMasterTables\\(env\\)\\.catch/);\n  assert.doesNotMatch(source, /useDrinkMasterLeanOutput = await ensureDrinkMasterTables\\(env\\)/);\n});\n"""
+          if "final recommendation starts Anthropic without awaiting D1 master preflight" not in x:
+            x += add
+            t.write_text(x,encoding='utf-8')
+          PY
+      - name: Test
+        run: |
+          npm ci
+          npm test
+          npm run validate:drink-master-v1.9
+      - name: Commit clean patch
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/oneoff-parallelize-preflight.yml
+          git add src/worker.mjs test/worker.test.mjs
+          git commit -m 'Parallelize drink master preflight with recommendation'
+          git push origin HEAD:perf/parallelize-drink-master-preflight
