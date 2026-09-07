@@ -444,3 +444,11 @@ test('Worker App contract declares the managed D1 drink image database', async (
   const contract = JSON.parse(await readFile(new URL('../carila-worker-app.json', import.meta.url), 'utf8'));
   assert.deepEqual(contract.d1Databases, [{ binding: 'DRINK_DB', name: 'bar-carila-drink-images' }]);
 });
+
+
+test('final recommendation starts Anthropic without awaiting D1 master preflight', async () => {
+  const source = await readFile(new URL('../src/worker.mjs', import.meta.url), 'utf8');
+  assert.match(source, /const useDrinkMasterLeanOutput = .*Boolean\(env\.DRINK_DB\)/);
+  assert.match(source, /ensureDrinkMasterTables\(env\)\.catch/);
+  assert.doesNotMatch(source, /useDrinkMasterLeanOutput = await ensureDrinkMasterTables\(env\)/);
+});
