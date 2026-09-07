@@ -249,6 +249,12 @@ test('frontend localizes chat errors and reports safe diagnostics', async () => 
   assert.doesNotMatch(html, /line\.innerHTML/);
 });
 
+test('recommendation enrichment does not run drink-master schema maintenance after Sonnet', async () => {
+  const source = await readFile(new URL('../src/worker.mjs', import.meta.url), 'utf8');
+  assert.match(source, /readDrinkMaster\(env, parsed\.drink\.name, false\)/);
+  assert.match(source, /async function readDrinkMaster\(env, name, ensureReady = true\)/);
+});
+
 test('frontend routes quick turns to Haiku and final recommendations to Sonnet', async () => {
   const html = await readFile(new URL('../public/assets/js/main.js', import.meta.url), 'utf8');
   assert.match(html, /const FAST_MODEL='claude-haiku-4-5-20251001'/);
