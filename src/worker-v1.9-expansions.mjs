@@ -16,6 +16,7 @@ import { DRINK_MASTER_EXPANSION_B22, DRINK_MASTER_EXPANSION_B22_EVIDENCE_VERSION
 import { DRINK_MASTER_EXPANSION_B23, DRINK_MASTER_EXPANSION_B23_EVIDENCE_VERSION, DRINK_MASTER_EXPANSION_B23_EVALUATED_AT } from './drink-master-expansion-b23-approved.mjs';
 import { DRINK_MASTER_EXPANSION_B24, DRINK_MASTER_EXPANSION_B24_EVIDENCE_VERSION, DRINK_MASTER_EXPANSION_B24_EVALUATED_AT } from './drink-master-expansion-b24-approved.mjs';
 import { DRINK_MASTER_EXPANSION_B25, DRINK_MASTER_EXPANSION_B25_EVIDENCE_VERSION, DRINK_MASTER_EXPANSION_B25_EVALUATED_AT } from './drink-master-expansion-b25-approved.mjs';
+import { DRINK_MASTER_EXPANSION_B26, DRINK_MASTER_EXPANSION_B26_EVIDENCE_VERSION, DRINK_MASTER_EXPANSION_B26_EVALUATED_AT } from './drink-master-expansion-b26-approved.mjs';
 import { normalizeDrinkV19Key } from './drink-master-v1.9-master.mjs';
 
 const EXPANSION_BATCHES = [
@@ -37,10 +38,11 @@ const EXPANSION_BATCHES = [
 const B23_BATCH={ id:'B23', drinks:DRINK_MASTER_EXPANSION_B23, evidenceVersion:DRINK_MASTER_EXPANSION_B23_EVIDENCE_VERSION, evaluatedAt:DRINK_MASTER_EXPANSION_B23_EVALUATED_AT };
 const B24_BATCH={ id:'B24', drinks:DRINK_MASTER_EXPANSION_B24, evidenceVersion:DRINK_MASTER_EXPANSION_B24_EVIDENCE_VERSION, evaluatedAt:DRINK_MASTER_EXPANSION_B24_EVALUATED_AT };
 const B25_BATCH={ id:'B25', drinks:DRINK_MASTER_EXPANSION_B25, evidenceVersion:DRINK_MASTER_EXPANSION_B25_EVIDENCE_VERSION, evaluatedAt:DRINK_MASTER_EXPANSION_B25_EVALUATED_AT };
+const B26_BATCH={ id:'B26', drinks:DRINK_MASTER_EXPANSION_B26, evidenceVersion:DRINK_MASTER_EXPANSION_B26_EVIDENCE_VERSION, evaluatedAt:DRINK_MASTER_EXPANSION_B26_EVALUATED_AT };
 
 const readyByVersion = new Map();
 const expansionLookup = new Map();
-for (const batch of [...EXPANSION_BATCHES,B23_BATCH,B24_BATCH,B25_BATCH]) {
+for (const batch of [...EXPANSION_BATCHES,B23_BATCH,B24_BATCH,B25_BATCH,B26_BATCH]) {
   for (const drink of batch.drinks) {
     const record = { ...drink, evidenceVersion: batch.evidenceVersion };
     for (const candidate of [drink.masterKey, drink.nameJa, ...(drink.aliases || [])]) expansionLookup.set(normalizeDrinkV19Key(candidate), record);
@@ -114,5 +116,5 @@ async function enrichExpansionResponse(response, env) {
   return new Response(JSON.stringify(data),{status:response.status,headers});
 }
 
-export { EXPANSION_BATCHES, B23_BATCH, B24_BATCH, B25_BATCH, expansionLookup, enrichExpansionResponse };
-export default { async fetch(request, env, ctx) { const maintenance=Promise.allSettled(EXPANSION_BATCHES.map((batch)=>ensureBatch(env,batch)).concat(ensureBatch(env,B23_BATCH),ensureBatch(env,B24_BATCH),ensureBatch(env,B25_BATCH))); if (ctx?.waitUntil) ctx.waitUntil(maintenance); const response=await baseWorker.fetch(request,env,ctx); return enrichExpansionResponse(response,env); } };
+export { EXPANSION_BATCHES, B23_BATCH, B24_BATCH, B25_BATCH, B26_BATCH, expansionLookup, enrichExpansionResponse };
+export default { async fetch(request, env, ctx) { const maintenance=Promise.allSettled(EXPANSION_BATCHES.map((batch)=>ensureBatch(env,batch)).concat(ensureBatch(env,B23_BATCH),ensureBatch(env,B24_BATCH),ensureBatch(env,B25_BATCH),ensureBatch(env,B26_BATCH))); if (ctx?.waitUntil) ctx.waitUntil(maintenance); const response=await baseWorker.fetch(request,env,ctx); return enrichExpansionResponse(response,env); } };
