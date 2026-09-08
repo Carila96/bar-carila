@@ -18,8 +18,8 @@ import { DRINK_MASTER_EXPANSION_B24, DRINK_MASTER_EXPANSION_B24_EVIDENCE_VERSION
 import { DRINK_MASTER_EXPANSION_B25, DRINK_MASTER_EXPANSION_B25_EVIDENCE_VERSION, DRINK_MASTER_EXPANSION_B25_EVALUATED_AT } from './drink-master-expansion-b25-approved.mjs';
 import { DRINK_MASTER_EXPANSION_B26, DRINK_MASTER_EXPANSION_B26_EVIDENCE_VERSION, DRINK_MASTER_EXPANSION_B26_EVALUATED_AT } from './drink-master-expansion-b26-approved.mjs';
 import { DRINK_MASTER_EXPANSION_B27, DRINK_MASTER_EXPANSION_B27_EVIDENCE_VERSION, DRINK_MASTER_EXPANSION_B27_EVALUATED_AT } from './drink-master-expansion-b27-approved.mjs';
+import { DRINK_MASTER_EXPANSION_B28, DRINK_MASTER_EXPANSION_B28_EVIDENCE_VERSION, DRINK_MASTER_EXPANSION_B28_EVALUATED_AT } from './drink-master-expansion-b28-approved.mjs';
 import { normalizeDrinkV19Key } from './drink-master-v1.9-master.mjs';
-
 const EXPANSION_BATCHES = [
   { id: 'B09', drinks: DRINK_MASTER_EXPANSION_B09, evidenceVersion: DRINK_MASTER_EXPANSION_B09_EVIDENCE_VERSION, evaluatedAt: DRINK_MASTER_EXPANSION_B09_EVALUATED_AT },
   { id: 'B10', drinks: DRINK_MASTER_EXPANSION_B10, evidenceVersion: DRINK_MASTER_EXPANSION_B10_EVIDENCE_VERSION, evaluatedAt: DRINK_MASTER_EXPANSION_B10_EVALUATED_AT },
@@ -41,28 +41,25 @@ const B24_BATCH={ id:'B24', drinks:DRINK_MASTER_EXPANSION_B24, evidenceVersion:D
 const B25_BATCH={ id:'B25', drinks:DRINK_MASTER_EXPANSION_B25, evidenceVersion:DRINK_MASTER_EXPANSION_B25_EVIDENCE_VERSION, evaluatedAt:DRINK_MASTER_EXPANSION_B25_EVALUATED_AT };
 const B26_BATCH={ id:'B26', drinks:DRINK_MASTER_EXPANSION_B26, evidenceVersion:DRINK_MASTER_EXPANSION_B26_EVIDENCE_VERSION, evaluatedAt:DRINK_MASTER_EXPANSION_B26_EVALUATED_AT };
 const B27_BATCH={ id:'B27', drinks:DRINK_MASTER_EXPANSION_B27, evidenceVersion:DRINK_MASTER_EXPANSION_B27_EVIDENCE_VERSION, evaluatedAt:DRINK_MASTER_EXPANSION_B27_EVALUATED_AT };
-
+const B28_BATCH={ id:'B28', drinks:DRINK_MASTER_EXPANSION_B28, evidenceVersion:DRINK_MASTER_EXPANSION_B28_EVIDENCE_VERSION, evaluatedAt:DRINK_MASTER_EXPANSION_B28_EVALUATED_AT };
 const readyByVersion = new Map();
 const expansionLookup = new Map();
-for (const batch of [...EXPANSION_BATCHES,B23_BATCH,B24_BATCH,B25_BATCH,B26_BATCH,B27_BATCH]) {
+for (const batch of [...EXPANSION_BATCHES,B23_BATCH,B24_BATCH,B25_BATCH,B26_BATCH,B27_BATCH,B28_BATCH]) {
   for (const drink of batch.drinks) {
     const record = { ...drink, evidenceVersion: batch.evidenceVersion };
     for (const candidate of [drink.masterKey, drink.nameJa, ...(drink.aliases || [])]) expansionLookup.set(normalizeDrinkV19Key(candidate), record);
   }
 }
-
 async function ensureExpansionTables(env) {
   if (!env?.DRINK_DB) return;
   await env.DRINK_DB.prepare(`CREATE TABLE IF NOT EXISTS drinks (id INTEGER PRIMARY KEY AUTOINCREMENT,canonical_key TEXT NOT NULL UNIQUE,name_ja TEXT NOT NULL,name_en TEXT NOT NULL DEFAULT '',category TEXT NOT NULL DEFAULT '',base_spirit TEXT NOT NULL DEFAULT '',drink_kind TEXT NOT NULL DEFAULT 'cocktail',japan_availability_score INTEGER,japan_rarity_score INTEGER,japan_rarity_label TEXT NOT NULL DEFAULT '',japan_rarity_confidence REAL,rarity_reason TEXT NOT NULL DEFAULT '',evidence_version TEXT NOT NULL DEFAULT '',evaluated_at TEXT,taste_summary TEXT NOT NULL DEFAULT '',origin_summary TEXT NOT NULL DEFAULT '',short_description TEXT NOT NULL DEFAULT '',order_hint TEXT NOT NULL DEFAULT '',global_popularity_score INTEGER,active INTEGER NOT NULL DEFAULT 1,created_at TEXT NOT NULL DEFAULT (datetime('now')),updated_at TEXT NOT NULL DEFAULT (datetime('now')))` ).run();
   await env.DRINK_DB.prepare(`CREATE TABLE IF NOT EXISTS drink_aliases (alias_key TEXT PRIMARY KEY,drink_id INTEGER NOT NULL,alias_text TEXT NOT NULL,language TEXT NOT NULL DEFAULT '',created_at TEXT NOT NULL DEFAULT (datetime('now')),FOREIGN KEY (drink_id) REFERENCES drinks(id))`).run();
   await env.DRINK_DB.prepare(`CREATE TABLE IF NOT EXISTS drink_evidence (id INTEGER PRIMARY KEY AUTOINCREMENT,drink_id INTEGER NOT NULL,evidence_type TEXT NOT NULL,source_title TEXT NOT NULL DEFAULT '',source_url TEXT NOT NULL DEFAULT '',source_note TEXT NOT NULL DEFAULT '',observed_at TEXT,weight TEXT NOT NULL DEFAULT 'supporting',created_at TEXT NOT NULL DEFAULT (datetime('now')),FOREIGN KEY (drink_id) REFERENCES drinks(id))`).run();
 }
-
 async function hasBatch(env, evidenceVersion, length) {
   if (!env?.DRINK_DB) return true;
   try { const row = await env.DRINK_DB.prepare('SELECT COUNT(*) AS count FROM drinks WHERE evidence_version = ?').bind(evidenceVersion).first(); return Number(row?.count || 0) >= length; } catch { return false; }
 }
-
 async function seedBatch(env, drinks, evidenceVersion, evaluatedAt) {
   if (!env?.DRINK_DB) return;
   await ensureExpansionTables(env);
@@ -78,14 +75,12 @@ async function seedBatch(env, drinks, evidenceVersion, evaluatedAt) {
     }
   }
 }
-
 function ensureBatch(env, batch) {
   if (!env?.DRINK_DB) return Promise.resolve();
   const current = readyByVersion.get(batch.evidenceVersion); if (current) return current;
   const promise = (async () => { if (!(await hasBatch(env, batch.evidenceVersion, batch.drinks.length))) await seedBatch(env, batch.drinks, batch.evidenceVersion, batch.evaluatedAt); })().catch((error) => { readyByVersion.delete(batch.evidenceVersion); console.error(`${batch.id} seed failed`, error); });
   readyByVersion.set(batch.evidenceVersion, promise); return promise;
 }
-
 function parseJsonText(text) {
   if (typeof text !== 'string') return null;
   const cleaned = text.replace(/```json|```/g, '').trim();
@@ -94,14 +89,11 @@ function parseJsonText(text) {
   if (first < 0 || last <= first) return null;
   try { return JSON.parse(cleaned.slice(first, last + 1)); } catch { return null; }
 }
-
 function findExpansionDrink(candidates) { for (const candidate of candidates) { const match = expansionLookup.get(normalizeDrinkV19Key(candidate)); if (match) return match; } return null; }
-
 async function readExpansionFromD1(env, drink) {
   if (!env?.DRINK_DB || !drink) return null;
   try { const row = await env.DRINK_DB.prepare(`SELECT canonical_key,japan_availability_score,japan_rarity_score,japan_rarity_label,japan_rarity_confidence,rarity_reason,evidence_version FROM drinks WHERE canonical_key = ? LIMIT 1`).bind(normalizeDrinkV19Key(drink.masterKey)).first(); if (!row || row.evidence_version !== drink.evidenceVersion) return null; return row; } catch (error) { console.error('expansion D1 lookup failed', error); return null; }
 }
-
 async function enrichExpansionResponse(response, env) {
   const started = Date.now();
   if (!response.ok || !String(response.headers.get('content-type') || '').includes('application/json')) return response;
@@ -117,6 +109,5 @@ async function enrichExpansionResponse(response, env) {
   const headers=new Headers(response.headers); headers.set('content-type','application/json; charset=utf-8'); const currentTiming=headers.get('server-timing'); headers.set('server-timing',[currentTiming,`expansion-enrich;dur=${Date.now()-started}`].filter(Boolean).join(', '));
   return new Response(JSON.stringify(data),{status:response.status,headers});
 }
-
-export { EXPANSION_BATCHES, B23_BATCH, B24_BATCH, B25_BATCH, B26_BATCH, B27_BATCH, expansionLookup, enrichExpansionResponse };
-export default { async fetch(request, env, ctx) { const maintenance=Promise.allSettled(EXPANSION_BATCHES.map((batch)=>ensureBatch(env,batch)).concat(ensureBatch(env,B23_BATCH),ensureBatch(env,B24_BATCH),ensureBatch(env,B25_BATCH),ensureBatch(env,B26_BATCH),ensureBatch(env,B27_BATCH))); if (ctx?.waitUntil) ctx.waitUntil(maintenance); const response=await baseWorker.fetch(request,env,ctx); return enrichExpansionResponse(response,env); } };
+export { EXPANSION_BATCHES, B23_BATCH, B24_BATCH, B25_BATCH, B26_BATCH, B27_BATCH, B28_BATCH, expansionLookup, enrichExpansionResponse };
+export default { async fetch(request, env, ctx) { const maintenance=Promise.allSettled(EXPANSION_BATCHES.map((batch)=>ensureBatch(env,batch)).concat(ensureBatch(env,B23_BATCH),ensureBatch(env,B24_BATCH),ensureBatch(env,B25_BATCH),ensureBatch(env,B26_BATCH),ensureBatch(env,B27_BATCH),ensureBatch(env,B28_BATCH))); if (ctx?.waitUntil) ctx.waitUntil(maintenance); const response=await baseWorker.fetch(request,env,ctx); return enrichExpansionResponse(response,env); } };
