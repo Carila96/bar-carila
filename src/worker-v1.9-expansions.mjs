@@ -19,6 +19,7 @@ import { DRINK_MASTER_EXPANSION_B25, DRINK_MASTER_EXPANSION_B25_EVIDENCE_VERSION
 import { DRINK_MASTER_EXPANSION_B26, DRINK_MASTER_EXPANSION_B26_EVIDENCE_VERSION, DRINK_MASTER_EXPANSION_B26_EVALUATED_AT } from './drink-master-expansion-b26-approved.mjs';
 import { DRINK_MASTER_EXPANSION_B27, DRINK_MASTER_EXPANSION_B27_EVIDENCE_VERSION, DRINK_MASTER_EXPANSION_B27_EVALUATED_AT } from './drink-master-expansion-b27-approved.mjs';
 import { DRINK_MASTER_EXPANSION_B28, DRINK_MASTER_EXPANSION_B28_EVIDENCE_VERSION, DRINK_MASTER_EXPANSION_B28_EVALUATED_AT } from './drink-master-expansion-b28-approved.mjs';
+import { DRINK_MASTER_EXPANSION_B29, DRINK_MASTER_EXPANSION_B29_EVIDENCE_VERSION, DRINK_MASTER_EXPANSION_B29_EVALUATED_AT } from './drink-master-expansion-b29-approved.mjs';
 import { normalizeDrinkV19Key } from './drink-master-v1.9-master.mjs';
 const EXPANSION_BATCHES = [
   { id: 'B09', drinks: DRINK_MASTER_EXPANSION_B09, evidenceVersion: DRINK_MASTER_EXPANSION_B09_EVIDENCE_VERSION, evaluatedAt: DRINK_MASTER_EXPANSION_B09_EVALUATED_AT },
@@ -42,9 +43,10 @@ const B25_BATCH={ id:'B25', drinks:DRINK_MASTER_EXPANSION_B25, evidenceVersion:D
 const B26_BATCH={ id:'B26', drinks:DRINK_MASTER_EXPANSION_B26, evidenceVersion:DRINK_MASTER_EXPANSION_B26_EVIDENCE_VERSION, evaluatedAt:DRINK_MASTER_EXPANSION_B26_EVALUATED_AT };
 const B27_BATCH={ id:'B27', drinks:DRINK_MASTER_EXPANSION_B27, evidenceVersion:DRINK_MASTER_EXPANSION_B27_EVIDENCE_VERSION, evaluatedAt:DRINK_MASTER_EXPANSION_B27_EVALUATED_AT };
 const B28_BATCH={ id:'B28', drinks:DRINK_MASTER_EXPANSION_B28, evidenceVersion:DRINK_MASTER_EXPANSION_B28_EVIDENCE_VERSION, evaluatedAt:DRINK_MASTER_EXPANSION_B28_EVALUATED_AT };
+const B29_BATCH={ id:'B29', drinks:DRINK_MASTER_EXPANSION_B29, evidenceVersion:DRINK_MASTER_EXPANSION_B29_EVIDENCE_VERSION, evaluatedAt:DRINK_MASTER_EXPANSION_B29_EVALUATED_AT };
 const readyByVersion = new Map();
 const expansionLookup = new Map();
-for (const batch of [...EXPANSION_BATCHES,B23_BATCH,B24_BATCH,B25_BATCH,B26_BATCH,B27_BATCH,B28_BATCH]) {
+for (const batch of [...EXPANSION_BATCHES,B23_BATCH,B24_BATCH,B25_BATCH,B26_BATCH,B27_BATCH,B28_BATCH,B29_BATCH]) {
   for (const drink of batch.drinks) {
     const record = { ...drink, evidenceVersion: batch.evidenceVersion };
     for (const candidate of [drink.masterKey, drink.nameJa, ...(drink.aliases || [])]) expansionLookup.set(normalizeDrinkV19Key(candidate), record);
@@ -109,5 +111,5 @@ async function enrichExpansionResponse(response, env) {
   const headers=new Headers(response.headers); headers.set('content-type','application/json; charset=utf-8'); const currentTiming=headers.get('server-timing'); headers.set('server-timing',[currentTiming,`expansion-enrich;dur=${Date.now()-started}`].filter(Boolean).join(', '));
   return new Response(JSON.stringify(data),{status:response.status,headers});
 }
-export { EXPANSION_BATCHES, B23_BATCH, B24_BATCH, B25_BATCH, B26_BATCH, B27_BATCH, B28_BATCH, expansionLookup, enrichExpansionResponse };
-export default { async fetch(request, env, ctx) { const maintenance=Promise.allSettled(EXPANSION_BATCHES.map((batch)=>ensureBatch(env,batch)).concat(ensureBatch(env,B23_BATCH),ensureBatch(env,B24_BATCH),ensureBatch(env,B25_BATCH),ensureBatch(env,B26_BATCH),ensureBatch(env,B27_BATCH),ensureBatch(env,B28_BATCH))); if (ctx?.waitUntil) ctx.waitUntil(maintenance); const response=await baseWorker.fetch(request,env,ctx); return enrichExpansionResponse(response,env); } };
+export { EXPANSION_BATCHES, B23_BATCH, B24_BATCH, B25_BATCH, B26_BATCH, B27_BATCH, B28_BATCH, B29_BATCH, expansionLookup, enrichExpansionResponse };
+export default { async fetch(request, env, ctx) { const maintenance=Promise.allSettled(EXPANSION_BATCHES.map((batch)=>ensureBatch(env,batch)).concat(ensureBatch(env,B23_BATCH),ensureBatch(env,B24_BATCH),ensureBatch(env,B25_BATCH),ensureBatch(env,B26_BATCH),ensureBatch(env,B27_BATCH),ensureBatch(env,B28_BATCH),ensureBatch(env,B29_BATCH))); if (ctx?.waitUntil) ctx.waitUntil(maintenance); const response=await baseWorker.fetch(request,env,ctx); return enrichExpansionResponse(response,env); } };
