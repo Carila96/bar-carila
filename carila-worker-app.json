@@ -1,7 +1,8 @@
 {
   "requiredSecrets": [
     "ANTHROPIC_API_KEY",
-    "UNSPLASH_ACCESS_KEY"
+    "UNSPLASH_ACCESS_KEY",
+    "OPENAI_API_KEY"
   ],
   "d1Databases": [
     {
