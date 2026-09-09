@@ -27,6 +27,7 @@ import { DRINK_MASTER_EXPANSION_B33, DRINK_MASTER_EXPANSION_B33_EVIDENCE_VERSION
 import { DRINK_MASTER_EXPANSION_B34, DRINK_MASTER_EXPANSION_B34_EVIDENCE_VERSION, DRINK_MASTER_EXPANSION_B34_EVALUATED_AT } from './drink-master-expansion-b34-approved.mjs';
 import { DRINK_MASTER_EXPANSION_B35, DRINK_MASTER_EXPANSION_B35_EVIDENCE_VERSION, DRINK_MASTER_EXPANSION_B35_EVALUATED_AT } from './drink-master-expansion-b35-approved.mjs';
 import { DRINK_MASTER_EXPANSION_B36, DRINK_MASTER_EXPANSION_B36_EVIDENCE_VERSION, DRINK_MASTER_EXPANSION_B36_EVALUATED_AT } from './drink-master-expansion-b36-approved.mjs';
+import { DRINK_MASTER_EXPANSION_B37, DRINK_MASTER_EXPANSION_B37_EVIDENCE_VERSION, DRINK_MASTER_EXPANSION_B37_EVALUATED_AT } from './drink-master-expansion-b37-approved.mjs';
 import { normalizeDrinkV19Key } from './drink-master-v1.9-master.mjs';
 const EXPANSION_BATCHES = [
   { id: 'B09', drinks: DRINK_MASTER_EXPANSION_B09, evidenceVersion: DRINK_MASTER_EXPANSION_B09_EVIDENCE_VERSION, evaluatedAt: DRINK_MASTER_EXPANSION_B09_EVALUATED_AT },
@@ -58,9 +59,10 @@ const B33_BATCH={ id:'B33', drinks:DRINK_MASTER_EXPANSION_B33, evidenceVersion:D
 const B34_BATCH={ id:'B34', drinks:DRINK_MASTER_EXPANSION_B34, evidenceVersion:DRINK_MASTER_EXPANSION_B34_EVIDENCE_VERSION, evaluatedAt:DRINK_MASTER_EXPANSION_B34_EVALUATED_AT };
 const B35_BATCH={ id:'B35', drinks:DRINK_MASTER_EXPANSION_B35, evidenceVersion:DRINK_MASTER_EXPANSION_B35_EVIDENCE_VERSION, evaluatedAt:DRINK_MASTER_EXPANSION_B35_EVALUATED_AT };
 const B36_BATCH={ id:'B36', drinks:DRINK_MASTER_EXPANSION_B36, evidenceVersion:DRINK_MASTER_EXPANSION_B36_EVIDENCE_VERSION, evaluatedAt:DRINK_MASTER_EXPANSION_B36_EVALUATED_AT };
+const B37_BATCH={ id:'B37', drinks:DRINK_MASTER_EXPANSION_B37, evidenceVersion:DRINK_MASTER_EXPANSION_B37_EVIDENCE_VERSION, evaluatedAt:DRINK_MASTER_EXPANSION_B37_EVALUATED_AT };
 const readyByVersion = new Map();
 const expansionLookup = new Map();
-for (const batch of [...EXPANSION_BATCHES,B23_BATCH,B24_BATCH,B25_BATCH,B26_BATCH,B27_BATCH,B28_BATCH,B29_BATCH,B30_BATCH,B31_BATCH,B32_BATCH,B33_BATCH,B34_BATCH,B35_BATCH,B36_BATCH]) {
+for (const batch of [...EXPANSION_BATCHES,B23_BATCH,B24_BATCH,B25_BATCH,B26_BATCH,B27_BATCH,B28_BATCH,B29_BATCH,B30_BATCH,B31_BATCH,B32_BATCH,B33_BATCH,B34_BATCH,B35_BATCH,B36_BATCH,B37_BATCH]) {
   for (const drink of batch.drinks) {
     const record = { ...drink, evidenceVersion: batch.evidenceVersion };
     for (const candidate of [drink.masterKey, drink.nameJa, ...(drink.aliases || [])]) expansionLookup.set(normalizeDrinkV19Key(candidate), record);
@@ -125,5 +127,5 @@ async function enrichExpansionResponse(response, env) {
   const headers=new Headers(response.headers); headers.set('content-type','application/json; charset=utf-8'); const currentTiming=headers.get('server-timing'); headers.set('server-timing',[currentTiming,`expansion-enrich;dur=${Date.now()-started}`].filter(Boolean).join(', '));
   return new Response(JSON.stringify(data),{status:response.status,headers});
 }
-export { EXPANSION_BATCHES, B23_BATCH, B24_BATCH, B25_BATCH, B26_BATCH, B27_BATCH, B28_BATCH, B29_BATCH, B30_BATCH, B31_BATCH, B32_BATCH, B33_BATCH, B34_BATCH, B35_BATCH, B36_BATCH, expansionLookup, enrichExpansionResponse };
-export default { async fetch(request, env, ctx) { const maintenance=Promise.allSettled(EXPANSION_BATCHES.map((batch)=>ensureBatch(env,batch)).concat(ensureBatch(env,B23_BATCH),ensureBatch(env,B24_BATCH),ensureBatch(env,B25_BATCH),ensureBatch(env,B26_BATCH),ensureBatch(env,B27_BATCH),ensureBatch(env,B28_BATCH),ensureBatch(env,B29_BATCH),ensureBatch(env,B30_BATCH),ensureBatch(env,B31_BATCH),ensureBatch(env,B32_BATCH),ensureBatch(env,B33_BATCH),ensureBatch(env,B34_BATCH),ensureBatch(env,B35_BATCH),ensureBatch(env,B36_BATCH))); if (ctx?.waitUntil) ctx.waitUntil(maintenance); const response=await baseWorker.fetch(request,env,ctx); return enrichExpansionResponse(response,env); } };
+export { EXPANSION_BATCHES, B23_BATCH, B24_BATCH, B25_BATCH, B26_BATCH, B27_BATCH, B28_BATCH, B29_BATCH, B30_BATCH, B31_BATCH, B32_BATCH, B33_BATCH, B34_BATCH, B35_BATCH, B36_BATCH, B37_BATCH, expansionLookup, enrichExpansionResponse };
+export default { async fetch(request, env, ctx) { const maintenance=Promise.allSettled(EXPANSION_BATCHES.map((batch)=>ensureBatch(env,batch)).concat(ensureBatch(env,B23_BATCH),ensureBatch(env,B24_BATCH),ensureBatch(env,B25_BATCH),ensureBatch(env,B26_BATCH),ensureBatch(env,B27_BATCH),ensureBatch(env,B28_BATCH),ensureBatch(env,B29_BATCH),ensureBatch(env,B30_BATCH),ensureBatch(env,B31_BATCH),ensureBatch(env,B32_BATCH),ensureBatch(env,B33_BATCH),ensureBatch(env,B34_BATCH),ensureBatch(env,B35_BATCH),ensureBatch(env,B36_BATCH),ensureBatch(env,B37_BATCH))); if (ctx?.waitUntil) ctx.waitUntil(maintenance); const response=await baseWorker.fetch(request,env,ctx); return enrichExpansionResponse(response,env); } };
