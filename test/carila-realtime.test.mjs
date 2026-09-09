@@ -42,12 +42,13 @@ test('realtime voice creates a server-authenticated WebRTC call with Carila pers
 });
 
 test('Carila page exposes continuous WebRTC voice mode without push-to-talk', async () => {
-  const [html, app, css, wrangler, manifest] = await Promise.all([
+  const [html, app, css, wrangler, manifest, realtimeWorker] = await Promise.all([
     readFile(new URL('../public/carila/index.html', import.meta.url), 'utf8'),
     readFile(new URL('../public/carila/assets/js/carila.js', import.meta.url), 'utf8'),
     readFile(new URL('../public/carila/assets/css/voice.css', import.meta.url), 'utf8'),
     readFile(new URL('../wrangler.jsonc', import.meta.url), 'utf8'),
     readFile(new URL('../carila-worker-app.json', import.meta.url), 'utf8'),
+    readFile(new URL('../src/worker-carila-realtime.mjs', import.meta.url), 'utf8'),
   ]);
   assert.match(html, /id="voiceButton"/);
   assert.match(html, /一度始めれば、あとは普通に話しかけられます/);
@@ -59,5 +60,7 @@ test('Carila page exposes continuous WebRTC voice mode without push-to-talk', as
   assert.doesNotMatch(app, /MediaRecorder/);
   assert.match(css, /voice-button\.is-active/);
   assert.match(wrangler, /worker-carila-realtime\.mjs/);
+  assert.match(realtimeWorker, /worker-v1\.9-expansions\.mjs/);
+  assert.match(realtimeWorker, /return appWorker\.fetch/);
   assert.match(manifest, /OPENAI_API_KEY/);
 });
