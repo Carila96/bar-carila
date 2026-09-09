@@ -1,6 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "bar-carila",
+  // worker-carila-realtime.mjs delegates all non-voice routes to worker-v1.9-expansions.mjs.
   "main": "src/worker-carila-realtime.mjs",
   "compatibility_date": "2026-08-25",
   "workers_dev": true,
