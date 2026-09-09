@@ -1,0 +1,65 @@
+export const DRINK_MASTER_EXPANSION_B35_EVIDENCE_VERSION='jp-rarity-expansion-2026-09-09-b35';
+export const DRINK_MASTER_EXPANSION_B35_EVALUATED_AT='2026-09-09';
+const JP1='https://www.hotpepper.jp/strJ003365641/drink/';
+const JP2='https://www.hotpepper.jp/strJ003474302/drink/';
+const JP3='https://www.hotpepper.jp/strJ004678153/drink/';
+const label=r=>r>=75?'かなり珍しい':r>=55?'珍しい':r>=35?'やや珍しい':'定番寄り';
+const methodFor=ings=>ings.some(([n])=>/ginger ale|champagne|soda water/i.test(n))?'炭酸材料以外を氷で十分に冷却してグラスへ注ぎ、最後に炭酸材料を加えて軽くステアする。':ings.some(([n])=>/juice|cream|egg|sugar|grenadine|syrup|orange|lime|lemon|grapefruit/i.test(n))?'全材料を氷と十分にシェイクし、冷やした適切なグラスへストレインする。':'全材料を氷と十分にステアし、冷やした適切なグラスへストレインする。';
+const special=/Absinthe|Caperitif|Hercules|Creme de Noyau|Orange-flower|Anis del Oso|Groseille|Quinquina|Abricotine|Pernod/i;
+const d=(masterKey,nameJa,baseSpirit,availability,ingredients,page,aliases=[])=>({masterKey,nameJa,aliases,category:'cocktail',baseSpirit,drinkKind:'cocktail',availability,rarity:100-availability,rarityLabel:label(100-availability),confidence:.82,rarityReason:`1930 Savoy Cocktail Bookの原典スキャンと検索可能なSavoyデータベースで実在・名称・代表構成を確認。${ingredients.some(([n])=>special.test(n))?'歴史的または専門性の高い副材料を含むため、':''}主要酒材は日本国内で調達可能だが、名称認知度と常備酒材には店差があり、一般BARでの即時提供可能性は限定される。`,shortDescription:`${masterKey}は1930 Savoy Cocktail Bookに収録されるクラシックカクテル。`,orderHint:'名称で通じない場合は主要材料とSavoy系クラシックである旨を添えると確実。',imageQuery:`${masterKey} cocktail`,recipe:{ingredients:ingredients.map(([name,amount])=>({name,amount})),method:methodFor(ingredients)},evidence:[{type:'historical_primary_reference',title:`1930 Savoy Cocktail Book — p.${page}: ${masterKey}`,url:`https://euvs-vintage-cocktail-books.cld.bz/1930-The-Savoy-Cocktail-Book/${page}`,note:'1930年刊行The Savoy Cocktail Bookのデジタル原典スキャンで実在・標準名称・代表レシピを確認。'},{type:'historical_secondary_reference',title:'The 1930 Savoy Cocktail Book Database',url:'https://savoycocktaildatabase.com/cocktail-index/',note:'Savoy収録名の索引照合と表記確認に使用。'},{type:'jp_bar_reference',title:'Japanese full-service bar current menu coverage',url:JP1,note:'日本国内BARで主要スピリッツ、ベルモット、果汁、一般リキュール等の現行提供環境を確認。'},{type:'jp_bar_reference',title:'Japanese specialist bar current menu coverage',url:JP2,note:'日本国内でアブサン、シャルトリューズ、キルシュ等を扱う専門BARの現行提供環境を確認。'},{type:'jp_bar_reference',title:'Japanese classic cocktail bar current menu coverage',url:JP3,note:'日本国内BARでクラシックカクテル用酒材を提供する環境を補助確認。'}]});
+export const DRINK_MASTER_EXPANSION_B35_CANDIDATES=[
+d('Modder River Cocktail','モッダー・リバー','gin',20,[['Caperitif','30ml'],['Dry gin','30ml']],107),
+d('Modern Cocktail No. 1','モダン No.1','whisky',24,[['Orange bitters','1 dash'],['Jamaica rum','2 dashes'],['Absinthe','1 dash'],['Lemon juice','2 dashes'],['Scotch whisky','60ml']],107),
+d('Modern Cocktail No. 2','モダン No.2','whisky',22,[['Orange bitters','1 dash'],['Absinthe','1 dash'],['Grenadine','1 dash'],['Scotch whisky','40ml'],['Sloe gin','20ml']],107),
+d('Moll Cocktail','モル','gin',24,[['Gin','30ml'],['Sloe gin','30ml'],['Dry vermouth','30ml'],['Orange bitters','few drops'],['Sugar','to taste']],107),
+d('Monkey Gland Cocktail','モンキー・グランド','gin',42,[['Absinthe','3 dashes'],['Grenadine','3 dashes'],['Orange juice','20ml'],['Dry gin','40ml']],107),
+d('Monte Carlo Imperial Cocktail','モンテカルロ・インペリアル','gin',25,[['Dry gin','30ml'],['Lemon juice','15ml'],['White creme de menthe','15ml'],['Champagne','top']],108),
+d('Montpelier Cocktail','モンペリエ','gin',24,[['Dry vermouth','20ml'],['Dry gin','40ml']],108),
+d('Moonlight Cocktail','ムーンライト','gin',22,[['Grapefruit juice','15ml'],['Gin','20ml'],['Kirsch','5ml'],['White wine','20ml']],108),
+d('Moonraker Cocktail','ムーンレイカー','brandy',16,[['Brandy','20ml'],['Quinquina','20ml'],['Peach brandy','20ml'],['Absinthe','3 dashes']],108),
+d('Moonshine Cocktail','ムーンシャイン','gin',24,[['Gin','30ml'],['Dry vermouth','20ml'],['Maraschino liqueur','10ml'],['Absinthe bitters','1 drop']],108),
+d('Morning Cocktail','モーニング・カクテル','brandy',24,[['Curaçao','2 dashes'],['Maraschino liqueur','2 dashes'],['Orange bitters','2 dashes'],['Absinthe','2 dashes'],['Brandy','30ml'],['Dry vermouth','30ml']],109),
+d('Morning Glory Cocktail','モーニング・グローリー','whisky',28,[['Gomme syrup','3 dashes'],['Curaçao','2 dashes'],['Brandy','30ml'],['Whisky','30ml'],['Soda water','top']],109),
+d('Napoleon Cocktail','ナポレオン','gin',28,[['Fernet Branca','1 dash'],['Curaçao','1 dash'],['Dubonnet','1 dash'],['Dry gin','60ml']],110),
+d('Nevada Cocktail','ネバダ','rum',34,[['Bacardi rum','45ml'],['Grapefruit juice','15ml'],['Lime juice','15ml'],['Powdered sugar','1 tsp'],['Bitters','1 dash']],110),
+d('Newbury Cocktail','ニューベリー','gin',24,[['Curaçao','3 dashes'],['Sweet vermouth','20ml'],['Dry gin','40ml']],110),
+d('New Life Cocktail','ニュー・ライフ','rum',14,[['Hercules','15ml'],['Bacardi rum','15ml'],['Cointreau','30ml']],110),
+d('New 1920 Cocktail','ニュー1920','whisky',30,[['Orange bitters','1 dash'],['Dry vermouth','20ml'],['Sweet vermouth','20ml'],['Canadian whisky','20ml']],111),
+d("Newton's Special Cocktail",'ニュートンズ・スペシャル','brandy',30,[['Angostura bitters','1 dash'],['Cointreau','15ml'],['Brandy','45ml']],111),
+d('New York Cocktail','ニューヨーク','whisky',42,[['Sugar','1 lump'],['Lime or lemon juice','15ml'],['Grenadine','2 dashes'],['Canadian whisky','60ml']],111),
+d("Nick's Own Cocktail",'ニックス・オウン','brandy',20,[['Angostura bitters','1 dash'],['Absinthe','1 dash'],['Sweet vermouth','30ml'],['Brandy','30ml']],112),
+d('Nicolaski Cocktail','ニコラスキー','brandy',20,[['Brandy','60ml'],['Sugared lemon slice','1 slice']],112),
+d('Night Cap Cocktail','ナイト・キャップ','brandy',20,[['Egg yolk','1'],['Anisette','10ml'],['Curaçao','10ml'],['Brandy','40ml']],112),
+d('Nineteen Cocktail','ナインティーン','gin',18,[['Dry gin','20ml'],['Kirsch','20ml'],['Dry vermouth','20ml'],['Simple syrup','4 dashes']],112),
+d('Nineteen-Twenty Pick-Me-Up Cocktail','ナインティーン・トゥエンティ・ピックミーアップ','gin',16,[['Pernod absinthe','20ml'],['Gin','40ml'],['Angostura bitters','1 dash'],['Orange bitters','1 dash'],['Gomme syrup','1 dash'],['Soda water','top']],113),
+d('Odd McIntyre Cocktail','オッド・マッキンタイア','brandy',24,[['Lemon juice','15ml'],['Kina Lillet','15ml'],['Cointreau','15ml'],['Brandy','15ml']],113),
+d('Oh, Henry! Cocktail','オー・ヘンリー','whisky',26,[['Benedictine','20ml'],['Whisky','40ml'],['Ginger ale','top']],114),
+d('Old Etonian Cocktail','オールド・イートニアン','gin',24,[['Orange bitters','2 dashes'],['Creme de Noyau','2 dashes'],['London dry gin','40ml'],['Kina Lillet','20ml']],114),
+d('Old Fashioned Cocktail','オールド・ファッションド','whisky',70,[['Sugar','1 lump'],['Angostura bitters','2 dashes'],['Rye or Canadian whisky','60ml']],114),
+d('Olivette Cocktail','オリベット','gin',20,[['Simple syrup','2 dashes'],['Orange bitters','2 dashes'],['Absinthe','3 dashes'],['Plymouth gin','60ml']],115),
+d('Olympic Cocktail','オリンピック','brandy',38,[['Orange juice','20ml'],['Curaçao','20ml'],['Brandy','20ml']],115),
+d('One Exciting Night Cocktail','ワン・エキサイティング・ナイト','gin',22,[['Orange juice','1 dash'],['Dry vermouth','20ml'],['Sweet vermouth','20ml'],['Plymouth gin','20ml']],115),
+d('Oom Paul Cocktail','ウーム・ポール','brandy',16,[['Angostura bitters','1 dash'],['Caperitif','45ml'],['Calvados','15ml']],115),
+d('Opal Cocktail','オパール','gin',30,[['Gin','30ml'],['Orange juice','20ml'],['Cointreau','10ml'],['Sugar','small amount'],['Orange-flower water','few drops']],116),
+d('Opening Cocktail','オープニング','whisky',28,[['Grenadine','1 dash'],['Sweet vermouth','30ml'],['Canadian whisky','30ml']],116),
+d('Opera Cocktail','オペラ','gin',38,[['Maraschino liqueur','10ml'],['Dubonnet','20ml'],['Dry gin','30ml']],116),
+d('Orange Cocktail','オレンジ・カクテル','gin',34,[['Orange juice','15ml'],['Orange bitters','1 tsp'],['Gin','30ml'],['Sugar syrup','1 tsp'],['Dry vermouth','15ml']],116),
+d('Orange Bloom Cocktail','オレンジ・ブルーム','gin',26,[['Sweet vermouth','20ml'],['Cointreau','20ml'],['Dry gin','20ml']],117),
+d('Orange Blossom Cocktail','オレンジ・ブロッサム','gin',52,[['Orange juice','30ml'],['Dry gin','30ml']],117),
+d('Orange Martini Cocktail','オレンジ・マティーニ','gin',32,[['Gin','30ml'],['Dry vermouth','24ml'],['Sweet vermouth','12ml'],['Orange bitters','rinse']],117),
+d('Oriental Cocktail','オリエンタル','whisky',36,[['Rye whisky','30ml'],['Sweet vermouth','15ml'],['White curaçao','15ml'],['Lime juice','15ml']],117),
+d('Paddy Cocktail','パディ','whisky',42,[['Irish whisky','40ml'],['Sweet vermouth','20ml'],['Angostura bitters','1 dash']],117),
+d('Pall Mall Cocktail','パル・マル','gin',20,[['Orange bitters','1 dash'],['White creme de menthe','1 tsp'],['Sweet vermouth','20ml'],['Dry vermouth','20ml'],['Plymouth gin','20ml']],118),
+d('Palmer Cocktail','パーマー','whisky',28,[['Lemon juice','1 dash'],['Angostura bitters','1 dash'],['Canadian whisky','60ml']],118),
+d('Palmetto Cocktail','パルメット','rum',34,[['Orange bitters','2 dashes'],['Sweet vermouth','30ml'],['St. Croix rum','30ml']],118),
+d('Panama Cocktail','パナマ','brandy',38,[['Creme de cacao','20ml'],['Sweet cream','20ml'],['Brandy','20ml']],118),
+d('Pansy Cocktail','パンジー','absinthe',10,[['Angostura bitters','2 dashes'],['Grenadine','6 dashes'],['Absinthe','30ml']],118),
+d('Pansy Blossom Cocktail','パンジー・ブロッサム','anisette',10,[['Angostura bitters','2 dashes'],['Grenadine','1 tsp'],['Anis del Oso','30ml']],119),
+d('Pantomime Cocktail','パントマイム','vermouth',18,[['Orgeat syrup','1 dash'],['Grenadine','1 dash'],['Egg white','1'],['Dry vermouth','30ml']],119),
+d('Paradise Cocktail','パラダイス','gin',52,[['Lemon juice','1 dash'],['Orange juice','15ml'],['Apricot brandy','15ml'],['Gin','30ml']],119),
+d('Parisian Cocktail','パリジャン','gin',30,[['Dry vermouth','20ml'],['Creme de Cassis','20ml'],['Gin','20ml']],119),
+d('Parisian Blonde Cocktail','パリジャン・ブロンド','rum',24,[['Sweet cream','20ml'],['Curaçao','20ml'],['Jamaica rum','20ml']],119),
+d("Pat's Special Cocktail",'パッツ・スペシャル','gin',18,[['Gin','20ml'],['Sherry','20ml'],['Quinquina','20ml'],['Creme de Cassis','2 dashes'],['Abricotine','2 dashes']],120),
+d('Pauline Cocktail','ポーリーン','rum',18,[['Rum','30ml'],['Sweetened lemon juice','30ml'],['Absinthe bitters','1 dash'],['Nutmeg','small amount']],120),
+d('Pegu Club Cocktail','ペグ・クラブ','gin',58,[['Angostura bitters','1 dash'],['Orange bitters','1 dash'],['Lime juice','10ml'],['Curaçao','15ml'],['Dry gin','35ml']],120)
+];
