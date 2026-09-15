@@ -25,6 +25,13 @@ test('realtime voice creates a server-authenticated WebRTC call with Carila pers
     assert.equal(session.type, 'realtime');
     assert.equal(session.model, 'gpt-realtime-2.1');
     assert.deepEqual(session.output_modalities, ['audio']);
+    assert.equal(session.audio.input.noise_reduction.type, 'near_field');
+    assert.equal(session.audio.input.transcription.model, 'gpt-4o-mini-transcribe');
+    assert.equal(session.audio.input.turn_detection.create_response, false);
+    assert.equal(session.audio.input.turn_detection.interrupt_response, true);
+    assert.equal(session.audio.input.turn_detection.threshold, 0.72);
+    assert.equal(session.audio.output.voice, 'cedar');
+    assert.match(session.instructions, /明確な人間の発話/);
     assert.match(session.instructions, /バーテンダーと客/);
     assert.match(session.instructions, /相手が話し始めたら割り込み/);
     return new Response('v=0\r\nmock-answer', { status: 200, headers: { 'content-type': 'application/sdp' } });
@@ -56,7 +63,10 @@ test('Carila page exposes continuous WebRTC voice mode without push-to-talk', as
   assert.match(app, /getUserMedia/);
   assert.match(app, /addTrack/);
   assert.match(app, /\/api\/carila-realtime-session/);
-  assert.match(app, /途中でも話し始めれば割り込めます/);
+  assert.match(app, /conversation\.item\.input_audio_transcription\.completed/);
+  assert.match(app, /response\.output_audio_transcript\.delta/);
+  assert.match(app, /response\.create/);
+  assert.match(app, /話した内容も画面に表示されます/);
   assert.doesNotMatch(app, /MediaRecorder/);
   assert.match(css, /voice-button\.is-active/);
   assert.match(wrangler, /worker-carila-realtime\.mjs/);
