@@ -17,7 +17,7 @@
 
 ## 検証状況
 - コード・テスト更新済み。
-- GitHub Actions CIはPR作成後に確認する。
+- PR #105: CI成功 / drink-master validator成功。
 
 ## 次にやること
 1. CI / drink-master validatorを通す。
