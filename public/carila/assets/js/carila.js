@@ -148,8 +148,8 @@ async function startVoice() {
       try {
         const data = JSON.parse(event.data);
         if (data.type === 'input_audio_buffer.speech_started') elements.voiceStatus.textContent = '聞いています…';
-        if (data.type === 'input_audio_buffer.speech_stopped') elements.voiceStatus.textContent = 'Carilaが聞き取りました。';
-        if (data.type === 'response.output_audio.started') elements.voiceStatus.textContent = 'Carilaが話しています。途中でもそのまま話しかけられます。';
+        if (data.type === 'input_audio_buffer.speech_stopped') elements.voiceStatus.textContent = '聞き取り中…';
+        if (data.type === 'response.output_audio.delta') elements.voiceStatus.textContent = 'Carilaが話しています。途中でもそのまま話しかけられます。';
         if (data.type === 'response.done') elements.voiceStatus.textContent = 'そのまま話してください。';
         if (data.type === 'error') console.error('Carila realtime event error', data.error || data);
       } catch {}
