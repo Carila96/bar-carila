@@ -150,6 +150,19 @@ async function startVoice() {
         if (data.type === 'input_audio_buffer.speech_started') elements.voiceStatus.textContent = '聞いています…';
         if (data.type === 'input_audio_buffer.speech_stopped') elements.voiceStatus.textContent = '聞き取り中…';
         if (data.type === 'response.output_audio.delta') elements.voiceStatus.textContent = 'Carilaが話しています。途中でもそのまま話しかけられます。';
+        if (data.type === 'conversation.item.input_audio_transcription.completed') {
+          const transcript = typeof data.transcript === 'string' ? data.transcript.trim() : '';
+          const itemId = data.item_id || '';
+          if (!transcript || !isMeaningfulVoiceTranscript(transcript) || (itemId && handledVoiceInputItems.has(itemId))) {
+            elements.voiceStatus.textContent = 'そのまま話してください。';
+          } else {
+            if (itemId) handledVoiceInputItems.add(itemId);
+            showVoiceUserTranscript(transcript);
+            memory.add('user', transcript);
+            elements.voiceStatus.textContent = 'Carilaが聞き取りました。';
+            if (events.readyState === 'open') events.send(JSON.stringify({ type: 'response.create' }));
+          }
+        }
         if (data.type === 'response.done') elements.voiceStatus.textContent = 'そのまま話してください。';
         if (data.type === 'error') console.error('Carila realtime event error', data.error || data);
       } catch {}
