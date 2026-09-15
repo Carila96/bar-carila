@@ -77,7 +77,7 @@ function setVoiceUi(state, detail = '') {
   elements.voiceButton.setAttribute('aria-pressed', String(active));
   elements.voiceButton.disabled = connecting;
   elements.voiceButtonLabel.textContent = active ? '音声会話を終える' : connecting ? '接続しています…' : '音声会話を始める';
-  elements.voiceStatus.textContent = detail || (active ? 'そのまま話してください。Carilaの途中でも話し始めれば割り込めます。' : '一度始めれば、あとは普通に話しかけられます。');
+  elements.voiceStatus.textContent = detail || (active ? 'そのまま話してください。話した内容も画面に表示されます。' : '一度始めれば、あとは普通に話しかけられます。');
   elements.chatForm.classList.toggle('is-disabled-by-voice', active || connecting);
   elements.messageInput.disabled = active || connecting;
   elements.sendButton.disabled = active || connecting;
@@ -97,6 +97,8 @@ function stopVoice(detail = '') {
   voiceStream = null;
   voiceAudio = null;
   voiceStarting = false;
+  voiceAssistantTranscript = '';
+  handledVoiceInputItems.clear();
   setVoiceUi('idle', detail);
 }
 
