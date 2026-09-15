@@ -30,8 +30,10 @@ test('realtime voice creates a server-authenticated WebRTC call with Carila pers
     assert.equal(session.audio.input.turn_detection.create_response, false);
     assert.equal(session.audio.input.turn_detection.interrupt_response, true);
     assert.equal(session.audio.input.turn_detection.threshold, 0.72);
-    assert.equal(session.audio.output.voice, 'cedar');
+    assert.equal(session.audio.output.voice, 'ash');
     assert.match(session.instructions, /明確な人間の発話/);
+    assert.match(session.instructions, /必ず自然な日本語/);
+    assert.match(session.instructions, /英語で話しかけ始めない/);
     assert.match(session.instructions, /バーテンダーと客/);
     assert.match(session.instructions, /相手が話し始めたら割り込み/);
     return new Response('v=0\r\nmock-answer', { status: 200, headers: { 'content-type': 'application/sdp' } });
@@ -59,6 +61,8 @@ test('Carila page exposes continuous WebRTC voice mode without push-to-talk', as
   ]);
   assert.match(html, /id="voiceButton"/);
   assert.match(html, /一度始めれば、あとは普通に話しかけられます/);
+  assert.match(html, /id="voiceTranscript"/);
+  assert.match(html, /id="voiceTranscriptList"/);
   assert.match(app, /new RTCPeerConnection\(\)/);
   assert.match(app, /getUserMedia/);
   assert.match(app, /addTrack/);
@@ -66,9 +70,14 @@ test('Carila page exposes continuous WebRTC voice mode without push-to-talk', as
   assert.match(app, /conversation\.item\.input_audio_transcription\.completed/);
   assert.match(app, /response\.output_audio_transcript\.delta/);
   assert.match(app, /response\.create/);
+  assert.match(app, /いらっしゃいませ。今日はどういたしますか？/);
+  assert.match(app, /conversation\.item\.create/);
+  assert.match(app, /addVoiceLog/);
   assert.match(app, /話した内容も画面に表示されます/);
   assert.doesNotMatch(app, /MediaRecorder/);
   assert.match(css, /voice-button\.is-active/);
+  assert.match(css, /voice-transcript/);
+  assert.match(css, /width:auto/);
   assert.match(wrangler, /worker-carila-realtime\.mjs/);
   assert.match(realtimeWorker, /worker-v1\.9-expansions\.mjs/);
   assert.match(realtimeWorker, /return appWorker\.fetch/);
