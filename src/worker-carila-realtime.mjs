@@ -25,7 +25,25 @@ async function createCarilaRealtimeCall(request, env) {
     type: 'realtime',
     model: REALTIME_MODEL,
     output_modalities: ['audio'],
-    instructions: `${CARILA_SYSTEM_PROMPT}\n\n【音声会話専用ルール】\n自然な対面会話として応答する。読み上げ原稿のように長く話さず、原則1〜3文程度で間を残す。相手が話し始めたら割り込みを自然に受け入れる。相手の発話が短い相槌や言い直しなら、必要以上に話題を広げない。テキスト画面の説明をせず、実際にカウンターで会話している前提で話す。`,
+    audio: {
+      input: {
+        noise_reduction: { type: 'near_field' },
+        transcription: { model: 'gpt-4o-mini-transcribe', language: 'ja' },
+        turn_detection: {
+          type: 'server_vad',
+          threshold: 0.72,
+          prefix_padding_ms: 300,
+          silence_duration_ms: 650,
+          create_response: false,
+          interrupt_response: true,
+        },
+      },
+      output: {
+        voice: 'cedar',
+        speed: 0.96,
+      },
+    },
+    instructions: `${CARILA_SYSTEM_PROMPT}\n\n【音声会話専用ルール】\n自然な対面会話として応答する。読み上げ原稿のように長く話さず、原則1〜3文程度で間を残す。相手が話し始めたら割り込みを自然に受け入れる。相手の発話が短い相槌や言い直しなら、必要以上に話題を広げない。テキスト画面の説明をせず、実際にカウンターで会話している前提で話す。明確な人間の発話が確認できるまでは絶対に返答を始めない。無音、環境音、衣擦れ、呼吸音、スピーカーから回り込んだCarila自身の声には返答しない。声は落ち着いた低めの男性寄りで、柔らかく、過度に芝居がからない話し方にする。`,
     max_output_tokens: 320,
   };
 
