@@ -39,7 +39,7 @@ async function createCarilaRealtimeCall(request, env) {
         },
       },
       output: {
-        voice: 'onyx',
+        voice: 'ash',
         speed: 0.94,
       },
     },
