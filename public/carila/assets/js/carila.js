@@ -37,6 +37,19 @@ function showLatest() {
   }
 }
 
+function showVoiceUserTranscript(text) {
+  elements.userTurn.hidden = false;
+  elements.userTurn.querySelector('p').textContent = text;
+}
+
+function showVoiceAssistantTranscript(text) {
+  elements.carilaTurn.textContent = formatCarilaText(text);
+}
+
+function isMeaningfulVoiceTranscript(text) {
+  return text.replace(/[\s、。,.…!?！？「」『』（）()\-ー]/g, '').length > 0;
+}
+
 function resizeComposer() {
   elements.messageInput.style.height = 'auto';
   const maxHeight = Number.parseFloat(getComputedStyle(elements.messageInput).maxHeight);
