@@ -185,6 +185,11 @@ async function startVoice() {
     };
 
     const events = peer.createDataChannel('oai-events');
+    events.addEventListener('open', () => {
+      if (peer !== voicePeer) return;
+      voiceEvents = events;
+      requestInitialVoiceGreeting(events);
+    });
     events.addEventListener('message', (event) => {
       try {
         const data = JSON.parse(event.data);
@@ -199,9 +204,10 @@ async function startVoice() {
           } else {
             if (itemId) handledVoiceInputItems.add(itemId);
             showVoiceUserTranscript(transcript);
+            addVoiceLog('user', transcript);
             memory.add('user', transcript);
             elements.voiceStatus.textContent = 'Carilaが聞き取りました。';
-            if (events.readyState === 'open') events.send(JSON.stringify({ type: 'response.create' }));
+            sendRealtimeResponse(events);
           }
         }
         if (data.type === 'response.created') voiceAssistantTranscript = '';
@@ -214,6 +220,7 @@ async function startVoice() {
           if (transcript) {
             voiceAssistantTranscript = transcript;
             showVoiceAssistantTranscript(transcript);
+            addVoiceLog('assistant', transcript);
             memory.add('assistant', transcript);
           }
         }
