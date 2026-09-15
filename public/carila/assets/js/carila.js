@@ -163,6 +163,19 @@ async function startVoice() {
             if (events.readyState === 'open') events.send(JSON.stringify({ type: 'response.create' }));
           }
         }
+        if (data.type === 'response.created') voiceAssistantTranscript = '';
+        if (data.type === 'response.output_audio_transcript.delta' && typeof data.delta === 'string') {
+          voiceAssistantTranscript += data.delta;
+          if (voiceAssistantTranscript.trim()) showVoiceAssistantTranscript(voiceAssistantTranscript);
+        }
+        if (data.type === 'response.output_audio_transcript.done') {
+          const transcript = (typeof data.transcript === 'string' ? data.transcript : voiceAssistantTranscript).trim();
+          if (transcript) {
+            voiceAssistantTranscript = transcript;
+            showVoiceAssistantTranscript(transcript);
+            memory.add('assistant', transcript);
+          }
+        }
         if (data.type === 'response.done') elements.voiceStatus.textContent = 'そのまま話してください。';
         if (data.type === 'error') console.error('Carila realtime event error', data.error || data);
       } catch {}
