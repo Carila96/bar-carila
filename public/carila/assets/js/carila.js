@@ -4,12 +4,13 @@ import { formatCarilaText } from './text-format.js';
 
 const memory = new SessionMemory();
 const byId = (id) => document.getElementById(id);
-const elements = Object.fromEntries(['sceneCaption','carilaWindow','carilaTurn','userTurn','starters','chatForm','messageInput','sendButton','status','historyButton','historyDialog','historyList','closeHistory','leaveButton','farewellDialog','farewellText','restartButton','menuButton','menuDrawer','menuOverlay','closeMenu','voiceButton','voiceButtonLabel','voiceStatus'].map((id) => [id, byId(id)]));
+const elements = Object.fromEntries(['sceneCaption','carilaWindow','carilaTurn','userTurn','starters','chatForm','messageInput','sendButton','status','historyButton','historyDialog','historyList','closeHistory','leaveButton','farewellDialog','farewellText','restartButton','menuButton','menuDrawer','menuOverlay','closeMenu','voiceButton','voiceButtonLabel','voiceStatus','voiceTranscript','voiceTranscriptList'].map((id) => [id, byId(id)]));
 const bar = document.querySelector('.bar');
 let voicePeer = null;
 let voiceStream = null;
 let voiceAudio = null;
 let voiceStarting = false;
+let voiceEvents = null;
 let voiceAssistantTranscript = '';
 const handledVoiceInputItems = new Set();
 
@@ -20,7 +21,7 @@ memory.add('assistant', UI_CONFIG.greeting);
 for (const label of UI_CONFIG.starters) {
   const button = document.createElement('button');
   button.type = 'button'; button.textContent = label;
-  button.addEventListener('click', () => send(label));
+  button.addEventListener('click', () => { if (isVoiceActive()) sendVoiceChoice(label); else send(label); });
   elements.starters.append(button);
 }
 
