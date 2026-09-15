@@ -134,6 +134,7 @@ function stopVoice(detail = '') {
   voicePeer = null;
   voiceStream = null;
   voiceAudio = null;
+  voiceEvents = null;
   voiceStarting = false;
   voiceAssistantTranscript = '';
   handledVoiceInputItems.clear();
@@ -150,8 +151,10 @@ async function startVoice() {
   voiceStarting = true;
   setVoiceUi('connecting');
   bar.classList.add('is-conversing');
-  elements.starters.hidden = true;
+  elements.starters.hidden = false;
   elements.sceneCaption.hidden = true;
+  elements.voiceTranscriptList.replaceChildren();
+  elements.voiceTranscript.hidden = false;
 
   try {
     voiceStream = await navigator.mediaDevices.getUserMedia({
