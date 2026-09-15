@@ -4,12 +4,13 @@ import { formatCarilaText } from './text-format.js';
 
 const memory = new SessionMemory();
 const byId = (id) => document.getElementById(id);
-const elements = Object.fromEntries(['sceneCaption','carilaWindow','carilaTurn','userTurn','starters','chatForm','messageInput','sendButton','status','historyButton','historyDialog','historyList','closeHistory','leaveButton','farewellDialog','farewellText','restartButton','menuButton','menuDrawer','menuOverlay','closeMenu','voiceButton','voiceButtonLabel','voiceStatus'].map((id) => [id, byId(id)]));
+const elements = Object.fromEntries(['sceneCaption','carilaWindow','carilaTurn','userTurn','starters','chatForm','messageInput','sendButton','status','historyButton','historyDialog','historyList','closeHistory','leaveButton','farewellDialog','farewellText','restartButton','menuButton','menuDrawer','menuOverlay','closeMenu','voiceButton','voiceButtonLabel','voiceStatus','voiceTranscript','voiceTranscriptList'].map((id) => [id, byId(id)]));
 const bar = document.querySelector('.bar');
 let voicePeer = null;
 let voiceStream = null;
 let voiceAudio = null;
 let voiceStarting = false;
+let voiceEvents = null;
 let voiceAssistantTranscript = '';
 const handledVoiceInputItems = new Set();
 
@@ -20,7 +21,7 @@ memory.add('assistant', UI_CONFIG.greeting);
 for (const label of UI_CONFIG.starters) {
   const button = document.createElement('button');
   button.type = 'button'; button.textContent = label;
-  button.addEventListener('click', () => send(label));
+  button.addEventListener('click', () => { if (isVoiceActive()) sendVoiceChoice(label); else send(label); });
   elements.starters.append(button);
 }
 
@@ -48,6 +49,43 @@ function showVoiceAssistantTranscript(text) {
 
 function isMeaningfulVoiceTranscript(text) {
   return text.replace(/[\s、。,.…!?！？「」『』（）()\-ー]/g, '').length > 0;
+}
+
+function addVoiceLog(role, text) {
+  if (!text) return;
+  elements.voiceTranscript.hidden = false;
+  const item = document.createElement('li');
+  item.className = role === 'assistant' ? 'is-carila' : 'is-user';
+  const speaker = document.createElement('strong');
+  speaker.textContent = role === 'assistant' ? 'Carila' : 'あなた';
+  const body = document.createElement('span');
+  body.textContent = role === 'assistant' ? formatCarilaText(text) : text;
+  item.append(speaker, body);
+  elements.voiceTranscriptList.append(item);
+  elements.voiceTranscriptList.scrollTop = elements.voiceTranscriptList.scrollHeight;
+}
+
+function sendRealtimeResponse(channel, instructions = '') {
+  if (!channel || channel.readyState !== 'open') return;
+  const event = { type: 'response.create' };
+  if (instructions) event.response = { instructions };
+  channel.send(JSON.stringify(event));
+}
+
+function sendVoiceChoice(text) {
+  if (!voiceEvents || voiceEvents.readyState !== 'open') return;
+  showVoiceUserTranscript(text);
+  addVoiceLog('user', text);
+  memory.add('user', text);
+  voiceEvents.send(JSON.stringify({
+    type: 'conversation.item.create',
+    item: { type: 'message', role: 'user', content: [{ type: 'input_text', text }] },
+  }));
+  sendRealtimeResponse(voiceEvents);
+}
+
+function requestInitialVoiceGreeting(channel) {
+  sendRealtimeResponse(channel, '必ず日本語で「いらっしゃいませ。今日はどういたしますか？」の一文だけを、落ち着いた低い成人男性の声色で自然に話してください。英語や前置き、追加説明は一切しないでください。');
 }
 
 function resizeComposer() {
@@ -96,6 +134,7 @@ function stopVoice(detail = '') {
   voicePeer = null;
   voiceStream = null;
   voiceAudio = null;
+  voiceEvents = null;
   voiceStarting = false;
   voiceAssistantTranscript = '';
   handledVoiceInputItems.clear();
@@ -112,8 +151,10 @@ async function startVoice() {
   voiceStarting = true;
   setVoiceUi('connecting');
   bar.classList.add('is-conversing');
-  elements.starters.hidden = true;
+  elements.starters.hidden = false;
   elements.sceneCaption.hidden = true;
+  elements.voiceTranscriptList.replaceChildren();
+  elements.voiceTranscript.hidden = false;
 
   try {
     voiceStream = await navigator.mediaDevices.getUserMedia({
@@ -144,6 +185,11 @@ async function startVoice() {
     };
 
     const events = peer.createDataChannel('oai-events');
+    events.addEventListener('open', () => {
+      if (peer !== voicePeer) return;
+      voiceEvents = events;
+      requestInitialVoiceGreeting(events);
+    });
     events.addEventListener('message', (event) => {
       try {
         const data = JSON.parse(event.data);
@@ -158,9 +204,10 @@ async function startVoice() {
           } else {
             if (itemId) handledVoiceInputItems.add(itemId);
             showVoiceUserTranscript(transcript);
+            addVoiceLog('user', transcript);
             memory.add('user', transcript);
             elements.voiceStatus.textContent = 'Carilaが聞き取りました。';
-            if (events.readyState === 'open') events.send(JSON.stringify({ type: 'response.create' }));
+            sendRealtimeResponse(events);
           }
         }
         if (data.type === 'response.created') voiceAssistantTranscript = '';
@@ -173,6 +220,7 @@ async function startVoice() {
           if (transcript) {
             voiceAssistantTranscript = transcript;
             showVoiceAssistantTranscript(transcript);
+            addVoiceLog('assistant', transcript);
             memory.add('assistant', transcript);
           }
         }

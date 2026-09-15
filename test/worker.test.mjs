@@ -158,7 +158,7 @@ test('Carila starters are ordinary first utterances and farewell is explicit', a
   for (const starter of ['お酒を注文する', '少し話したくて', '特に決めていません']) {
     assert.match(config, new RegExp(starter));
   }
-  assert.match(app, /button\.addEventListener\('click', \(\) => send\(label\)\)/);
+  assert.match(app, /button\.addEventListener\('click'.*isVoiceActive\(\).*sendVoiceChoice\(label\).*send\(label\)/s);
   assert.doesNotMatch(app, /mode/i);
   assert.match(config, /本日はありがとうございました。\\nまたよろしければお越しください。/);
   assert.match(app, /leaveButton\.addEventListener\('click'/);
