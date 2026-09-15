@@ -10,6 +10,8 @@ let voicePeer = null;
 let voiceStream = null;
 let voiceAudio = null;
 let voiceStarting = false;
+let voiceAssistantTranscript = '';
+const handledVoiceInputItems = new Set();
 
 document.querySelector('.scene').style.setProperty('--scene-image', `url("${UI_CONFIG.imagePath}")`);
 elements.carilaTurn.textContent = formatCarilaText(UI_CONFIG.greeting);
@@ -33,6 +35,19 @@ function showLatest() {
     elements.carilaWindow.classList.remove('is-entering');
     requestAnimationFrame(() => elements.carilaWindow.classList.add('is-entering'));
   }
+}
+
+function showVoiceUserTranscript(text) {
+  elements.userTurn.hidden = false;
+  elements.userTurn.querySelector('p').textContent = text;
+}
+
+function showVoiceAssistantTranscript(text) {
+  elements.carilaTurn.textContent = formatCarilaText(text);
+}
+
+function isMeaningfulVoiceTranscript(text) {
+  return text.replace(/[\s、。,.…!?！？「」『』（）()\-ー]/g, '').length > 0;
 }
 
 function resizeComposer() {
@@ -62,7 +77,7 @@ function setVoiceUi(state, detail = '') {
   elements.voiceButton.setAttribute('aria-pressed', String(active));
   elements.voiceButton.disabled = connecting;
   elements.voiceButtonLabel.textContent = active ? '音声会話を終える' : connecting ? '接続しています…' : '音声会話を始める';
-  elements.voiceStatus.textContent = detail || (active ? 'そのまま話してください。Carilaの途中でも話し始めれば割り込めます。' : '一度始めれば、あとは普通に話しかけられます。');
+  elements.voiceStatus.textContent = detail || (active ? 'そのまま話してください。話した内容も画面に表示されます。' : '一度始めれば、あとは普通に話しかけられます。');
   elements.chatForm.classList.toggle('is-disabled-by-voice', active || connecting);
   elements.messageInput.disabled = active || connecting;
   elements.sendButton.disabled = active || connecting;
@@ -82,6 +97,8 @@ function stopVoice(detail = '') {
   voiceStream = null;
   voiceAudio = null;
   voiceStarting = false;
+  voiceAssistantTranscript = '';
+  handledVoiceInputItems.clear();
   setVoiceUi('idle', detail);
 }
 
@@ -131,8 +148,34 @@ async function startVoice() {
       try {
         const data = JSON.parse(event.data);
         if (data.type === 'input_audio_buffer.speech_started') elements.voiceStatus.textContent = '聞いています…';
-        if (data.type === 'input_audio_buffer.speech_stopped') elements.voiceStatus.textContent = 'Carilaが聞き取りました。';
-        if (data.type === 'response.output_audio.started') elements.voiceStatus.textContent = 'Carilaが話しています。途中でもそのまま話しかけられます。';
+        if (data.type === 'input_audio_buffer.speech_stopped') elements.voiceStatus.textContent = '聞き取り中…';
+        if (data.type === 'response.output_audio.delta') elements.voiceStatus.textContent = 'Carilaが話しています。途中でもそのまま話しかけられます。';
+        if (data.type === 'conversation.item.input_audio_transcription.completed') {
+          const transcript = typeof data.transcript === 'string' ? data.transcript.trim() : '';
+          const itemId = data.item_id || '';
+          if (!transcript || !isMeaningfulVoiceTranscript(transcript) || (itemId && handledVoiceInputItems.has(itemId))) {
+            elements.voiceStatus.textContent = 'そのまま話してください。';
+          } else {
+            if (itemId) handledVoiceInputItems.add(itemId);
+            showVoiceUserTranscript(transcript);
+            memory.add('user', transcript);
+            elements.voiceStatus.textContent = 'Carilaが聞き取りました。';
+            if (events.readyState === 'open') events.send(JSON.stringify({ type: 'response.create' }));
+          }
+        }
+        if (data.type === 'response.created') voiceAssistantTranscript = '';
+        if (data.type === 'response.output_audio_transcript.delta' && typeof data.delta === 'string') {
+          voiceAssistantTranscript += data.delta;
+          if (voiceAssistantTranscript.trim()) showVoiceAssistantTranscript(voiceAssistantTranscript);
+        }
+        if (data.type === 'response.output_audio_transcript.done') {
+          const transcript = (typeof data.transcript === 'string' ? data.transcript : voiceAssistantTranscript).trim();
+          if (transcript) {
+            voiceAssistantTranscript = transcript;
+            showVoiceAssistantTranscript(transcript);
+            memory.add('assistant', transcript);
+          }
+        }
         if (data.type === 'response.done') elements.voiceStatus.textContent = 'そのまま話してください。';
         if (data.type === 'error') console.error('Carila realtime event error', data.error || data);
       } catch {}
