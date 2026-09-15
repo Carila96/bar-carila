@@ -10,6 +10,8 @@ let voicePeer = null;
 let voiceStream = null;
 let voiceAudio = null;
 let voiceStarting = false;
+let voiceAssistantTranscript = '';
+const handledVoiceInputItems = new Set();
 
 document.querySelector('.scene').style.setProperty('--scene-image', `url("${UI_CONFIG.imagePath}")`);
 elements.carilaTurn.textContent = formatCarilaText(UI_CONFIG.greeting);
