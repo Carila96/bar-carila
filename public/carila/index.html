@@ -28,11 +28,15 @@
     </section>
 
     <section class="counter">
-      <div id="starters" class="starters" aria-label="会話を始める"></div>
       <div class="voice-controls">
         <button id="voiceButton" class="voice-button" type="button" aria-pressed="false"><span class="voice-button__dot" aria-hidden="true"></span><span id="voiceButtonLabel">音声会話を始める</span></button>
         <p id="voiceStatus" class="voice-status" role="status">一度始めれば、あとは普通に話しかけられます。</p>
       </div>
+      <div id="starters" class="starters" aria-label="会話を始める"></div>
+      <section id="voiceTranscript" class="voice-transcript" aria-label="音声会話のログ" hidden>
+        <p class="voice-transcript__label">VOICE LOG</p>
+        <ol id="voiceTranscriptList"></ol>
+      </section>
       <form id="chatForm" class="composer">
         <label class="sr-only" for="messageInput">Carilaへのメッセージ</label>
         <textarea id="messageInput" rows="3" maxlength="2000" placeholder="例：今日ちょっと嫌なことがあって。聞いてもらえますか？" required></textarea>
