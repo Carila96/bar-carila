@@ -51,6 +51,43 @@ function isMeaningfulVoiceTranscript(text) {
   return text.replace(/[\s、。,.…!?！？「」『』（）()\-ー]/g, '').length > 0;
 }
 
+function addVoiceLog(role, text) {
+  if (!text) return;
+  elements.voiceTranscript.hidden = false;
+  const item = document.createElement('li');
+  item.className = role === 'assistant' ? 'is-carila' : 'is-user';
+  const speaker = document.createElement('strong');
+  speaker.textContent = role === 'assistant' ? 'Carila' : 'あなた';
+  const body = document.createElement('span');
+  body.textContent = role === 'assistant' ? formatCarilaText(text) : text;
+  item.append(speaker, body);
+  elements.voiceTranscriptList.append(item);
+  elements.voiceTranscriptList.scrollTop = elements.voiceTranscriptList.scrollHeight;
+}
+
+function sendRealtimeResponse(channel, instructions = '') {
+  if (!channel || channel.readyState !== 'open') return;
+  const event = { type: 'response.create' };
+  if (instructions) event.response = { instructions };
+  channel.send(JSON.stringify(event));
+}
+
+function sendVoiceChoice(text) {
+  if (!voiceEvents || voiceEvents.readyState !== 'open') return;
+  showVoiceUserTranscript(text);
+  addVoiceLog('user', text);
+  memory.add('user', text);
+  voiceEvents.send(JSON.stringify({
+    type: 'conversation.item.create',
+    item: { type: 'message', role: 'user', content: [{ type: 'input_text', text }] },
+  }));
+  sendRealtimeResponse(voiceEvents);
+}
+
+function requestInitialVoiceGreeting(channel) {
+  sendRealtimeResponse(channel, '必ず日本語で「いらっしゃいませ。今日はどういたしますか？」の一文だけを、落ち着いた低い成人男性の声色で自然に話してください。英語や前置き、追加説明は一切しないでください。');
+}
+
 function resizeComposer() {
   elements.messageInput.style.height = 'auto';
   const maxHeight = Number.parseFloat(getComputedStyle(elements.messageInput).maxHeight);
