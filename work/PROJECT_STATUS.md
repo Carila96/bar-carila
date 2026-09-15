@@ -18,7 +18,7 @@
 - ユーザー/Carila双方の音声Transcriptをボタン下のVOICE LOGへ蓄積表示。
 
 ## 検証状況
-- 実装・テスト更新済み。PR作成後にCI / drink-master validatorを確認する。
+- PR #106: CI成功 / drink-master validator成功。
 
 ## 次にやること
 1. CI / drink-master validatorを通す。
