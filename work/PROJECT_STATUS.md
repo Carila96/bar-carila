@@ -1,6 +1,6 @@
 # PROJECT_STATUS
 
-最終更新: 2026-09-15
+最終更新: 2026-09-17
 現在のbranch: main
 
 ## 現在地
@@ -11,9 +11,11 @@
 
 ## 現在の作業
 - PR #106 Merge後のCARILA WORKS Preview実機確認待ち。
+- Amazonアソシエイト再登録に伴い、旧Tracking ID `carila-22` を新ID `carila0e-22` へ差し替え中。
 
 ## 検証状況
 - PR #106: CI成功 / drink-master validator成功 / Merge済み（e5f882e7）。
+- Amazon ID監査: `public/index.html` の固定12リンクと `public/assets/js/main.js` の動的リンク定数で旧IDを確認。新IDへ差し替え済み、PR検証待ち。
 
 ## 次にやること
 1. CARILA WORKS Previewを更新し、iPhone実機で日本語固定・定型挨拶・男性寄り声質・選択肢・ログ・割り込みを確認。
