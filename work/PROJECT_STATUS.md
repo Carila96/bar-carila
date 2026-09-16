@@ -11,11 +11,15 @@
 
 ## 現在の作業
 - PR #106 Merge後のCARILA WORKS Preview実機確認待ち。
-- Amazonアソシエイト再登録に伴い、旧Tracking ID `carila-22` を新ID `carila0e-22` へ差し替え中。
+- Amazonアソシエイト再登録に伴うTracking ID差し替えは完了。
 
 ## 検証状況
 - PR #106: CI成功 / drink-master validator成功 / Merge済み（e5f882e7）。
-- Amazon ID監査: `public/index.html` の固定12リンクと `public/assets/js/main.js` の動的リンク定数で旧IDを確認。新IDへ差し替え済み、PR検証待ち。
+- Amazon ID監査: `public/index.html` 固定12リンクと `public/assets/js/main.js` の動的リンク定数を新ID `carila0e-22` へ更新。旧ID `carila-22` は対象runtime filesで0件。CI `test` / `validate` とも成功。
+
+## PR / Merge状況
+- PR #107 `Replace expired Amazon Associate tracking ID` を2026-09-17にMerge済み。
+- Merge commit: `b19844b961fa83cfe04fb4687f2719e010d61d65`
 
 ## 次にやること
 1. CARILA WORKS Previewを更新し、iPhone実機で日本語固定・定型挨拶・男性寄り声質・選択肢・ログ・割り込みを確認。
