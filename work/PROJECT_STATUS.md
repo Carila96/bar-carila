@@ -35,3 +35,8 @@
 - Production公開はCARILA WORKS Controlからのみ行う。
 - Realtimeの現行組み込みvoiceは限定され、将来の本人声はCustom Voice IDへ差し替える前提。
 - GitHub ActionsはPR時の重複検証を避ける。`research/jp-rarity-v1.9-working`のpushでは専用validatorを維持する。
+
+## Harness / GitHub capability verification
+- GitHub操作可否を一経路の失敗だけで判断しない必須ルールを `AGENTS.md` へ追加済み。
+- `GitHub操作不可` / `Merge不可` と報告する前に、認証済みGitHub connector/APIでRepository metadata、latest commit、Open PR、file readを直接確認する。
+- 書き込み依頼ではsafe writeも実際に試してから可否を判断する。
