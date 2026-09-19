@@ -40,3 +40,12 @@
 - GitHub操作可否を一経路の失敗だけで判断しない必須ルールを `AGENTS.md` へ追加済み。
 - `GitHub操作不可` / `Merge不可` と報告する前に、認証済みGitHub connector/APIでRepository metadata、latest commit、Open PR、file readを直接確認する。
 - 書き込み依頼ではsafe writeも実際に試してから可否を判断する。
+
+
+## 2026-09-19 — Google検索 / SEO baseline
+
+- トップへcanonicalとWebApplication JSON-LDを追加。
+- 既存title / description / OGP / Twitter Cardは維持。
+- `robots.txt` / `sitemap.xml` を追加し、トップと `/carila/` を検索対象として明示。
+- CARILA共通匿名AnalyticsはControl-managed HTMLへの自動注入で次回公開更新時から適用予定。
+- DEPENDENCY DELTA: NONE
