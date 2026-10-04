@@ -49,3 +49,9 @@
 - `robots.txt` / `sitemap.xml` を追加し、トップと `/carila/` を検索対象として明示。
 - CARILA共通匿名AnalyticsはControl-managed HTMLへの自動注入で次回公開更新時から適用予定。
 - DEPENDENCY DELTA: NONE
+
+## Favicon整備（2026-10-05）
+- 未設定ページへfaviconを追加。既存の作品アイコン・UI・OGP・公開状態を維持。対象: public/carila/index.html, public/index.html。
+- PNG64×64 / ICO16・32・48・64（新規asset対象のみ）と参照先を非Actions検証。Worker変更はfaviconのHTMLタグのみ。
+- main反映とProduction反映は別。公開更新はControlのログイン待ちで未実施。既存機能の未公開変更がmainに含まれる場合、faviconだけの公開と見なさない。
+- DEPENDENCY DELTA: NONE / ROUTE DELTA: NONE / ACTIONS DELTA: NONE / LEGACY CLEANUP: NONE
