@@ -1,30 +1,36 @@
 # PROJECT_STATUS
 
-最終更新: 2026-10-05
-対象: 発行済みAmazon IDの設定 PR → main
-Task base main: 50ac3f7ac6969deff76654c72f2fafc76d66242a
+最終更新: 2026-10-06
+現在のbranch: fix-bar-search-affiliate-fallback
 
 ## 現在地
 - ドリンクマスター1500杯到達済み。自動拡張停止済み。Open Recommendation方針を維持する。
 - /carilaのRealtime / WebRTCは実装済み。PR #106以降のiPhone実機確認（日本語・挨拶・voice・配置・割り込み）は継続課題。
-- Amazon mainのIDはcarila0e-22、PR #107はMerge済み。一方、2026-10-05に公開版の固定12hrefと公開JSで旧carila-22を確認した。
-- 本PRは5導線のID設定/URL生成をpublic/assets/js/amazon-links.jsへ集約。5設定はユーザー提示のAmazon管理一覧（IMG_1955.png）の発行済みIDへ更新。既存carila0e-22は未知の導線のfallbackとして維持する。
-- グッズ12商品/提案/材料/検索/履歴をplacementで区別。affiliate_clickにprojectId / placement / trackingIdを送る。5用途のAmazon ID設定は完了。固定12hrefもcarilabgoods-22を使い、helperは?v=20261005-idsで参照する。
-- Amazonログインがunsupported session/clientの500で止まったため、レポート/登録サイト/命名上限は未取得。追加IDの発行済み一覧はユーザー提示画像で確認済み。
-- 詳細と次回のSource of Truthはdocs/amazon-tracking.md。
+- Amazon tracking IDは5用途で設定済み。bar_recommend=carilabrecommend-22 / bar_ingredients=carilabrecipe-22 / bar_search=carilabsearch-22 / bar_history=carilabhistory-22 / bar_goods=carilabgoods-22。未知導線fallbackはcarila0e-22。
+- Production実機で「ジントニック」検索が正常に返ることをユーザー確認済み。直前のWork検索エラーは常時再現ではない。
+
+## 今回の変更
+- お酒検索本体とアフィリエイトURL生成を分離。検索本体カードを先にDOMへ確定し、その後ショッピング導線を独立try/catchで追加するため、Amazon等の周辺導線失敗で検索結果を消さない。
+- 検索AIのJSON parsingを強化。コードフェンス・前後文混入を吸収し、parse失敗時のみ1回再試行する。
+- PWA/standalone向けに100dvh、safe-area、狭幅時のsearch flex min-width、全面ページ下余白を追加。
+- manifest.webmanifestを追加。
+- PWA iconとして、暗いBAR背景 + 中央のカクテルグラスをモチーフにしたbarcarila-icon.svgを追加。
+- iOS Home Screen用に180x180 PNGのapple-touch-icon.pngを追加。
+- amazon-links.jsからmanifest / apple-touch-icon / PWA CSS / iOS standalone metaを安全にbootstrapする。PWA装飾失敗は本体処理を止めない。
 
 ## 検証
-- npm test: 232/232 PASS（Amazon追加4件を含む）。
-- npm run validate:drink-master-v1.9: 400/400 book-index canonical gate PASS。
-- 対象JS/HTML inline構文 PASS。新ID別成果/Preview/モバイル/Productionイベント受信は未検証。
-- CIはPR時に1本。依存・Actions設定・Worker/API・UI・楽天URLは変更しない。
+- PR #119。
+- CI run #832: SUCCESS。npm test + npm run validate:drink-master-v1.9 を通過。
+- 専用回帰testで検索本体→周辺リンクの分離、manifest、safe-area CSS、SVG icon、iOS PNG iconを検証。
+- Amazon ID分類・楽天URL・既存main.jsの推薦ロジック自体は変更しない。
 
-## Production / 次
-1. Previewの5導線とモバイルを確認する。
-2. 明示的な公開依頼後のみControlからProduction更新。公開tagとイベント受信を再確認する。
-3. AmazonのID別レポートで5用途のクリック/注文/紹介料を確認する。
-- Xの「それあります」は既存URLを使う方針。X返信URLや自動運用は変更しない。
-- 本PRのMergeはProduction公開ではない。公開更新は実施しない。
-- mainにはRealtime/favicons/AdSense法務導線等の既存未公開変更が含まれる可能性があり、ID修正だけの公開と見なさない。
-- 支払い/銀行口座設定は変更しない。既存の1500杯マスター横断監査とRealtime実機確認待ちは保持する。
-- DEPENDENCY DELTA: NONE / ROUTE DELTA: NONE / ACTIONS DELTA: NONE。
+## 次にやること
+1. PR #119をMerge。
+2. CARILA WORKS Controlからテスト版更新後、iPhone PWAで検索画面の見切れ、safe-area、検索入力幅、専用アイコン、検索結果+Amazon導線を実機確認。
+3. iOSは既存ホーム画面アイコンをキャッシュするため、アイコン確認時は必要なら一度ホーム画面から削除して再追加する。
+4. 1500杯マスター品質の前半/中盤/高速追加後半/最終バッチ横断監査は別作業として保持。
+
+## Handoff
+- 推薦候補は1500杯に閉じない。Open Recommendation + Known Master方針を維持する。
+- Production公開はCARILA WORKS Controlからのみ行う。
+- DEPENDENCY DELTA: NONE / ACTIONS DELTA: NONE。

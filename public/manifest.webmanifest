@@ -1,0 +1,21 @@
+{
+  "id": "/",
+  "name": "Bar Carila",
+  "short_name": "Bar Carila",
+  "description": "AIバーテンダーと、その日の気分に合う一杯を探すバー。",
+  "lang": "ja",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a0c0a",
+  "theme_color": "#0a0c0a",
+  "icons": [
+    {
+      "src": "/barcarila-icon.svg?v=20261006-pwa2",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
