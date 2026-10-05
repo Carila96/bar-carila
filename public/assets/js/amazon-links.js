@@ -14,17 +14,19 @@
   const searchUrl = (query, placement) => "https://www.amazon.co.jp/s?k=" +
     encodeURIComponent(query) + "&tag=" + encodeURIComponent(trackingId(placement));
   const properties = link => {
-    const url = new URL(link.href, location.href);
-    const placement = link.dataset.amazonPlacement;
-    if (url.protocol !== "https:" || !["amazon.co.jp", "www.amazon.co.jp"].includes(url.hostname) ||
-        !Object.prototype.hasOwnProperty.call(trackingIds, placement)) return null;
-    return {provider: "amazon", projectId: "bar-carila", placement,
-      trackingId: url.searchParams.get("tag") || ""};
+    try {
+      const url = new URL(link.href, location.href);
+      const placement = link.dataset.amazonPlacement;
+      if (url.protocol !== "https:" || !["amazon.co.jp", "www.amazon.co.jp"].includes(url.hostname) ||
+          !Object.prototype.hasOwnProperty.call(trackingIds, placement)) return null;
+      return {provider: "amazon", projectId: "bar-carila", placement,
+        trackingId: url.searchParams.get("tag") || ""};
+    } catch (_) { return null; }
   };
   window.CarilaAmazon = Object.freeze({trackingId, searchUrl, properties});
 
-  // PWA metadata is kept here because this helper is already loaded on every BarCarila page.
-  // The guards make the feature additive: a missing manifest/icon stylesheet must never block the app.
+  // PWA metadata is bootstrapped here because this helper already loads before main.js on every BarCarila page.
+  // Each operation is additive and guarded so PWA decoration can never block the core app.
   const ensureHeadLink = (rel, href, attrs = {}) => {
     if (!document.head || !document.createElement || document.head.querySelector?.(`link[rel="${rel}"]`)) return;
     const link = document.createElement("link");
@@ -43,9 +45,10 @@
   try {
     const viewport = document.querySelector?.('meta[name="viewport"]');
     if (viewport && !viewport.content.includes("viewport-fit=cover")) viewport.content += ",viewport-fit=cover";
-    ensureHeadLink("manifest", "/manifest.webmanifest?v=20261005-pwa1");
-    ensureHeadLink("apple-touch-icon", "/apple-touch-icon.png?v=20261005-pwa1", {sizes: "180x180"});
-    ensureHeadLink("stylesheet", "/assets/css/pwa.css?v=20261005-pwa1");
+    ensureHeadLink("manifest", "/manifest.webmanifest?v=20261006-pwa2");
+    ensureHeadLink("apple-touch-icon", "/barcarila-icon.svg?v=20261006-pwa2");
+    ensureHeadLink("stylesheet", "/assets/css/pwa.css?v=20261006-pwa2");
+    ensureMeta("theme-color", "#0a0c0a");
     ensureMeta("apple-mobile-web-app-capable", "yes");
     ensureMeta("apple-mobile-web-app-status-bar-style", "black-translucent");
     ensureMeta("apple-mobile-web-app-title", "Bar Carila");
@@ -85,7 +88,26 @@
     const text = data?.content?.find?.(item => item?.type === "text")?.text || data?.content?.[0]?.text;
     if (typeof text !== "string" || !text.trim()) throw new Error("missing search payload");
     const clean = text.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
-    return JSON.parse(clean);
+    try { return JSON.parse(clean); } catch (_) {}
+    const first = clean.indexOf("{");
+    const last = clean.lastIndexOf("}");
+    if (first >= 0 && last > first) return JSON.parse(clean.slice(first, last + 1));
+    throw new Error("malformed search payload");
+  };
+  const requestSearchPayload = async (query, system, attempt = 0) => {
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({model: "claude-haiku-4-5-20251001", max_tokens: 450, system,
+        messages: [{role: "user", content: `「${query}」について教えてください。JSONだけを返してください。`}]})
+    });
+    if (!response.ok) throw new Error(`search HTTP ${response.status}`);
+    try {
+      return parseSearchPayload(await response.json());
+    } catch (error) {
+      if (attempt < 1) return requestSearchPayload(query, system, attempt + 1);
+      throw error;
+    }
   };
   const installResilientDrinkSearch = () => {
     if (typeof document.getElementById !== "function" || typeof window.doSearch !== "function") return;
@@ -99,14 +121,7 @@
 入力がお酒として特定できる場合: {"found":true,"name":"正式名","category":"カテゴリ","description":"説明2〜3文","tip":"バーでの楽しみ方・豆知識","search_ja":"Amazon/楽天検索用ワード","similar":["似たお酒1","似たお酒2","似たお酒3"]}
 特定できない場合: {"found":false,"suggestions":["候補1","候補2","候補3"],"message":"メッセージ"}`;
       try {
-        const response = await fetch("/api/chat", {
-          method: "POST",
-          headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({model: "claude-haiku-4-5-20251001", max_tokens: 450, system,
-            messages: [{role: "user", content: `「${query}」について教えてください`}]})
-        });
-        if (!response.ok) throw new Error(`search HTTP ${response.status}`);
-        const payload = parseSearchPayload(await response.json());
+        const payload = await requestSearchPayload(query, system);
         if (payload?.found) {
           const name = String(payload.name || query);
           const category = String(payload.category || "");
@@ -117,9 +132,16 @@
           const image = imageUrl
             ? `<div class="search-result-image"><img src="${escapeHtml(imageUrl)}" alt="" loading="lazy"></div>`
             : "";
-          // Core search result is rendered first. Affiliate URL generation is isolated below and may fail independently.
-          const core = `<div class="search-result-card">${image}<div class="search-result-name">${escapeHtml(name)}</div><div class="search-result-cat">${escapeHtml(category)}</div><div class="search-result-desc">${escapeHtml(description)}</div>${tip ? `<div class="search-result-tip">${escapeHtml(tip)}</div>` : ""}${affiliateSearchLinks(payload.search_ja || name)}</div>`;
+          // Core search content is committed first. Shopping helpers are appended separately and cannot erase it.
+          const core = `<div class="search-result-card">${image}<div class="search-result-name">${escapeHtml(name)}</div><div class="search-result-cat">${escapeHtml(category)}</div><div class="search-result-desc">${escapeHtml(description)}</div>${tip ? `<div class="search-result-tip">${escapeHtml(tip)}</div>` : ""}</div>`;
           results.innerHTML = core + suggestionHtml("似たお酒", payload.similar);
+          try {
+            const card = results.querySelector?.(".search-result-card");
+            const shopping = affiliateSearchLinks(payload.search_ja || name);
+            if (card && shopping) card.insertAdjacentHTML("beforeend", shopping);
+          } catch (affiliateError) {
+            console.warn("BarCarila affiliate links unavailable", affiliateError);
+          }
         } else {
           results.innerHTML = `<div class="search-empty">${escapeHtml(payload?.message || "見つかりませんでした")}</div>` + suggestionHtml("もしかしてこちら？", payload?.suggestions);
         }
@@ -149,8 +171,7 @@
   document.addEventListener("click", event => {
     const link = event.target?.closest?.("a[data-amazon-placement]");
     if (!link) return;
-    let payload;
-    try { payload = properties(link); } catch (_) { return; }
+    const payload = properties(link);
     if (!payload) return;
     // The Control tracker is the sole sender; GA4 is not used as a second sink.
     const send = attempt => {
