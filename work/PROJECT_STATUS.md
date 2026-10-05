@@ -1,69 +1,29 @@
 # PROJECT_STATUS
 
-最終更新: 2026-09-17
-現在のbranch: main
+最終更新: 2026-10-05
+対象: Amazon tracking preparation PR → main
+監査時main: 1767105d93087d4300cb78691a79264644ff2b23
 
 ## 現在地
-- ドリンクマスターは1500杯到達済み。自動拡張タスクは停止済み。
-- /carila に OpenAI Realtime / WebRTC の連続音声会話を実装済み。
-- PR #105で無音誤反応と基本文字起こしを修正済み。
-- 実機確認で、voiceが女性寄り、英語で話し始める、開始時の定型挨拶がない、音声UIが大きい、選択肢と音声ログの配置が不親切という追加課題を確認。
-- GitHub Actions重複削減は完了し、PR検証を`CI`へ一本化済み。
+- ドリンクマスター1500杯到達済み。自動拡張停止済み。Open Recommendation方針を維持する。
+- /carilaのRealtime / WebRTCは実装済み。PR #106以降のiPhone実機確認（日本語・挨拶・voice・配置・割り込み）は継続課題。
+- Amazon mainのIDはcarila0e-22、PR #107はMerge済み。一方、2026-10-05に公開版の固定12hrefと公開JSで旧carila-22を確認した。
+- 本PRは5導線のID設定/URL生成をpublic/assets/js/amazon-links.jsへ集約。未発行IDはnullで、既存carila0e-22へfallbackする。
+- グッズ12商品/提案/材料/検索/履歴をplacementで区別。affiliate_clickにprojectId / placement / trackingIdを送る。Amazon IDの分離はまだ未完了。
+- Amazonログインがunsupported session/clientの500で止まったため、現在のレポート/登録サイト/追加ID/命名上限は未取得。
+- 詳細と次回のSource of Truthはdocs/amazon-tracking.md。
 
-## 現在の作業
-- PR #106 Merge後のCARILA WORKS Preview実機確認待ち。
-- Amazonアソシエイト再登録に伴うTracking ID差し替えは完了。
-- PRでは`CI`のみが`npm ci` / `npm test` / `validate:drink-master-v1.9`を実行し、専用validation workflowは研究ブランチpush専用。
+## 検証
+- npm test: 232/232 PASS（Amazon追加4件を含む）。
+- npm run validate:drink-master-v1.9: 400/400 book-index canonical gate PASS。
+- 対象JS/HTML inline構文 PASS。新ID別成果/Preview/モバイル/Productionイベント受信は未検証。
+- CIはPR時に1本。依存・Actions設定・Worker/API・UI・楽天URLは変更しない。
 
-## 検証状況
-- PR #106: CI成功 / drink-master validator成功 / Merge済み（e5f882e7）。
-- Amazon ID監査: `public/index.html` 固定12リンクと `public/assets/js/main.js` の動的リンク定数を新ID `carila0e-22` へ更新。旧ID `carila-22` は対象runtime filesで0件。CI `test` / `validate` とも成功。
-- PR #110では新しい`CI` 1本のみ起動し、全テストとdrink-master validatorが成功。重複validator workflowはPRで起動しないことを確認済み。
-
-## PR / Merge状況
-- PR #107 `Replace expired Amazon Associate tracking ID` を2026-09-17にMerge済み。
-- Merge commit: `b19844b961fa83cfe04fb4687f2719e010d61d65`
-- PR #110 `Consolidate duplicate BAR Carila CI` を2026-09-17にMerge済み。
-- Merge commit: `08931191ec531408ab56d0587ec91a24b14dc687`
-
-## 次にやること
-1. CARILA WORKS Previewを更新し、iPhone実機で日本語固定・定型挨拶・男性寄り声質・選択肢・ログ・割り込みを確認。
-2. 1500杯マスターは別セッションで前半/中盤/高速追加後半/最終バッチを横断監査する。
-
-## Handoff
-- 推薦候補は1500杯に閉じない。Open Recommendation + Known Master方針を維持する。
-- Production公開はCARILA WORKS Controlからのみ行う。
-- Realtimeの現行組み込みvoiceは限定され、将来の本人声はCustom Voice IDへ差し替える前提。
-- GitHub ActionsはPR時の重複検証を避ける。`research/jp-rarity-v1.9-working`のpushでは専用validatorを維持する。
-
-## Harness / GitHub capability verification
-- GitHub操作可否を一経路の失敗だけで判断しない必須ルールを `AGENTS.md` へ追加済み。
-- `GitHub操作不可` / `Merge不可` と報告する前に、認証済みGitHub connector/APIでRepository metadata、latest commit、Open PR、file readを直接確認する。
-- 書き込み依頼ではsafe writeも実際に試してから可否を判断する。
-
-
-## 2026-09-19 — Google検索 / SEO baseline
-
-- トップへcanonicalとWebApplication JSON-LDを追加。
-- 既存title / description / OGP / Twitter Cardは維持。
-- `robots.txt` / `sitemap.xml` を追加し、トップと `/carila/` を検索対象として明示。
-- CARILA共通匿名AnalyticsはControl-managed HTMLへの自動注入で次回公開更新時から適用予定。
-- DEPENDENCY DELTA: NONE
-
-## Favicon整備（2026-10-05）
-- 未設定ページへfaviconを追加。既存の作品アイコン・UI・OGP・公開状態を維持。対象: public/carila/index.html, public/index.html。
-- PNG64×64 / ICO16・32・48・64（新規asset対象のみ）と参照先を非Actions検証。Worker変更はfaviconのHTMLタグのみ。
-- main反映とProduction反映は別。公開更新はControlのログイン待ちで未実施。既存機能の未公開変更がmainに含まれる場合、faviconだけの公開と見なさない。
-- DEPENDENCY DELTA: NONE / ROUTE DELTA: NONE / ACTIONS DELTA: NONE / LEGACY CLEANUP: NONE
-
-
-## AdSense公開前チェック（2026-10-05）
-- ControlのPUBLIC一覧と正式Productionを再取得して確認。法務導線・広告Privacy・検索用メタデータを対象範囲で補修。
-- 今回の変更: public/index.html, public/carila/index.html。
-- Production公開、AdSense再審査の送信は実施しない。mainへのMergeとProduction反映は別。
-- 公開版には未反映の既存main変更がある場合もある。Control公開前に全差分を確認し、公開後に法務導線・robots/sitemap・実画面を再確認する。
-- Search Consoleは今回ログイン先への通信が502のため現在状態を再取得できていない。
-- 広告はログイン・入力・管理・空データ・エラー・未審査UGC画面へ置かない。新規AdSenseコードは追加しない。
-- 非Actions検証: 対象HTML/JS構文、法務リンク、canonical、sitemapのXML構造、関連の既存テストを確認。実機モバイル/本番広告配信は未検証。
-- DEPENDENCY DELTA: NONE / ACTIONS DELTA: NONE / LEGACY CLEANUP: NONE
-- ROUTE DELTA: NONE（既存法務URLの導線を整備）。
+## Production / 次
+1. Amazon管理画面で既存設定/命名制約を確認し、同一アカウント配下の5導線の実IDを発行する。
+2. trackingIdsを更新し、Previewの全導線とモバイルを確認する。
+3. 明示的な公開依頼後のみControlからProduction更新。公開tagとイベント受信を再確認する。
+- 本PRのMergeはProduction公開ではない。公開更新は実施しない。
+- mainにはRealtime/favicons/AdSense法務導線等の既存未公開変更が含まれる可能性があり、ID修正だけの公開と見なさない。
+- 支払い/銀行口座設定は変更しない。既存の1500杯マスター横断監査とRealtime実機確認待ちは保持する。
+- DEPENDENCY DELTA: NONE / ROUTE DELTA: NONE / ACTIONS DELTA: NONE。
