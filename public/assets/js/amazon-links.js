@@ -45,9 +45,9 @@
   try {
     const viewport = document.querySelector?.('meta[name="viewport"]');
     if (viewport && !viewport.content.includes("viewport-fit=cover")) viewport.content += ",viewport-fit=cover";
-    ensureHeadLink("manifest", "/manifest.webmanifest?v=20261006-pwa2");
-    ensureHeadLink("apple-touch-icon", "/barcarila-icon.svg?v=20261006-pwa2");
-    ensureHeadLink("stylesheet", "/assets/css/pwa.css?v=20261006-pwa2");
+    ensureHeadLink("manifest", "/manifest.webmanifest?v=20261006-pwa3");
+    ensureHeadLink("apple-touch-icon", "/apple-touch-icon.png?v=20261006-pwa3", {sizes: "180x180"});
+    ensureHeadLink("stylesheet", "/assets/css/pwa.css?v=20261006-pwa3");
     ensureMeta("theme-color", "#0a0c0a");
     ensureMeta("apple-mobile-web-app-capable", "yes");
     ensureMeta("apple-mobile-web-app-status-bar-style", "black-translucent");
