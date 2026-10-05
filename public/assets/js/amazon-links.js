@@ -3,11 +3,11 @@
   "use strict";
   const defaultTrackingId = "carila0e-22";
   const trackingIds = Object.freeze({
-    bar_recommend: null,
-    bar_ingredients: null,
-    bar_search: null,
-    bar_history: null,
-    bar_goods: null
+    bar_recommend: "carilabrecommend-22",
+    bar_ingredients: "carilabrecipe-22",
+    bar_search: "carilabsearch-22",
+    bar_history: "carilabhistory-22",
+    bar_goods: "carilabgoods-22"
   });
   const trackingId = placement => (Object.prototype.hasOwnProperty.call(trackingIds, placement) &&
     trackingIds[placement]) || defaultTrackingId;
