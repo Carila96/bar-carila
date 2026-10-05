@@ -64,16 +64,18 @@ test('drink search commits core content before optional shopping links', () => {
   assert.match(source, /BarCarila affiliate links unavailable/);
   assert.match(source, /first = clean\.indexOf\("\{"\)/);
 });
-test('PWA manifest, safe-area CSS, and custom cocktail icon are present', () => {
+test('PWA manifest, safe-area CSS, and custom cocktail icons are present', () => {
   const manifest = JSON.parse(fs.readFileSync(new URL('../public/manifest.webmanifest', import.meta.url), 'utf8'));
   const css = fs.readFileSync(new URL('../public/assets/css/pwa.css', import.meta.url), 'utf8');
   const icon = fs.readFileSync(new URL('../public/barcarila-icon.svg', import.meta.url), 'utf8');
+  const appleIcon = fs.readFileSync(new URL('../public/apple-touch-icon.png', import.meta.url));
   assert.equal(manifest.display, 'standalone');
   assert.equal(manifest.icons[0].src.startsWith('/barcarila-icon.svg'), true);
+  assert.ok(appleIcon.length > 1000);
   assert.match(css, /100dvh/);
   assert.match(css, /safe-area-inset-bottom/);
   assert.match(css, /\.search-input\{min-width:0/);
   assert.match(icon, /cocktail glass icon/);
   assert.match(source, /viewport-fit=cover/);
-  assert.match(source, /apple-touch-icon/);
+  assert.match(source, /\/apple-touch-icon\.png/);
 });
