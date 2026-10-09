@@ -1,56 +1,56 @@
 # PROJECT_STATUS
 
 最終更新: 2026-10-09
-現在のbranch: `fix/d1-request-storm-20261009`
+現在のbranch: `fix/d1-readonly-master-runtime-20261009`
 
 ## 現在地
 - Cloudflare D1 Freeの日次rows readが2026-10-09 20:33 JST時点で `5.1M / 5M` に到達。
 - D1一覧の当日query回数で `bar-carila-drink-images` が約30kと突出。`moshimo-box` 約2.23k、`carilaworks-registry` 約2.19k、SIXSHIFTは当日0だった。
 - `bar-carila-drink-images` は画像だけでなく `DRINK_DB` として1500杯の酒マスターも保持している。
-- Production entry `src/worker-carila-realtime.mjs` が、Realtime以外の全requestを `worker-v1.9-expansions.mjs` に委譲していた。
-- expansion workerはfetch開始時にB09〜B41の33 batchすべてへ `ensureBatch()` を実行し、Worker isolateごとの初回に各batch `SELECT COUNT(*) FROM drinks WHERE evidence_version=?` を発行する。
-- そのためHTML/JS/image/favicon等の静的requestまで酒マスターbatch確認を誘発する構造になっていた。約900 request × 33 ≒ 29,700 queriesとなり、Cloudflare画面の約30kと整合するため、今回のrows-read枯渇の主要因として扱う。
+- PR #121で、静的/非chat requestまでB09〜B41の33 batch確認を起動していたrequest stormを解消しmainへMerge済み。main `8b0ff429205ca0974f28a8ce838fc2e3ecb0657d`。
 
-## 今回の修正
-- `src/worker-carila-realtime.mjs`
-  - `/api/carila-realtime-session` は従来どおりRealtime handler。
-  - `/api/chat` だけを `worker-v1.9-expansions.mjs` へ通し、B09〜B41のD1 seed/enrichment契約を維持。
-  - それ以外のstatic / health / drink-image / drink-meta / carila-chat等は `worker-v1.9.mjs` へ直接委譲し、expansion batch maintenanceを完全に迂回する。
-- `test/d1-hot-path.test.mjs`
-  - static assetと`/health`でDRINK_DB.prepareが呼ばれたら失敗する回帰testを追加。
+## 今回の追加軽量化
+- 1500杯Known Masterは既にRepository内versioned sourceとして固定保持されており、通常chat requestでschema作成・seed・batch存在確認を繰り返す必要はない。
+- `/api/chat` に渡す `DRINK_DB` をruntime read-only wrapper化。
+- request-timeの以下をD1へ送らない:
+  - `CREATE/ALTER/DROP` for `drinks / drink_aliases / drink_evidence`
+  - master seed `INSERT/UPDATE/DELETE/REPLACE`
+  - B01〜B41等の `SELECT COUNT(*) ... evidence_version` seed確認
+  - seed時だけ使う `SELECT id FROM drinks WHERE canonical_key=?`
+- 実際の推薦で必要な `canonical_key` / aliasのindexed read-only lookupは従来どおりD1へ通すため、AIのlean-output契約・既存説明/希少度enrichmentを壊さない。
+- これにより、管理表を毎回読む方式よりさらに軽く、通常の既知酒推薦は「全master健全性確認」ではなく対象酒のpoint lookupだけに限定する。
+- 将来的には固定masterを完全static lookupへ移し、master D1 read自体を0にできる余地を残す。ただし現段階では出力品質と既存D1 copy情報を維持するため、indexed point lookupは残す。
+
+## 画像D1方針
+- `drink_images` は後から変わる永続cacheなのでD1継続が妥当。
+- Cloudflare Cache HIT時はD1 0。
+- edge cache MISS時のみ `cache_key` point lookupを行う。
+- 未知画像のみUnsplash取得→D1保存。
+- `drink_images` は今回のmaster read-only wrapper対象外。
 
 ## 影響
-- 酒推薦 `/api/chat` の1500杯Known Master / rarity enrichment / Open Recommendationは維持。
-- drink image D1、Unsplash cache、Realtime voice、affiliate導線、UI、静的asset配信は仕様変更なし。
-- D1 schema/data削除なし。batch seed自体も削除せず、必要なchat経路に限定する。
-- 想定効果: 静的アクセスごとに最大33 batch確認が発生するrequest stormを除去し、BAR CarilaのD1 query/rows-readを桁違いに削減する。
+- Open Recommendation、1500杯Known Master、rarity/description/trivia enrichment、Realtime voice、画像、affiliate、UI契約は維持。
+- D1 schema/data削除なし。
+- master更新はユーザーrequest中にseedする設計から切り離す方向へ統一する。
 
 ## 検証
-- branch commit `8cf9b6f...`: routing fix。
-- branch commit `8d520ee...`: non-chat D1 hot-path regression test。
-- 最終CIはDraft中skipし、Ready時に既存CI + drink-master validationを1回実行する。
-
-## 既存状態
-- ドリンクマスター1500杯到達済み。自動拡張停止済み。Open Recommendation方針を維持する。
-- `/carila` Realtime / WebRTC実装済み。
-- Amazon tracking ID 5用途は維持。
-- unrelated stale Open PR #12は今回触らない。
-- Production公開はCARILA WORKS Controlからのみ行う。
+- PR #121 final CI run #838: `npm test` + `validate:drink-master-v1.9` SUCCESS、Merge済み。
+- `test/d1-master-readonly-runtime.test.mjs` を追加し、seed COUNT/writeはunderlying D1へ到達せず、indexed master readとdrink_images SQLは通ることを契約化。
+- 今回もDraft中CI skip、Ready時に既存最終CIを1回のみ実行する。
 
 ## 次
-1. Draft PR作成、Draft中CI skip確認。
-2. Merge candidateとしてReady化し、既存CI/validationを1回実行。
-3. PASSならMerge。
-4. CARILA WORKS ControlからBAR CARILA公開版を更新。
-5. 翌reset後、Cloudflare D1の `bar-carila-drink-images` query/rows-readを比較。
-6. BAR収束後、SIXSHIFTの4.5秒pollingを将来利用者増加に耐えるevent-driven設計へ別作業で見直す。
+1. Draft PRでread-only master runtime gateを確認。
+2. Ready時CI/validation PASS後Merge。
+3. CARILA WORKS ControlからBAR CARILA公開版を更新。
+4. 翌reset後、`bar-carila-drink-images` query/rows-readを比較。
+5. BAR収束後、SIXSHIFTの4.5秒pollingをevent-driven寄りへ再設計する。
 
 ## DELTA
 DEPENDENCY DELTA: NONE
-ROUTE DELTA: expansion workerへの委譲を`/api/chat`だけに限定。公開URL/API契約自体は変更なし。
+ROUTE DELTA: `/api/chat`のみread-only master D1 wrapperを使用。
 ACTIONS DELTA: Draft中skip、Ready時に既存最終CI 1回のみ。
-D1 DELTA: static/non-chat request由来のB09〜B41 batch COUNT確認を除去。data/schemaは変更なし。
-LEGACY CLEANUP: 全requestで酒マスターseed maintenanceを走らせる誤ったtop-level routingを解消。
+D1 DELTA: request-time master seed/DDL/COUNTを0化。実推薦はindexed point lookupのみ維持。画像D1は従来どおり。
+LEGACY CLEANUP: user request中に固定1500杯masterの完全性を再確認・seedする設計をruntimeから排除。
 
 ## Handoff
-D1上限枯渇の主要因としてBAR Carila request stormを特定。Cloudflare当日約30k queriesと、1requestあたり最大33 batch確認のコード構造が数量的に整合する。修正branchはnon-chatをbase v1.9へ直接routeし、chat機能だけexpansion workerを維持。Merge/Production反映後に翌日D1実測で効果判定する。
+2026-10-09のD1枯渇主因としてBAR Carilaの約30k query stormを数量的に特定。PR #121でnon-chat stormを停止済み。追加branchではchat request内に残っていた固定master seed/DDL/COUNTもread-only runtime gateで除去し、実データpoint lookupだけを許可する。Production反映後はBAR D1が大幅減少する想定。固定masterの完全static化はさらに可能だが、現段階では出力品質を維持しつつ十分大きな削減が得られるread-only point lookupを採用する。
