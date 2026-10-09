@@ -12,6 +12,53 @@ function json(body, status = 200, headers = {}) {
   });
 }
 
+function noopStatement(firstValue = null) {
+  return {
+    __barCarilaNoop: true,
+    bind() { return this; },
+    async first() { return firstValue; },
+    async run() { return { success: true, meta: { changes: 0 } }; },
+    async all() { return { results: [] }; },
+    async raw() { return []; },
+  };
+}
+
+function isRuntimeMasterMaintenance(sql) {
+  const text = String(sql || '').trim();
+  if (/^SELECT\s+COUNT\(\*\)\s+AS\s+count\s+FROM\s+drinks\s+WHERE\s+evidence_version\s*=\s*\?/i.test(text)) return 'seed-count';
+  if (/^SELECT\s+id\s+FROM\s+drinks\s+WHERE\s+canonical_key\s*=\s*\?/i.test(text)) return 'seed-id';
+  if (/^(CREATE|ALTER|DROP|INSERT|UPDATE|DELETE|REPLACE)\b/i.test(text)
+      && /\b(drinks|drink_aliases|drink_evidence)\b/i.test(text)) return 'write';
+  return '';
+}
+
+export function createReadOnlyMasterDb(db) {
+  if (!db?.prepare) return db;
+  return {
+    prepare(sql) {
+      const maintenance = isRuntimeMasterMaintenance(sql);
+      if (maintenance === 'seed-count') return noopStatement({ count: Number.MAX_SAFE_INTEGER });
+      if (maintenance === 'seed-id') return noopStatement(null);
+      if (maintenance === 'write') return noopStatement();
+      return db.prepare(sql);
+    },
+    async batch(statements) {
+      if (!Array.isArray(statements) || statements.length === 0) return [];
+      if (statements.every((statement) => statement?.__barCarilaNoop)) {
+        return statements.map(() => ({ success: true, meta: { changes: 0 } }));
+      }
+      const results = [];
+      for (const statement of statements) {
+        if (statement?.__barCarilaNoop) results.push(await statement.run());
+        else results.push(await statement.run());
+      }
+      return results;
+    },
+    exec: typeof db.exec === 'function' ? db.exec.bind(db) : undefined,
+    dump: typeof db.dump === 'function' ? db.dump.bind(db) : undefined,
+  };
+}
+
 async function createCarilaRealtimeCall(request, env) {
   if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405, { allow: 'POST' });
   if (!env?.OPENAI_API_KEY) return json({ error: 'Realtime voice is not configured', code: 'MISSING_OPENAI_API_KEY' }, 503);
@@ -80,7 +127,10 @@ export default {
   async fetch(request, env, context) {
     const { pathname } = new URL(request.url);
     if (pathname === '/api/carila-realtime-session') return createCarilaRealtimeCall(request, env);
-    if (pathname === '/api/chat') return appWorker.fetch(request, env, context);
+    if (pathname === '/api/chat') {
+      const runtimeEnv = env?.DRINK_DB ? { ...env, DRINK_DB: createReadOnlyMasterDb(env.DRINK_DB) } : env;
+      return appWorker.fetch(request, runtimeEnv, context);
+    }
     return baseWorker.fetch(request, env, context);
   },
 };
