@@ -1,4 +1,5 @@
 import appWorker from './worker-v1.9-expansions.mjs';
+import baseWorker from './worker-v1.9.mjs';
 import { CARILA_SYSTEM_PROMPT } from './carila-personality.mjs';
 
 const REALTIME_ENDPOINT = 'https://api.openai.com/v1/realtime/calls';
@@ -79,6 +80,7 @@ export default {
   async fetch(request, env, context) {
     const { pathname } = new URL(request.url);
     if (pathname === '/api/carila-realtime-session') return createCarilaRealtimeCall(request, env);
-    return appWorker.fetch(request, env, context);
+    if (pathname === '/api/chat') return appWorker.fetch(request, env, context);
+    return baseWorker.fetch(request, env, context);
   },
 };

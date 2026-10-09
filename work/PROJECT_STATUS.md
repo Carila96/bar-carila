@@ -1,37 +1,56 @@
 # PROJECT_STATUS
 
-最終更新: 2026-10-06
-現在のbranch: main
+最終更新: 2026-10-09
+現在のbranch: `fix/d1-request-storm-20261009`
 
 ## 現在地
-- ドリンクマスター1500杯到達済み。自動拡張停止済み。Open Recommendation方針を維持する。
-- /carilaのRealtime / WebRTCは実装済み。PR #106以降のiPhone実機確認（日本語・挨拶・voice・配置・割り込み）は継続課題。
-- Amazon tracking IDは5用途で設定済み。bar_recommend=carilabrecommend-22 / bar_ingredients=carilabrecipe-22 / bar_search=carilabsearch-22 / bar_history=carilabhistory-22 / bar_goods=carilabgoods-22。未知導線fallbackはcarila0e-22。
-- Production実機で「ジントニック」検索が正常に返ることをユーザー確認済み。直前のWork検索エラーは常時再現ではない。
-- PR #119「Harden PWA layout and isolate drink search from affiliate failures」はMerge済み。Merge commit: 540d0867f8d0fd4594085239681e93ed76bfba2e。
+- Cloudflare D1 Freeの日次rows readが2026-10-09 20:33 JST時点で `5.1M / 5M` に到達。
+- D1一覧の当日query回数で `bar-carila-drink-images` が約30kと突出。`moshimo-box` 約2.23k、`carilaworks-registry` 約2.19k、SIXSHIFTは当日0だった。
+- `bar-carila-drink-images` は画像だけでなく `DRINK_DB` として1500杯の酒マスターも保持している。
+- Production entry `src/worker-carila-realtime.mjs` が、Realtime以外の全requestを `worker-v1.9-expansions.mjs` に委譲していた。
+- expansion workerはfetch開始時にB09〜B41の33 batchすべてへ `ensureBatch()` を実行し、Worker isolateごとの初回に各batch `SELECT COUNT(*) FROM drinks WHERE evidence_version=?` を発行する。
+- そのためHTML/JS/image/favicon等の静的requestまで酒マスターbatch確認を誘発する構造になっていた。約900 request × 33 ≒ 29,700 queriesとなり、Cloudflare画面の約30kと整合するため、今回のrows-read枯渇の主要因として扱う。
 
-## 今回の変更
-- お酒検索本体とアフィリエイトURL生成を分離。検索本体カードを先にDOMへ確定し、その後ショッピング導線を独立try/catchで追加するため、Amazon等の周辺導線失敗で検索結果を消さない。
-- 検索AIのJSON parsingを強化。コードフェンス・前後文混入を吸収し、parse失敗時のみ1回再試行する。
-- PWA/standalone向けに100dvh、safe-area、狭幅時のsearch flex min-width、全面ページ下余白を追加。
-- manifest.webmanifestを追加。
-- PWA iconとして、暗いBAR背景 + 中央のカクテルグラスをモチーフにしたbarcarila-icon.svgを追加。
-- iOS Home Screen用に180x180 PNGのapple-touch-icon.pngを追加。
-- amazon-links.jsからmanifest / apple-touch-icon / PWA CSS / iOS standalone metaを安全にbootstrapする。PWA装飾失敗は本体処理を止めない。
+## 今回の修正
+- `src/worker-carila-realtime.mjs`
+  - `/api/carila-realtime-session` は従来どおりRealtime handler。
+  - `/api/chat` だけを `worker-v1.9-expansions.mjs` へ通し、B09〜B41のD1 seed/enrichment契約を維持。
+  - それ以外のstatic / health / drink-image / drink-meta / carila-chat等は `worker-v1.9.mjs` へ直接委譲し、expansion batch maintenanceを完全に迂回する。
+- `test/d1-hot-path.test.mjs`
+  - static assetと`/health`でDRINK_DB.prepareが呼ばれたら失敗する回帰testを追加。
+
+## 影響
+- 酒推薦 `/api/chat` の1500杯Known Master / rarity enrichment / Open Recommendationは維持。
+- drink image D1、Unsplash cache、Realtime voice、affiliate導線、UI、静的asset配信は仕様変更なし。
+- D1 schema/data削除なし。batch seed自体も削除せず、必要なchat経路に限定する。
+- 想定効果: 静的アクセスごとに最大33 batch確認が発生するrequest stormを除去し、BAR CarilaのD1 query/rows-readを桁違いに削減する。
 
 ## 検証
-- PR #119 CI run #834: SUCCESS。npm test + npm run validate:drink-master-v1.9 を通過。
-- 直前のCI run #833もSUCCESS。
-- 専用回帰testで検索本体→周辺リンクの分離、manifest、safe-area CSS、SVG icon、iOS PNG iconを検証。
-- Amazon ID分類・楽天URL・既存main.jsの推薦ロジック自体は変更していない。
+- branch commit `8cf9b6f...`: routing fix。
+- branch commit `8d520ee...`: non-chat D1 hot-path regression test。
+- 最終CIはDraft中skipし、Ready時に既存CI + drink-master validationを1回実行する。
 
-## 次にやること
-1. CARILA WORKS Controlからテスト版更新後、iPhone PWAで検索画面の見切れ、safe-area、検索入力幅、専用アイコン、検索結果+Amazon導線を実機確認。
-2. iOSは既存ホーム画面アイコンをキャッシュするため、アイコン確認時は必要なら一度ホーム画面から削除して再追加する。
-3. 問題なければユーザー操作で公開版更新。
-4. 1500杯マスター品質の前半/中盤/高速追加後半/最終バッチ横断監査は別作業として保持。
+## 既存状態
+- ドリンクマスター1500杯到達済み。自動拡張停止済み。Open Recommendation方針を維持する。
+- `/carila` Realtime / WebRTC実装済み。
+- Amazon tracking ID 5用途は維持。
+- unrelated stale Open PR #12は今回触らない。
+- Production公開はCARILA WORKS Controlからのみ行う。
+
+## 次
+1. Draft PR作成、Draft中CI skip確認。
+2. Merge candidateとしてReady化し、既存CI/validationを1回実行。
+3. PASSならMerge。
+4. CARILA WORKS ControlからBAR CARILA公開版を更新。
+5. 翌reset後、Cloudflare D1の `bar-carila-drink-images` query/rows-readを比較。
+6. BAR収束後、SIXSHIFTの4.5秒pollingを将来利用者増加に耐えるevent-driven設計へ別作業で見直す。
+
+## DELTA
+DEPENDENCY DELTA: NONE
+ROUTE DELTA: expansion workerへの委譲を`/api/chat`だけに限定。公開URL/API契約自体は変更なし。
+ACTIONS DELTA: Draft中skip、Ready時に既存最終CI 1回のみ。
+D1 DELTA: static/non-chat request由来のB09〜B41 batch COUNT確認を除去。data/schemaは変更なし。
+LEGACY CLEANUP: 全requestで酒マスターseed maintenanceを走らせる誤ったtop-level routingを解消。
 
 ## Handoff
-- 推薦候補は1500杯に閉じない。Open Recommendation + Known Master方針を維持する。
-- Production公開はCARILA WORKS Controlからのみ行う。
-- DEPENDENCY DELTA: NONE / ACTIONS DELTA: NONE。
+D1上限枯渇の主要因としてBAR Carila request stormを特定。Cloudflare当日約30k queriesと、1requestあたり最大33 batch確認のコード構造が数量的に整合する。修正branchはnon-chatをbase v1.9へ直接routeし、chat機能だけexpansion workerを維持。Merge/Production反映後に翌日D1実測で効果判定する。
