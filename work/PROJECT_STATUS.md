@@ -1,13 +1,15 @@
 # PROJECT_STATUS
 
 最終更新: 2026-10-09
-現在のbranch: `fix/d1-readonly-master-runtime-20261009`
+現在のbranch: `main`
 
 ## 現在地
 - Cloudflare D1 Freeの日次rows readが2026-10-09 20:33 JST時点で `5.1M / 5M` に到達。
 - D1一覧の当日query回数で `bar-carila-drink-images` が約30kと突出。`moshimo-box` 約2.23k、`carilaworks-registry` 約2.19k、SIXSHIFTは当日0だった。
 - `bar-carila-drink-images` は画像だけでなく `DRINK_DB` として1500杯の酒マスターも保持している。
-- PR #121で、静的/非chat requestまでB09〜B41の33 batch確認を起動していたrequest stormを解消しmainへMerge済み。main `8b0ff429205ca0974f28a8ce838fc2e3ecb0657d`。
+- PR #121で、静的/非chat requestまでB09〜B41の33 batch確認を起動していたrequest stormを解消してMerge済み。
+- PR #122で、`/api/chat` 内に残っていた固定masterのrequest-time DDL/seed/COUNTもread-only runtime gateで除去してMerge済み。
+- latest main: `2571bf56577832cbf0b2f1a2e699ab92a9b68a81`（PR #122 merge時点。本文更新commitはこの後のmainに積まれる）。
 
 ## 今回の追加軽量化
 - 1500杯Known Masterは既にRepository内versioned sourceとして固定保持されており、通常chat requestでschema作成・seed・batch存在確認を繰り返す必要はない。
@@ -35,15 +37,13 @@
 
 ## 検証
 - PR #121 final CI run #838: `npm test` + `validate:drink-master-v1.9` SUCCESS、Merge済み。
-- `test/d1-master-readonly-runtime.test.mjs` を追加し、seed COUNT/writeはunderlying D1へ到達せず、indexed master readとdrink_images SQLは通ることを契約化。
-- 今回もDraft中CI skip、Ready時に既存最終CIを1回のみ実行する。
+- PR #122 final CI run #840: `npm test` + `validate:drink-master-v1.9` SUCCESS、Merge済み。
+- `test/d1-master-readonly-runtime.test.mjs` で、seed COUNT/writeはunderlying D1へ到達せず、indexed master readとdrink_images SQLは通ることを契約化。
 
 ## 次
-1. Draft PRでread-only master runtime gateを確認。
-2. Ready時CI/validation PASS後Merge。
-3. CARILA WORKS ControlからBAR CARILA公開版を更新。
-4. 翌reset後、`bar-carila-drink-images` query/rows-readを比較。
-5. BAR収束後、SIXSHIFTの4.5秒pollingをevent-driven寄りへ再設計する。
+1. CARILA WORKS ControlからBAR CARILA公開版を更新。
+2. 翌reset後、`bar-carila-drink-images` query/rows-readを比較。
+3. BAR収束後、SIXSHIFTの4.5秒pollingをevent-driven寄りへ再設計する。
 
 ## DELTA
 DEPENDENCY DELTA: NONE
@@ -53,4 +53,4 @@ D1 DELTA: request-time master seed/DDL/COUNTを0化。実推薦はindexed point 
 LEGACY CLEANUP: user request中に固定1500杯masterの完全性を再確認・seedする設計をruntimeから排除。
 
 ## Handoff
-2026-10-09のD1枯渇主因としてBAR Carilaの約30k query stormを数量的に特定。PR #121でnon-chat stormを停止済み。追加branchではchat request内に残っていた固定master seed/DDL/COUNTもread-only runtime gateで除去し、実データpoint lookupだけを許可する。Production反映後はBAR D1が大幅減少する想定。固定masterの完全static化はさらに可能だが、現段階では出力品質を維持しつつ十分大きな削減が得られるread-only point lookupを採用する。
+2026-10-09のD1枯渇主因としてBAR Carilaの約30k query stormを数量的に特定。PR #121でnon-chat stormを停止し、PR #122でchat内の固定master maintenanceも停止。Production反映後はBAR D1が大幅減少する想定。固定masterの完全static化はさらに可能だが、現段階では出力品質を維持しつつ十分大きな削減が得られるread-only point lookupを採用する。次はProduction反映→翌reset後のD1実測、その後SIXSHIFTのpolling再設計。
