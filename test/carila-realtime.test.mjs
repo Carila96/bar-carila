@@ -5,6 +5,37 @@ import worker from '../src/worker-carila-realtime.mjs';
 
 const context = { waitUntil() {} };
 
+class FakeUsageDb {
+  constructor() { this.rows = new Map(); }
+
+  prepare(sql) {
+    const db = this;
+    const normalized = String(sql).replace(/\s+/g, ' ').trim();
+    return {
+      args: [],
+      bind(...args) { this.args = args; return this; },
+      async run() { return { success: true, meta: { changes: 0 } }; },
+      async first() {
+        if (normalized.startsWith('INSERT INTO carila_usage_daily')) {
+          const [clientId, usageDate, limit] = this.args;
+          const key = `${clientId}:${usageDate}`;
+          const row = db.rows.get(key) || { text_turns: 0, voice_sessions: 0 };
+          const counter = normalized.includes('voice_sessions = carila_usage_daily.voice_sessions + 1') ? 'voice_sessions' : 'text_turns';
+          if (row[counter] >= Number(limit)) return null;
+          row[counter] += 1;
+          db.rows.set(key, row);
+          return { ...row };
+        }
+        if (normalized.startsWith('SELECT text_turns, voice_sessions FROM carila_usage_daily')) {
+          const [clientId, usageDate] = this.args;
+          return db.rows.get(`${clientId}:${usageDate}`) || null;
+        }
+        return null;
+      },
+    };
+  }
+}
+
 test('realtime voice endpoint requires its server-side OpenAI secret', async () => {
   const response = await worker.fetch(new Request('https://preview.example/api/carila-realtime-session', {
     method: 'POST', headers: { 'content-type': 'application/sdp' }, body: 'v=0\r\n',
@@ -41,16 +72,52 @@ test('realtime voice creates a server-authenticated WebRTC call with Carila pers
   try {
     const response = await worker.fetch(new Request('https://preview.example/api/carila-realtime-session', {
       method: 'POST', headers: { 'content-type': 'application/sdp' }, body: 'v=0\r\nmock-offer',
-    }), { OPENAI_API_KEY: 'server-secret' }, context);
+    }), { OPENAI_API_KEY: 'server-secret', DRINK_DB: new FakeUsageDb() }, context);
     assert.equal(response.status, 200);
     assert.equal(response.headers.get('content-type'), 'application/sdp');
+    assert.equal(response.headers.get('x-carila-trial-limit'), '2');
+    assert.equal(response.headers.get('x-carila-trial-remaining'), '1');
+    assert.match(response.headers.get('set-cookie') || '', /bar_carila_client=/);
     assert.equal(await response.text(), 'v=0\r\nmock-answer');
   } finally {
     globalThis.fetch = originalFetch;
   }
 });
 
-test('Carila page exposes continuous WebRTC voice mode without push-to-talk', async () => {
+test('realtime voice trial allows two sessions per browser per JST day and blocks the third', async () => {
+  const originalFetch = globalThis.fetch;
+  let upstreamCalls = 0;
+  globalThis.fetch = async () => {
+    upstreamCalls += 1;
+    return new Response('v=0\r\nmock-answer', { status: 200, headers: { 'content-type': 'application/sdp' } });
+  };
+  const env = { OPENAI_API_KEY: 'server-secret', DRINK_DB: new FakeUsageDb() };
+  try {
+    const first = await worker.fetch(new Request('https://preview.example/api/carila-realtime-session', {
+      method: 'POST', headers: { 'content-type': 'application/sdp' }, body: 'v=0\r\nfirst',
+    }), env, context);
+    assert.equal(first.status, 200);
+    const cookie = (first.headers.get('set-cookie') || '').split(';')[0];
+    assert.match(cookie, /^bar_carila_client=/);
+
+    const second = await worker.fetch(new Request('https://preview.example/api/carila-realtime-session', {
+      method: 'POST', headers: { 'content-type': 'application/sdp', cookie }, body: 'v=0\r\nsecond',
+    }), env, context);
+    assert.equal(second.status, 200);
+    assert.equal(second.headers.get('x-carila-trial-remaining'), '0');
+
+    const third = await worker.fetch(new Request('https://preview.example/api/carila-realtime-session', {
+      method: 'POST', headers: { 'content-type': 'application/sdp', cookie }, body: 'v=0\r\nthird',
+    }), env, context);
+    assert.equal(third.status, 429);
+    assert.equal((await third.json()).code, 'CARILA_TRIAL_LIMIT_REACHED');
+    assert.equal(upstreamCalls, 2);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('Carila page exposes continuous WebRTC voice mode with trial safeguards', async () => {
   const [html, app, css, wrangler, manifest, realtimeWorker] = await Promise.all([
     readFile(new URL('../public/carila/index.html', import.meta.url), 'utf8'),
     readFile(new URL('../public/carila/assets/js/carila.js', import.meta.url), 'utf8'),
@@ -74,6 +141,8 @@ test('Carila page exposes continuous WebRTC voice mode without push-to-talk', as
   assert.match(app, /conversation\.item\.create/);
   assert.match(app, /addVoiceLog/);
   assert.match(app, /話した内容も画面に表示されます/);
+  assert.match(app, /VOICE_SESSION_MAX_MS = 5 \* 60 \* 1000/);
+  assert.match(app, /CARILA_TRIAL_LIMIT_REACHED/);
   assert.doesNotMatch(app, /MediaRecorder/);
   assert.match(css, /voice-button\.is-active/);
   assert.match(css, /voice-transcript/);
@@ -81,5 +150,8 @@ test('Carila page exposes continuous WebRTC voice mode without push-to-talk', as
   assert.match(wrangler, /worker-carila-realtime\.mjs/);
   assert.match(realtimeWorker, /worker-v1\.9-expansions\.mjs/);
   assert.match(realtimeWorker, /return appWorker\.fetch/);
+  assert.match(realtimeWorker, /DEFAULT_TEXT_DAILY_LIMIT = 20/);
+  assert.match(realtimeWorker, /DEFAULT_VOICE_DAILY_LIMIT = 2/);
+  assert.match(realtimeWorker, /carila_usage_daily/);
   assert.match(manifest, /OPENAI_API_KEY/);
 });
