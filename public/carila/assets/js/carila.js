@@ -301,28 +301,19 @@ async function send(rawMessage) {
 elements.voiceButton.addEventListener('click', () => { if (isVoiceActive()) stopVoice('音声会話を終了しました。'); else startVoice(); });
 elements.chatForm.addEventListener('submit', (event) => { event.preventDefault(); send(elements.messageInput.value); });
 elements.messageInput.addEventListener('input', resizeComposer);
-elements.messageInput.addEventListener('keydown', (event) => {
-  if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) { event.preventDefault(); elements.chatForm.requestSubmit(); }
-});
-elements.historyButton.addEventListener('click', () => {
-  elements.historyList.innerHTML = '';
-  for (const item of memory.conversation()) {
-    const li = document.createElement('li'); li.className = item.role;
-    const speaker = document.createElement('strong'); speaker.textContent = item.role === 'assistant' ? 'Carila' : 'あなた';
-    const text = document.createElement('p'); text.textContent = item.role === 'assistant' ? formatCarilaText(item.content) : item.content;
-    li.append(speaker, text); elements.historyList.append(li);
-  }
-  elements.historyDialog.showModal();
-});
-elements.closeHistory.addEventListener('click', () => elements.historyDialog.close());
+elements.messageInput.addEventListener('keydown', (event) => { if (event.key === 'Enter' && (event.ctrlKey || event.metaKey) && !event.isComposing) { event.preventDefault(); elements.chatForm.requestSubmit(); } });
 elements.menuButton.addEventListener('click', () => toggleMenu(elements.menuDrawer.getAttribute('aria-hidden') === 'true'));
 elements.closeMenu.addEventListener('click', () => toggleMenu(false));
 elements.menuOverlay.addEventListener('click', () => toggleMenu(false));
-elements.leaveButton.addEventListener('click', () => {
+elements.historyButton.addEventListener('click', () => {
   toggleMenu(false);
-  stopVoice();
-  elements.farewellText.textContent = UI_CONFIG.farewell;
-  elements.farewellDialog.showModal();
+  elements.historyList.replaceChildren();
+  memory.history().forEach((message) => { const item = document.createElement('li'); const speaker = document.createElement('strong'); speaker.textContent = message.role === 'assistant' ? 'CARILA' : 'あなた'; const content = message.role === 'assistant' ? formatCarilaText(message.content) : message.content; const text = document.createTextNode(content); item.append(speaker, text); elements.historyList.append(item); });
+  elements.historyDialog.showModal();
 });
-elements.restartButton.addEventListener('click', () => { elements.farewellDialog.close(); location.reload(); });
+elements.closeHistory.addEventListener('click', () => elements.historyDialog.close());
+elements.leaveButton.addEventListener('click', () => { toggleMenu(false); if (isVoiceActive()) stopVoice(); elements.farewellText.textContent = UI_CONFIG.farewell; elements.farewellDialog.showModal(); });
+elements.restartButton.addEventListener('click', () => location.reload());
+window.addEventListener('pagehide', () => stopVoice());
 resizeComposer();
+setVoiceUi('idle');
