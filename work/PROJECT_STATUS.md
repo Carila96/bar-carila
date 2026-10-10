@@ -2,7 +2,7 @@
 
 最終更新: 2026-10-10
 現在のbranch: `main`
-最新main: `f1992d38eb87407194480ad3877fc2bd685b4317`（PR #123 Merge時点）
+最新main: `da04be9fb806fae4913a07dfcfe963bae15ae216`（PR #123 Merge後のstatus同期時点）
 
 ## 現在地
 - Cloudflare D1 Freeの日次rows readは2026-10-09に上限へ到達し、BAR CARILAのrequest-time master確認が主因と特定済み。
@@ -36,6 +36,7 @@
 - 修正後 CI run #842: `npm test` SUCCESS、`npm run validate:drink-master-v1.9` SUCCESS。
 - 最終status更新後 CI run #843: `npm test` SUCCESS、`npm run validate:drink-master-v1.9` SUCCESS。
 - PR #123 Merge commit: `f1992d38eb87407194480ad3877fc2bd685b4317`。
+- Merge後のPROJECT_STATUS同期commit: `da04be9fb806fae4913a07dfcfe963bae15ae216`。
 - local git cloneによるtest実行は実行環境DNSで`github.com`をresolveできず失敗。この経路のみの失敗で、GitHub connector/Actionsで検証を完了。
 
 ## ブロッカー / 制約
