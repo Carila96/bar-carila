@@ -44,3 +44,7 @@ Production deployment: **not performed**. Results below distinguish existing Pro
 3. On Preview, verify `/carila/`, two successive text turns, search/recommendation, metadata latency, new security headers, manifest MIME and missing-asset 404.
 4. iPhone: mic permission, Japanese greeting / actual voice, speaker playback, interruption, transcripts, five-minute end, stop/restart, background/pagehide and narrow layout. Test normal quotas only as needed; use mocks for the 20-turn boundary.
 5. Only after Preview acceptance, user updates the **public version** through Control. Do not deploy from this repository.
+
+## GitHub evidence
+PR #124: https://github.com/Carila96/bar-carila/pull/124
+Code head `ac23b890d16196c0847296075af852af3c1e1002`; existing CI #844 (run 38054155814) completed SUCCESS, including npm test and master validation on Node 22. This final evidence append changes documentation only. Confirm final PR merged state/main ref before Control Preview update.

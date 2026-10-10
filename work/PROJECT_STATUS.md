@@ -48,3 +48,9 @@ DEPENDENCY NONE / ACTIONS既存CIのみ / ROUTE・DNS・PRODUCTION公開なし /
 
 ## 開始時の不存在文書
 CARILA_WORKS_PLAYBOOK.md、docs/REQUIREMENTS.md、docs/UNRESOLVED.md、docs/INTERACTION_CONTRACT.md、evals/ACCEPTANCE.md、work/PROJECT_CHECKLIST.mdは開始時不存在。UNRESOLVED/ACCEPTANCEのみ本監査で新設。共通規約があると仮定していない。
+
+## GitHub最終検証
+PR #124: https://github.com/Carila96/bar-carila/pull/124
+Code head: `ac23b890d16196c0847296075af852af3c1e1002`。
+既存CI run #844 / 38054155814: SUCCESS。npm ci / npm test / validate:drink-master-v1.9の全step成功。
+この追記は文書のみでcode変更なし。Merge状態とlatest mainはPRのmerged / main refを取得して確認する。Preview/Productionを自動更新しない。
