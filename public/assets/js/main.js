@@ -1,3 +1,4 @@
+function escapeBarText(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 const API='/api/chat';
 const DRINK_META_API='/api/drink-meta';
 const DRINK_META_CACHE_KEY='bar_carila_drink_meta_cache_v1';
@@ -132,7 +133,7 @@ function expandPanda(){document.getElementById('pandaStage').classList.remove('c
 let chatHistory=[],isLoading=false,convLog=[];
 
 // ===== History =====
-function getHistory(){try{return JSON.parse(localStorage.getItem('bar_carila_history')||'[]')}catch{return[];}}
+function getHistory(){try{const h=JSON.parse(localStorage.getItem('bar_carila_history')||'[]');return Array.isArray(h)?h.filter(i=>i&&typeof i==='object'):[];}catch{return[];}}
 function saveToHistory(drink){
   const h=getHistory();
   h.unshift({date:new Date().toLocaleString('ja-JP',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}),name:drink.name,category:drink.category,abv:drink.abv||'',tags:drink.tags||[],description:(drink.description||'').substring(0,80)});
@@ -141,7 +142,7 @@ function saveToHistory(drink){
 }
 function openHistory(){
   const h=getHistory();
-  document.getElementById('historyList').innerHTML=!h.length?'<div class="history-empty">まだ履歴がありません。</div>':h.map(i=>`<div class="history-item"><div class="history-date">${i.date}</div><div class="history-drink">${i.name}</div><div class="history-cat">${i.category}${i.abv?` · ${i.abv}`:''}</div>${i.description?`<div class="history-desc">${i.description}…</div>`:''} <div class="history-tags">${(i.tags||[]).map(t=>`<span class="history-tag">${t}</span>`).join('')}</div><div class="history-links"><a class="history-link" data-amazon-placement="bar_history" href="${window.CarilaAmazon.searchUrl(i.name,'bar_history')}" target="_blank" rel="noopener">Amazon</a><a class="history-link" href="https://search.rakuten.co.jp/search/mall/${encodeURIComponent(i.name)}/?l2-id=1000&a_id=${RAKUTEN_ID}" target="_blank" rel="noopener">楽天</a></div></div>`).join('');
+  document.getElementById('historyList').innerHTML=!h.length?'<div class="history-empty">まだ履歴がありません。</div>':h.map(i=>`<div class="history-item"><div class="history-date">${escapeBarText(i.date)}</div><div class="history-drink">${escapeBarText(i.name)}</div><div class="history-cat">${escapeBarText(i.category)}${i.abv?` · ${escapeBarText(i.abv)}`:''}</div>${i.description?`<div class="history-desc">${escapeBarText(i.description)}…</div>`:''} <div class="history-tags">${(Array.isArray(i.tags)?i.tags:[]).map(t=>`<span class="history-tag">${escapeBarText(t)}</span>`).join('')}</div><div class="history-links"><a class="history-link" data-amazon-placement="bar_history" href="${window.CarilaAmazon.searchUrl(i.name,'bar_history')}" target="_blank" rel="noopener">Amazon</a><a class="history-link" href="https://search.rakuten.co.jp/search/mall/${encodeURIComponent(i.name)}/?l2-id=1000&a_id=${RAKUTEN_ID}" target="_blank" rel="noopener">楽天</a></div></div>`).join('');
   document.getElementById('historyPage').classList.add('open');
 }
 function closeHistory(){document.getElementById('historyPage').classList.remove('open');}
@@ -176,12 +177,13 @@ async function doSearch(){
     if(r.found){
       const q=encodeURIComponent(r.search_ja||r.name);
       const imgUrl=getDrinkImg(r.name,r.category);
-      const similarHTML=r.similar&&r.similar.length?`<div class="search-suggest"><div class="search-suggest-label">似たお酒</div><div class="search-suggest-btns">${r.similar.map(s=>`<button class="search-suggest-btn" onclick="searchFor('${s}')">${s}</button>`).join('')}</div></div>`:'';
-      results.innerHTML=`<div class="search-result-card"><div style="width:calc(100%+32px);height:120px;overflow:hidden;border-radius:8px 8px 0 0;margin:-16px -16px 12px;"><img src="${imgUrl}" style="width:100%;height:100%;object-fit:cover;opacity:0.8;" onload="this.style.opacity=0.85" onerror="this.parentNode.style.display='none'"></div><div class="search-result-name">${r.name}</div><div class="search-result-cat">${r.category}</div><div class="search-result-desc">${r.description}</div>${r.tip?`<div class="search-result-tip">${r.tip}</div>`:''}<div class="search-result-links"><a class="search-result-link" data-amazon-placement="bar_search" href="${window.CarilaAmazon.searchUrl(decodeURIComponent(q),'bar_search')}" target="_blank" rel="noopener">Amazon で探す</a><a class="search-result-link" href="https://search.rakuten.co.jp/search/mall/${encodeURIComponent(r.search_ja||r.name)}/?l2-id=1000&a_id=${RAKUTEN_ID}" target="_blank" rel="noopener">楽天市場で探す</a></div></div>${similarHTML}`;
+      const similarHTML=r.similar&&r.similar.length?`<div class="search-suggest"><div class="search-suggest-label">似たお酒</div><div class="search-suggest-btns">${r.similar.map(s=>`<button class="search-suggest-btn" type="button" data-search-name="${escapeBarText(s)}">${escapeBarText(s)}</button>`).join('')}</div></div>`:'';
+      results.innerHTML=`<div class="search-result-card"><div style="width:calc(100%+32px);height:120px;overflow:hidden;border-radius:8px 8px 0 0;margin:-16px -16px 12px;"><img src="${escapeBarText(imgUrl)}" style="width:100%;height:100%;object-fit:cover;opacity:0.8;" onload="this.style.opacity=0.85" onerror="this.parentNode.style.display='none'"></div><div class="search-result-name">${escapeBarText(r.name)}</div><div class="search-result-cat">${escapeBarText(r.category)}</div><div class="search-result-desc">${escapeBarText(r.description)}</div>${r.tip?`<div class="search-result-tip">${escapeBarText(r.tip)}</div>`:''}<div class="search-result-links"><a class="search-result-link" data-amazon-placement="bar_search" href="${window.CarilaAmazon.searchUrl(decodeURIComponent(q),'bar_search')}" target="_blank" rel="noopener">Amazon で探す</a><a class="search-result-link" href="https://search.rakuten.co.jp/search/mall/${encodeURIComponent(r.search_ja||r.name)}/?l2-id=1000&a_id=${RAKUTEN_ID}" target="_blank" rel="noopener">楽天市場で探す</a></div></div>${similarHTML}`;
     }else{
-      const suggestHTML=r.suggestions&&r.suggestions.length?`<div class="search-suggest"><div class="search-suggest-label">もしかしてこちら？</div><div class="search-suggest-btns">${r.suggestions.map(s=>`<button class="search-suggest-btn" onclick="searchFor('${s}')">${s}</button>`).join('')}</div></div>`:'';
-      results.innerHTML=`<div class="search-empty">${r.message||'見つかりませんでした'}</div>${suggestHTML}`;
+      const suggestHTML=r.suggestions&&r.suggestions.length?`<div class="search-suggest"><div class="search-suggest-label">もしかしてこちら？</div><div class="search-suggest-btns">${r.suggestions.map(s=>`<button class="search-suggest-btn" type="button" data-search-name="${escapeBarText(s)}">${escapeBarText(s)}</button>`).join('')}</div></div>`:'';
+      results.innerHTML=`<div class="search-empty">${escapeBarText(r.message||'見つかりませんでした')}</div>${suggestHTML}`;
     }
+    results.querySelectorAll('[data-search-name]').forEach(button=>button.addEventListener('click',()=>searchFor(button.dataset.searchName)));
   }catch(e){results.innerHTML='<div class="search-empty">……少し調子が悪いようです。もう一度お試しください。</div>';}
 }
 function searchFor(name){document.getElementById('searchInput').value=name;doSearch();}
@@ -211,14 +213,14 @@ function buildAffiliateSection(drink){
 const NO_SHOP_RE=/^(氷|砂糖|グラニュー糖|角砂糖|塩|こしょう|胡椒|水|炭酸水|ソーダ水|ソーダ|トニックウォーター|レモン|ライム|オレンジ|グレープフルーツ|ミント|バジル|卵|卵白|卵黄|生クリーム|牛乳|ミルク|蜂蜜|はちみつ|ハチミツ)$/i;
 function buildRecipeHTML(recipe){
   if(!recipe||!recipe.ingredients||!recipe.ingredients.length)return'';
-  const items=recipe.ingredients.map(i=>`<li class="recipe-item"><span class="recipe-ingredient">${i.name}</span><span class="recipe-amount">${i.amount}</span></li>`).join('');
-  const method=recipe.method?`<div class="recipe-method">作り方：${recipe.method}</div>`:'';
+  const items=recipe.ingredients.map(i=>`<li class="recipe-item"><span class="recipe-ingredient">${escapeBarText(i.name)}</span><span class="recipe-amount">${escapeBarText(i.amount)}</span></li>`).join('');
+  const method=recipe.method?`<div class="recipe-method">作り方：${escapeBarText(recipe.method)}</div>`:'';
   const uid='ingr_'+Math.random().toString(36).substr(2,6);
   const shopIngr=recipe.ingredients.filter(ing=>!NO_SHOP_RE.test(ing.name));
   if(!shopIngr.length)return`<div class="recipe-section"><div class="recipe-title">✦ Recipe</div><ul class="recipe-list">${items}</ul>${method}</div>`;
   const shopItems=shopIngr.map(ing=>{
     const q=encodeURIComponent(ing.name);
-    return`<div class="ingr-shop-item"><span class="ingr-shop-name">${ing.name}</span><div class="ingr-shop-links"><a class="ingr-shop-link" data-amazon-placement="bar_ingredients" href="${window.CarilaAmazon.searchUrl(decodeURIComponent(q),'bar_ingredients')}" target="_blank" rel="noopener">Amazon</a><a class="ingr-shop-link" href="https://search.rakuten.co.jp/search/mall/${encodeURIComponent(ing.name)}/?l2-id=1000&a_id=${RAKUTEN_ID}" target="_blank" rel="noopener">楽天</a></div></div>`;
+    return`<div class="ingr-shop-item"><span class="ingr-shop-name">${escapeBarText(ing.name)}</span><div class="ingr-shop-links"><a class="ingr-shop-link" data-amazon-placement="bar_ingredients" href="${window.CarilaAmazon.searchUrl(decodeURIComponent(q),'bar_ingredients')}" target="_blank" rel="noopener">Amazon</a><a class="ingr-shop-link" href="https://search.rakuten.co.jp/search/mall/${encodeURIComponent(ing.name)}/?l2-id=1000&a_id=${RAKUTEN_ID}" target="_blank" rel="noopener">楽天</a></div></div>`;
   }).join('');
   return`<div class="recipe-section"><div class="recipe-title">✦ Recipe</div><ul class="recipe-list">${items}</ul>${method}<button class="ingr-shop-btn" onclick="toggleIngr('${uid}')">🛒 材料をまとめて探す ▼</button><div class="ingr-shop-list" id="${uid}">${shopItems}</div></div>`;
 }
@@ -233,7 +235,7 @@ function toggleIngr(uid){
 // ===== Conv log =====
 function buildLogHTML(){
   if(!convLog.length)return'<div style="color:var(--muted);font-size:11px;">記録がありません</div>';
-  return convLog.map(l=>`<div class="log-q">Q: ${l.q}</div><div class="log-a">→ ${l.a}</div>`).join('');
+  return convLog.map(l=>`<div class="log-q">Q: ${escapeBarText(l.q)}</div><div class="log-a">→ ${escapeBarText(l.a)}</div>`).join('');
 }
 
 // ===== Rec card =====
@@ -272,6 +274,9 @@ function applyDrinkMetaToCard(data,card){
 }
 
 function showRec(data){
+  const rarity=Number(data.drink.rarity);
+  data.drink.rarity=data.drink.rarity!=null&&Number.isFinite(rarity)?Math.max(0,Math.min(100,rarity)):null;
+  data.drink.tags=Array.isArray(data.drink.tags)?data.drink.tags:[];
   collapsePanda();
   const cat=(data.drink.category||'').toLowerCase();
   if(cat.includes('カクテル')||cat.includes('モクテル')||cat.includes('ノンアル'))setPanda('bartender');
@@ -287,7 +292,7 @@ function showRec(data){
   const sanitize=s=>(s||'').replace(/[^\u0000-\u007E\u3000-\u9FFF\uF900-\uFAFF\uFF00-\uFFEF\u30A0-\u30FF\u3040-\u309F\u4E00-\u9FFF]/g,'').trim();
   const analysisLine=data.analysis?sanitize(data.analysis.split('\n')[0]):'';
   const shareText=encodeURIComponent(t().shareTemplate(analysisLine,sanitize(data.drink.name)));
-  const triviaHTML=data.drink.trivia?`<div class="trivia-box"><div class="trivia-label">✦ Bartender's tip</div><div class="trivia-text">${data.drink.trivia}</div></div>`:'';
+  const triviaHTML=data.drink.trivia?`<div class="trivia-box"><div class="trivia-label">✦ Bartender's tip</div><div class="trivia-text">${escapeBarText(data.drink.trivia)}</div></div>`:'';
   const recipeHTML=buildRecipeHTML(data.drink.recipe);
   const affiliateHTML=buildAffiliateSection(data.drink);
   const followupBtnsHTML=t().followupBtns.map((b,i)=>`<button class="followup-btn" onclick="followUp('${t().followupCalls[i]}')">${b}</button>`).join('');
@@ -298,27 +303,27 @@ function showRec(data){
   const imgUrl=getDrinkImg(data.drink.name,data.drink.category);
   card.innerHTML=`
     <div class="rec-img-wrap">
-      <img src="${imgUrl}" alt="${data.drink.name}" onload="this.classList.add('loaded')" onerror="handleDrinkImgError(this)">
+      <img src="${escapeBarText(imgUrl)}" alt="${escapeBarText(data.drink.name)}" onload="this.classList.add('loaded')" onerror="handleDrinkImgError(this)">
       <div class="rec-img-credit">Photo: Unsplash</div>
     </div>
     <div class="rec-body">
       <div class="rec-ornament">${t().recOrnament}</div>
-      ${data.analysis?`<div class="rec-analysis">${data.analysis.replace(/\n/g,'<br>')}</div>`:''}
-      <div class="rec-name">${data.drink.name}</div>
+      ${data.analysis?`<div class="rec-analysis">${escapeBarText(data.analysis).replace(/\n/g,'<br>')}</div>`:''}
+      <div class="rec-name">${escapeBarText(data.drink.name)}</div>
       <div class="rec-cat">
-        <span>${data.drink.category}</span>${data.drink.abv?`<span style="color:var(--amber);font-size:10px;border:1px solid var(--amber-dim);padding:1px 7px;border-radius:10px;">${t().abvLabel}${data.drink.abv}</span>`:''}
+        <span>${escapeBarText(data.drink.category)}</span>${data.drink.abv?`<span style="color:var(--amber);font-size:10px;border:1px solid var(--amber-dim);padding:1px 7px;border-radius:10px;">${t().abvLabel}${escapeBarText(data.drink.abv)}</span>`:''}
         ${data.drink.rarity!=null?`<span class="rarity-wrap"><span class="rarity-label">${t().rarityLabel}</span><span class="rarity-bar"><span class="rarity-fill" style="width:${data.drink.rarity}%"></span></span><span class="rarity-val">${data.drink.rarity}%</span><span class="rarity-tag" style="font-size:10px;white-space:nowrap;">${rarityTagLabel}</span></span>`:''}
       </div>
-      <div class="rec-desc">${data.drink.description}</div>
+      <div class="rec-desc">${escapeBarText(data.drink.description)}</div>
       ${triviaHTML}
       ${recipeHTML}
-      <div class="bar-notice">${t().barNotice(data.drink.name)}</div>
+      <div class="bar-notice">${t().barNotice(escapeBarText(data.drink.name))}</div>
       ${affiliateHTML}
       <div class="share-wrap">
         <a class="share-btn x-btn" href="https://twitter.com/intent/tweet?text=${shareText}&url=${siteUrl}" target="_blank" rel="noopener">${t().shareBtnX}</a>
-        <button class="share-btn share-native" onclick="nativeShare('${data.drink.name}',decodeURIComponent('${shareText}'),decodeURIComponent('${siteUrl}'))">${t().shareNative}</button>
+        <button class="share-btn share-native" type="button">${t().shareNative}</button>
       </div>
-      <div class="rec-tags">${data.drink.tags.map(tag=>`<span class="tag">${tag}</span>`).join('')}</div>
+      <div class="rec-tags">${data.drink.tags.map(tag=>`<span class="tag">${escapeBarText(tag)}</span>`).join('')}</div>
       <div class="followup-section">
         <div class="followup-label">${t().followupLabel}</div>
         <div class="followup-btns">${followupBtnsHTML}</div>
@@ -330,6 +335,7 @@ function showRec(data){
       <button class="log-toggle" onclick="this.nextElementSibling.classList.toggle('open');this.textContent=this.nextElementSibling.classList.contains('open')?'${t().logToggleClose}':'${t().logToggleOpen}'">${t().logToggleOpen}</button>
       <div class="log-panel">${buildLogHTML()}</div>
     </div>`;
+  card.querySelector('.share-native')?.addEventListener('click',()=>nativeShare(data.drink.name,decodeURIComponent(shareText),decodeURIComponent(siteUrl)));
   area.appendChild(card);
   applyDrinkMetaToCard(data,card);
 
@@ -356,8 +362,8 @@ function nativeShare(name,text,url){
 }
 
 // ===== Chat =====
-function showMsg(text){document.getElementById('msgText').innerHTML=text.replace(/\n/g,'<br>');}
-function showLoading(){setPanda('loading');showMsg('<div class="loading-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>');document.getElementById('choicesArea').innerHTML='';}
+function showMsg(text){document.getElementById('msgText').innerHTML=escapeBarText(text).replace(/\n/g,'<br>');}
+function showLoading(){setPanda('loading');document.getElementById('msgText').innerHTML='<div class="loading-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';document.getElementById('choicesArea').innerHTML='';}
 
 function showChoices(choices){
   expandPanda();
@@ -372,7 +378,7 @@ function showChoices(choices){
   const inp=document.createElement('input');inp.type='text';inp.className='free-input';inp.placeholder=t().freeInput;inp.setAttribute('autocomplete','off');
   const sbtn=document.createElement('button');sbtn.className='send-btn';sbtn.textContent=t().send;
   sbtn.onclick=()=>{if(inp.value.trim())handleInput(inp.value.trim());};
-  inp.onkeydown=e=>{if(e.key==='Enter'&&inp.value.trim())handleInput(inp.value.trim());};
+  inp.onkeydown=e=>{if(e.key==='Enter'&&!e.isComposing&&inp.value.trim())handleInput(inp.value.trim());};
   row.appendChild(inp);row.appendChild(sbtn);wrap.appendChild(row);area.appendChild(wrap);
 }
 

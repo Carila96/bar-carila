@@ -387,6 +387,15 @@ async function chat(request, env) {
   return json(data, upstream.status, { 'server-timing': `anthropic;dur=${anthropicMs}, base-enrich;dur=${baseEnrichMs}, api;dur=${Date.now() - apiStarted}` });
 }
 
+export function isValidCarilaConversation(messages) {
+  return Array.isArray(messages) && messages.length > 0 && messages.length <= 40
+    && messages.every((message) => ['user', 'assistant'].includes(message?.role)
+      && typeof message.content === 'string' && message.content.trim().length > 0
+      && message.content.length <= 4000)
+    && messages[0].role === 'user'
+    && messages.every((message, index) => index === 0 || message.role !== messages[index - 1].role) && messages.at(-1).role === 'user';
+}
+
 async function carilaChat(request, env) {
   if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405, { allow: 'POST' });
   if (!env.ANTHROPIC_API_KEY) return missingSecret('ANTHROPIC_API_KEY');
@@ -394,13 +403,7 @@ async function carilaChat(request, env) {
   let body;
   try { body = await request.json(); } catch { return json({ error: 'Invalid JSON body' }, 400); }
   const messages = body?.messages;
-  const valid = Array.isArray(messages) && messages.length > 0 && messages.length <= 40
-    && messages.every((message) => ['user', 'assistant'].includes(message?.role)
-      && typeof message.content === 'string' && message.content.trim().length > 0
-      && message.content.length <= 4000)
-    && messages[0].role === 'user'
-    && messages.every((message, index) => index === 0 || message.role !== messages[index - 1].role);
-  if (!valid || messages.at(-1).role !== 'user') return json({ error: 'Invalid conversation' }, 400);
+  if (!isValidCarilaConversation(messages)) return json({ error: 'Invalid conversation' }, 400);
 
   const upstream = await fetch(ANTHROPIC_ENDPOINT, {
     method: 'POST',

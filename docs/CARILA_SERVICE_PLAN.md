@@ -53,3 +53,6 @@ Bartender Carila は、BARのカウンターでバーテンダーと話す感覚
 3. 有料化するなら月額・従量・併用のどれが適切か。
 4. 音声会話を有料価値の中心にするか、テキスト会話にも独立価値を持たせるか。
 5. 会話記憶・常連体験をどこまで持たせるか。
+
+## 2026-10-10 Acceptance補足
+Endpoint/SQLite/UI harnessで暫定上限とfail-closedを確認。無効payloadは回数を使わないが、有効なupstream失敗は試行回数を消費する。iPhone実音声と更新後Previewの確認は残る。詳細は `../evals/ACCEPTANCE.md` と `UNRESOLVED.md`。価格/課金設計は変更していない。

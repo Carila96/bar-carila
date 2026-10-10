@@ -8,10 +8,9 @@ neither a custom-domain route nor DNS configuration.
 ## Runtime contract
 
 - Wrangler serves `public/` through the `ASSETS` binding and executes
-  `src/worker.mjs` for `/api/*` and `/health` on the same origin.
+  `src/worker-carila-realtime.mjs` as the entrypoint, delegating to base Worker and master enrichment layers for `/api/*` and `/health`.
 - `POST /api/chat` proxies the existing Anthropic Messages request, using the
-  server-only `ANTHROPIC_API_KEY` secret. The UI requests Anthropic's stable
-  `claude-sonnet-4-6` alias.
+  server-only `ANTHROPIC_API_KEY` secret. Ordinary recommendations use `claude-sonnet-5`; short turns/search use `claude-haiku-4-5-20251001`; Bartender Carila text uses server-configured `claude-sonnet-4-6`.
 - `GET /api/drink-image` searches Unsplash using the server-only
   `UNSPLASH_ACCESS_KEY` secret and caches successful results at the edge.
 - `GET /health` performs no upstream request and does not disclose secret values.
@@ -35,3 +34,6 @@ Preview, a human accepts Preview, and CARILA WORKS Control promotes the same
 application to Production at `https://bar.carilaworks.com/`. Production
 promotion, custom-domain attachment, and DNS changes remain owned by CARILA
 WORKS Control and must not be performed from this repository.
+
+## Current acceptance
+See `evals/ACCEPTANCE.md` and `docs/UNRESOLVED.md`. Voice requires `OPENAI_API_KEY`. Trial is provisional (20 text / 2 voice per browser per JST day; 5 minutes in normal voice UI). D1 DRINK_DB and secrets are injected by Control; dry-run does not verify runtime bindings. Master maintenance is blocked for recommendation/metadata paths. Static missing assets must return 404; PWA metadata does not imply offline support.
