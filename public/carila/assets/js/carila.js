@@ -6,12 +6,14 @@ const memory = new SessionMemory();
 const byId = (id) => document.getElementById(id);
 const elements = Object.fromEntries(['sceneCaption','carilaWindow','carilaTurn','userTurn','starters','chatForm','messageInput','sendButton','status','historyButton','historyDialog','historyList','closeHistory','leaveButton','farewellDialog','farewellText','restartButton','menuButton','menuDrawer','menuOverlay','closeMenu','voiceButton','voiceButtonLabel','voiceStatus','voiceTranscript','voiceTranscriptList'].map((id) => [id, byId(id)]));
 const bar = document.querySelector('.bar');
+const VOICE_SESSION_MAX_MS = 5 * 60 * 1000;
 let voicePeer = null;
 let voiceStream = null;
 let voiceAudio = null;
 let voiceStarting = false;
 let voiceEvents = null;
 let voiceAssistantTranscript = '';
+let voiceSessionTimer = null;
 const handledVoiceInputItems = new Set();
 
 document.querySelector('.scene').style.setProperty('--scene-image', `url("${UI_CONFIG.imagePath}")`);
@@ -122,6 +124,8 @@ function setVoiceUi(state, detail = '') {
 }
 
 function stopVoice(detail = '') {
+  if (voiceSessionTimer) clearTimeout(voiceSessionTimer);
+  voiceSessionTimer = null;
   if (voiceStream) {
     for (const track of voiceStream.getTracks()) track.stop();
   }
@@ -178,6 +182,10 @@ async function startVoice() {
       if (peer !== voicePeer) return;
       if (peer.connectionState === 'connected') {
         voiceStarting = false;
+        if (voiceSessionTimer) clearTimeout(voiceSessionTimer);
+        voiceSessionTimer = setTimeout(() => {
+          stopVoice('試用中の音声会話は1回5分までです。またお話しください。');
+        }, VOICE_SESSION_MAX_MS);
         setVoiceUi('active');
       } else if (['failed','disconnected','closed'].includes(peer.connectionState)) {
         stopVoice(peer.connectionState === 'disconnected' ? '音声接続が切れました。もう一度お試しください。' : '音声会話を終了しました。');
@@ -239,11 +247,19 @@ async function startVoice() {
       body: offer.sdp,
     });
     const answerSdp = await response.text();
-    if (!response.ok) throw new Error(`realtime session ${response.status}: ${answerSdp.slice(0, 200)}`);
+    if (!response.ok) {
+      let code = '';
+      try { code = JSON.parse(answerSdp)?.code || ''; } catch {}
+      const error = new Error(`realtime session ${response.status}: ${answerSdp.slice(0, 200)}`);
+      error.code = code;
+      throw error;
+    }
     await peer.setRemoteDescription({ type: 'answer', sdp: answerSdp });
   } catch (error) {
     console.error('Carila realtime voice failed', error);
-    stopVoice('音声会話を開始できませんでした。マイク許可と接続設定をご確認ください。');
+    stopVoice(error?.code === 'CARILA_TRIAL_LIMIT_REACHED'
+      ? '本日の音声会話の試用回数に達しました。また明日お越しください。'
+      : '音声会話を開始できませんでした。マイク許可と接続設定をご確認ください。');
   }
 }
 
@@ -261,18 +277,23 @@ async function send(rawMessage) {
   memory.add('user', message); showLatest(); setBusy(true);
   bar.classList.add('is-conversing');
   elements.starters.hidden = true; elements.sceneCaption.hidden = true; elements.messageInput.value = ''; resizeComposer();
-  let failed = false;
+  let failureMessage = '';
   try {
     const response = await fetch(UI_CONFIG.apiPath, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ messages: memory.conversation() }) });
     const data = await response.json();
-    if (!response.ok || typeof data.reply !== 'string') throw new Error(data.requestId || 'chat unavailable');
+    if (!response.ok || typeof data.reply !== 'string') {
+      failureMessage = data?.code === 'CARILA_TRIAL_LIMIT_REACHED'
+        ? '本日のCarilaとの会話はここまでです。また明日お越しください。'
+        : '';
+      throw new Error(data.requestId || data.code || 'chat unavailable');
+    }
     memory.add('assistant', data.reply); showLatest();
   } catch (error) {
     console.error('Carila chat failed', error);
-    failed = true;
+    if (!failureMessage) failureMessage = '……申し訳ありません。少し店内の調子が悪いようです。もう一度お声がけください。';
   } finally {
     setBusy(false);
-    if (failed) elements.status.textContent = '……申し訳ありません。少し店内の調子が悪いようです。もう一度お声がけください。';
+    if (failureMessage) elements.status.textContent = failureMessage;
     if (!isVoiceActive()) elements.messageInput.focus();
   }
 }
@@ -280,19 +301,28 @@ async function send(rawMessage) {
 elements.voiceButton.addEventListener('click', () => { if (isVoiceActive()) stopVoice('音声会話を終了しました。'); else startVoice(); });
 elements.chatForm.addEventListener('submit', (event) => { event.preventDefault(); send(elements.messageInput.value); });
 elements.messageInput.addEventListener('input', resizeComposer);
-elements.messageInput.addEventListener('keydown', (event) => { if (event.key === 'Enter' && (event.ctrlKey || event.metaKey) && !event.isComposing) { event.preventDefault(); elements.chatForm.requestSubmit(); } });
-elements.menuButton.addEventListener('click', () => toggleMenu(elements.menuDrawer.getAttribute('aria-hidden') === 'true'));
-elements.closeMenu.addEventListener('click', () => toggleMenu(false));
-elements.menuOverlay.addEventListener('click', () => toggleMenu(false));
+elements.messageInput.addEventListener('keydown', (event) => {
+  if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) { event.preventDefault(); elements.chatForm.requestSubmit(); }
+});
 elements.historyButton.addEventListener('click', () => {
-  toggleMenu(false);
-  elements.historyList.replaceChildren();
-  memory.history().forEach((message) => { const item = document.createElement('li'); const speaker = document.createElement('strong'); speaker.textContent = message.role === 'assistant' ? 'CARILA' : 'あなた'; const content = message.role === 'assistant' ? formatCarilaText(message.content) : message.content; const text = document.createTextNode(content); item.append(speaker, text); elements.historyList.append(item); });
+  elements.historyList.innerHTML = '';
+  for (const item of memory.conversation()) {
+    const li = document.createElement('li'); li.className = item.role;
+    const speaker = document.createElement('strong'); speaker.textContent = item.role === 'assistant' ? 'Carila' : 'あなた';
+    const text = document.createElement('p'); text.textContent = item.role === 'assistant' ? formatCarilaText(item.content) : item.content;
+    li.append(speaker, text); elements.historyList.append(li);
+  }
   elements.historyDialog.showModal();
 });
 elements.closeHistory.addEventListener('click', () => elements.historyDialog.close());
-elements.leaveButton.addEventListener('click', () => { toggleMenu(false); if (isVoiceActive()) stopVoice(); elements.farewellText.textContent = UI_CONFIG.farewell; elements.farewellDialog.showModal(); });
-elements.restartButton.addEventListener('click', () => location.reload());
-window.addEventListener('pagehide', () => stopVoice());
+elements.menuButton.addEventListener('click', () => toggleMenu(elements.menuDrawer.getAttribute('aria-hidden') === 'true'));
+elements.closeMenu.addEventListener('click', () => toggleMenu(false));
+elements.menuOverlay.addEventListener('click', () => toggleMenu(false));
+elements.leaveButton.addEventListener('click', () => {
+  toggleMenu(false);
+  stopVoice();
+  elements.farewellText.textContent = UI_CONFIG.farewell;
+  elements.farewellDialog.showModal();
+});
+elements.restartButton.addEventListener('click', () => { elements.farewellDialog.close(); location.reload(); });
 resizeComposer();
-setVoiceUi('idle');
