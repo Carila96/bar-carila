@@ -4,6 +4,10 @@ import { CARILA_SYSTEM_PROMPT } from './carila-personality.mjs';
 
 const REALTIME_ENDPOINT = 'https://api.openai.com/v1/realtime/calls';
 const REALTIME_MODEL = 'gpt-realtime-2.1';
+const CLIENT_COOKIE = 'bar_carila_client';
+const DEFAULT_TEXT_DAILY_LIMIT = 20;
+const DEFAULT_VOICE_DAILY_LIMIT = 2;
+let usageTableReady;
 
 function json(body, status = 200, headers = {}) {
   return new Response(JSON.stringify(body), {
@@ -57,6 +61,140 @@ export function createReadOnlyMasterDb(db) {
     exec: typeof db.exec === 'function' ? db.exec.bind(db) : undefined,
     dump: typeof db.dump === 'function' ? db.dump.bind(db) : undefined,
   };
+}
+
+function parsePositiveLimit(value, fallback) {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isInteger(parsed) && parsed > 0 && parsed <= 1000 ? parsed : fallback;
+}
+
+function cookieValue(request, name) {
+  const cookie = request.headers.get('cookie') || '';
+  for (const pair of cookie.split(';')) {
+    const [key, ...rest] = pair.trim().split('=');
+    if (key === name) return decodeURIComponent(rest.join('='));
+  }
+  return '';
+}
+
+function usageIdentity(request) {
+  const existing = cookieValue(request, CLIENT_COOKIE);
+  if (/^[a-f0-9-]{20,64}$/i.test(existing)) return { id: existing, setCookie: '' };
+  const id = crypto.randomUUID();
+  return {
+    id,
+    setCookie: `${CLIENT_COOKIE}=${encodeURIComponent(id)}; Path=/; Max-Age=31536000; HttpOnly; Secure; SameSite=Lax`,
+  };
+}
+
+function jstUsageDate(now = Date.now()) {
+  return new Date(now + (9 * 60 * 60 * 1000)).toISOString().slice(0, 10);
+}
+
+function secondsUntilJstMidnight(now = Date.now()) {
+  const shifted = new Date(now + (9 * 60 * 60 * 1000));
+  const nextMidnightUtc = Date.UTC(
+    shifted.getUTCFullYear(),
+    shifted.getUTCMonth(),
+    shifted.getUTCDate() + 1,
+  ) - (9 * 60 * 60 * 1000);
+  return Math.max(1, Math.ceil((nextMidnightUtc - now) / 1000));
+}
+
+async function ensureUsageTable(db) {
+  if (!db?.prepare) throw new Error('DRINK_DB is not configured');
+  if (!usageTableReady) {
+    usageTableReady = db.prepare(`
+      CREATE TABLE IF NOT EXISTS carila_usage_daily (
+        client_id TEXT NOT NULL,
+        usage_date TEXT NOT NULL,
+        text_turns INTEGER NOT NULL DEFAULT 0,
+        voice_sessions INTEGER NOT NULL DEFAULT 0,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (client_id, usage_date)
+      )
+    `).run().catch((error) => {
+      usageTableReady = undefined;
+      throw error;
+    });
+  }
+  await usageTableReady;
+}
+
+async function consumeUsage(request, env, kind) {
+  const db = env?.DRINK_DB;
+  await ensureUsageTable(db);
+  const identity = usageIdentity(request);
+  const date = jstUsageDate();
+  const isVoice = kind === 'voice';
+  const limit = isVoice
+    ? parsePositiveLimit(env?.CARILA_VOICE_DAILY_LIMIT, DEFAULT_VOICE_DAILY_LIMIT)
+    : parsePositiveLimit(env?.CARILA_TEXT_DAILY_LIMIT, DEFAULT_TEXT_DAILY_LIMIT);
+  const counter = isVoice ? 'voice_sessions' : 'text_turns';
+  const statement = db.prepare(`
+    INSERT INTO carila_usage_daily (client_id, usage_date, text_turns, voice_sessions, updated_at)
+    VALUES (?, ?, ${isVoice ? 0 : 1}, ${isVoice ? 1 : 0}, CURRENT_TIMESTAMP)
+    ON CONFLICT(client_id, usage_date) DO UPDATE SET
+      ${counter} = carila_usage_daily.${counter} + 1,
+      updated_at = CURRENT_TIMESTAMP
+    WHERE carila_usage_daily.${counter} < ?
+    RETURNING text_turns, voice_sessions
+  `).bind(identity.id, date, limit);
+  const row = await statement.first();
+  const currentRow = row || await db.prepare(
+    'SELECT text_turns, voice_sessions FROM carila_usage_daily WHERE client_id = ? AND usage_date = ?',
+  ).bind(identity.id, date).first();
+  const used = Number(currentRow?.[counter] || 0);
+  return {
+    allowed: Boolean(row),
+    kind,
+    limit,
+    used,
+    remaining: Math.max(0, limit - used),
+    retryAfter: secondsUntilJstMidnight(),
+    setCookie: identity.setCookie,
+  };
+}
+
+function withUsageHeaders(response, usage) {
+  const headers = new Headers(response.headers);
+  headers.set('x-carila-trial-limit', String(usage.limit));
+  headers.set('x-carila-trial-remaining', String(usage.remaining));
+  headers.set('x-carila-trial-kind', usage.kind);
+  if (usage.setCookie) headers.set('set-cookie', usage.setCookie);
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
+function usageLimitReached(usage) {
+  const response = json({
+    error: 'Trial usage limit reached',
+    code: 'CARILA_TRIAL_LIMIT_REACHED',
+    kind: usage.kind,
+    limit: usage.limit,
+    reset: 'Asia/Tokyo midnight',
+  }, 429, { 'retry-after': String(usage.retryAfter) });
+  return withUsageHeaders(response, usage);
+}
+
+function usageGuardUnavailable(error) {
+  console.error('Carila usage guard failed', error);
+  return json({
+    error: 'Carila trial is temporarily unavailable',
+    code: 'CARILA_USAGE_GUARD_UNAVAILABLE',
+  }, 503);
+}
+
+async function guardUsage(request, env, kind) {
+  try {
+    const usage = await consumeUsage(request, env, kind);
+    return usage.allowed ? usage : usageLimitReached(usage);
+  } catch (error) {
+    return usageGuardUnavailable(error);
+  }
 }
 
 async function createCarilaRealtimeCall(request, env) {
@@ -126,7 +264,20 @@ async function createCarilaRealtimeCall(request, env) {
 export default {
   async fetch(request, env, context) {
     const { pathname } = new URL(request.url);
-    if (pathname === '/api/carila-realtime-session') return createCarilaRealtimeCall(request, env);
+    if (pathname === '/api/carila-realtime-session') {
+      if (!env?.OPENAI_API_KEY) return createCarilaRealtimeCall(request, env);
+      const guarded = await guardUsage(request, env, 'voice');
+      if (guarded instanceof Response) return guarded;
+      const response = await createCarilaRealtimeCall(request, env);
+      return withUsageHeaders(response, guarded);
+    }
+    if (pathname === '/api/carila-chat') {
+      if (!env?.ANTHROPIC_API_KEY) return baseWorker.fetch(request, env, context);
+      const guarded = await guardUsage(request, env, 'text');
+      if (guarded instanceof Response) return guarded;
+      const response = await baseWorker.fetch(request, env, context);
+      return withUsageHeaders(response, guarded);
+    }
     if (pathname === '/api/chat') {
       const runtimeEnv = env?.DRINK_DB ? { ...env, DRINK_DB: createReadOnlyMasterDb(env.DRINK_DB) } : env;
       return appWorker.fetch(request, runtimeEnv, context);
