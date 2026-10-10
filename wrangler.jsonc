@@ -1,7 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "bar-carila",
-  // worker-carila-realtime.mjs delegates all non-voice routes to worker-v1.9-expansions.mjs.
+  // Realtime/Trial entrypoint: /api/chat delegates to worker-v1.9-expansions.mjs; static requests bypass master maintenance.
   "main": "src/worker-carila-realtime.mjs",
   "compatibility_date": "2026-08-25",
   "workers_dev": true,
@@ -9,6 +9,6 @@
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
-    "not_found_handling": "single-page-application"
+    "not_found_handling": "none"
   }
 }

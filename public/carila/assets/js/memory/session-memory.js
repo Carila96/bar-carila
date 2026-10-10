@@ -14,7 +14,14 @@ export class SessionMemory {
 
   conversation() {
     const firstUser = this.#messages.findIndex(({ role }) => role === 'user');
-    return this.#messages.slice(Math.max(0, firstUser)).map(({ role, content }) => ({ role, content }));
+    const turns = [];
+    for (const { role, content } of this.#messages.slice(Math.max(0, firstUser))) {
+      if (turns.at(-1)?.role === role) turns.at(-1).content = `${turns.at(-1).content}\n${content}`.slice(-4000);
+      else turns.push({ role, content: content.slice(-4000) });
+    }
+    const recent = turns.slice(-39);
+    if (recent[0]?.role === 'assistant') recent.shift();
+    return recent;
   }
   history() { return this.#messages.map((message) => ({ ...message })); }
   get lastExchange() { return this.#messages.slice(-2); }
