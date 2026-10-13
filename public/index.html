@@ -202,7 +202,7 @@
 </div>
 
 <!-- Menu -->
-<button class="menu-btn" onclick="toggleMenu()"><span></span><span></span><span></span></button>
+<button class="menu-btn" type="button" aria-label="メニューを開く" onclick="toggleMenu()"><span></span><span></span><span></span></button>
 <div class="menu-overlay" id="menuOverlay" onclick="toggleMenu()"></div>
 <div class="menu-drawer" id="menuDrawer">
   <div class="menu-header"><div class="menu-title">Bar Carila</div><button class="menu-close" onclick="toggleMenu()">✕</button></div>
@@ -226,7 +226,7 @@
     <div>🔴 希少（81〜100）置いていないことが多いです</div>
   </div>
   <span class="menu-item disabled">📖 お酒の豆知識 <span class="menu-badge">近日公開</span></span>
-  <div class="menu-section-title">プレミアム</div>
+  <div class="menu-section-title">Carilaと会話</div>
   <a class="menu-item" href="/carila/">🎙️ バーテンダーと話す</a>
   <span class="menu-item disabled">⭐ お気に入り保存</span>
   <div style="padding:16px 20px;font-size:11px;color:var(--muted);border-top:1px solid var(--border);line-height:1.7;">
@@ -255,7 +255,7 @@ Bar CarilaはバーテンダーCarilaが営む架空のバーです。<div role=
 
 
 <script src="/assets/js/amazon-links.js?v=20261005-ids" defer></script>
-<script src="/assets/js/main.js" defer></script>
+<script src="/assets/js/main.js?v=20261010-acceptance" defer></script>
 <script>(()=>{const load=(img)=>{if(!img||img.src||!img.dataset.src)return;img.src=img.dataset.src;delete img.dataset.src;};document.querySelectorAll('.panda-img.active').forEach(load);const stage=document.getElementById('pandaStage');if(stage)new MutationObserver((records)=>{for(const r of records){const img=r.target;if(img.classList?.contains('panda-img')&&img.classList.contains('active'))load(img);}}).observe(stage,{subtree:true,attributes:true,attributeFilter:['class']});const startAnalytics=()=>{window.dataLayer=window.dataLayer||[];window.gtag=function(){dataLayer.push(arguments)};gtag('js',new Date());gtag('config','G-124MM8RN7Z');const s=document.createElement('script');s.async=true;s.src='https://www.googletagmanager.com/gtag/js?id=G-124MM8RN7Z';document.head.appendChild(s);};window.addEventListener('load',()=>{'requestIdleCallback'in window?requestIdleCallback(startAnalytics,{timeout:2000}):setTimeout(startAnalytics,800)},{once:true});})();</script>
 </body>
 </html>

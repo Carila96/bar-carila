@@ -1,5 +1,6 @@
 import appWorker from './worker-v1.9-expansions.mjs';
 import baseWorker from './worker-v1.9.mjs';
+import { isValidCarilaConversation } from './worker.mjs';
 import { CARILA_SYSTEM_PROMPT } from './carila-personality.mjs';
 
 const REALTIME_ENDPOINT = 'https://api.openai.com/v1/realtime/calls';
@@ -7,7 +8,7 @@ const REALTIME_MODEL = 'gpt-realtime-2.1';
 const CLIENT_COOKIE = 'bar_carila_client';
 const DEFAULT_TEXT_DAILY_LIMIT = 20;
 const DEFAULT_VOICE_DAILY_LIMIT = 2;
-let usageTableReady;
+const usageTablesReady = new WeakMap();
 
 function json(body, status = 200, headers = {}) {
   return new Response(JSON.stringify(body), {
@@ -72,7 +73,9 @@ function cookieValue(request, name) {
   const cookie = request.headers.get('cookie') || '';
   for (const pair of cookie.split(';')) {
     const [key, ...rest] = pair.trim().split('=');
-    if (key === name) return decodeURIComponent(rest.join('='));
+    if (key === name) {
+      try { return decodeURIComponent(rest.join('=')); } catch { return ''; }
+    }
   }
   return '';
 }
@@ -103,8 +106,8 @@ function secondsUntilJstMidnight(now = Date.now()) {
 
 async function ensureUsageTable(db) {
   if (!db?.prepare) throw new Error('DRINK_DB is not configured');
-  if (!usageTableReady) {
-    usageTableReady = db.prepare(`
+  if (!usageTablesReady.has(db)) {
+    const ready = db.prepare(`
       CREATE TABLE IF NOT EXISTS carila_usage_daily (
         client_id TEXT NOT NULL,
         usage_date TEXT NOT NULL,
@@ -114,11 +117,12 @@ async function ensureUsageTable(db) {
         PRIMARY KEY (client_id, usage_date)
       )
     `).run().catch((error) => {
-      usageTableReady = undefined;
+      usageTablesReady.delete(db);
       throw error;
     });
+    usageTablesReady.set(db, ready);
   }
-  await usageTableReady;
+  await usageTablesReady.get(db);
 }
 
 async function consumeUsage(request, env, kind) {
@@ -243,6 +247,7 @@ async function createCarilaRealtimeCall(request, env) {
       method: 'POST',
       headers: { authorization: `Bearer ${env.OPENAI_API_KEY}` },
       body: form,
+      signal: AbortSignal.timeout(30_000),
     });
   } catch (error) {
     console.error('Carila realtime call failed', error);
@@ -261,27 +266,48 @@ async function createCarilaRealtimeCall(request, env) {
   });
 }
 
-export default {
+const runtimeWorker = {
   async fetch(request, env, context) {
     const { pathname } = new URL(request.url);
     if (pathname === '/api/carila-realtime-session') {
+      if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405, { allow: 'POST' });
       if (!env?.OPENAI_API_KEY) return createCarilaRealtimeCall(request, env);
+      if (!(request.headers.get('content-type') || '').startsWith('application/sdp')) return json({ error: 'Expected application/sdp' }, 415);
+      const offer = await request.clone().text();
+      if (!offer || offer.length > 100_000) return json({ error: 'Invalid SDP offer' }, 400);
       const guarded = await guardUsage(request, env, 'voice');
       if (guarded instanceof Response) return guarded;
       const response = await createCarilaRealtimeCall(request, env);
       return withUsageHeaders(response, guarded);
     }
     if (pathname === '/api/carila-chat') {
-      if (!env?.ANTHROPIC_API_KEY) return baseWorker.fetch(request, env, context);
+      if (request.method !== 'POST' || !env?.ANTHROPIC_API_KEY) return baseWorker.fetch(request, env, context);
+      let body;
+      try { body = await request.clone().json(); } catch { return json({ error: 'Invalid JSON body' }, 400); }
+      if (!isValidCarilaConversation(body?.messages)) return json({ error: 'Invalid conversation' }, 400);
       const guarded = await guardUsage(request, env, 'text');
       if (guarded instanceof Response) return guarded;
       const response = await baseWorker.fetch(request, env, context);
       return withUsageHeaders(response, guarded);
     }
-    if (pathname === '/api/chat') {
+    if (pathname === '/api/chat' || pathname === '/api/drink-meta') {
       const runtimeEnv = env?.DRINK_DB ? { ...env, DRINK_DB: createReadOnlyMasterDb(env.DRINK_DB) } : env;
+      if (pathname === '/api/drink-meta') return baseWorker.fetch(request, runtimeEnv, context);
       return appWorker.fetch(request, runtimeEnv, context);
     }
     return baseWorker.fetch(request, env, context);
+  },
+};
+
+export default {
+  async fetch(request, env, context) {
+    const response = await runtimeWorker.fetch(request, env, context);
+    const headers = new Headers(response.headers);
+    headers.set('x-content-type-options', 'nosniff');
+    headers.set('referrer-policy', 'strict-origin-when-cross-origin');
+    headers.set('x-frame-options', 'DENY');
+    headers.set('content-security-policy', "base-uri 'self'; object-src 'none'; frame-ancestors 'none'");
+    headers.set('permissions-policy', 'camera=(), microphone=(self), geolocation=()');
+    return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
   },
 };

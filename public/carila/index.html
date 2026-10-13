@@ -9,8 +9,8 @@
   <meta name="theme-color" content="#0a0c0a">
   <meta name="description" content="バーテンダーCarilaと静かなカウンターで話す、テキスト・音声会話の実験室。">
   <title>バーテンダー Carila | BarCarila</title>
-  <link rel="stylesheet" href="/carila/assets/css/carila.css">
-  <link rel="stylesheet" href="/carila/assets/css/voice.css">
+  <link rel="stylesheet" href="/carila/assets/css/carila.css?v=20261010-acceptance">
+  <link rel="stylesheet" href="/carila/assets/css/voice.css?v=20261010-acceptance">
 </head>
 <body>
   <main class="bar" aria-labelledby="title">
@@ -46,12 +46,14 @@
         <button id="sendButton" type="submit"><span>送信</span><span aria-hidden="true">→</span></button>
       </form>
       <p class="composer__hint">短い一言でも、まとまらない長い話でも大丈夫です。</p>
+      <p class="composer__hint">Enterで改行、Ctrl / ⌘ + Enterで送信できます。</p>
+      <p class="composer__hint">試用中：テキストは1日20回、音声は1日2回・1回5分まで。日本時間の午前0時に回数が戻ります。</p>
       <p id="status" class="status" role="status"></p>
     </section>
   </main>
 
   <div id="menuOverlay" class="menu-overlay" hidden></div>
-  <aside id="menuDrawer" class="menu-drawer" aria-label="メニュー" aria-hidden="true">
+  <aside id="menuDrawer" class="menu-drawer" aria-label="メニュー" aria-hidden="true" inert>
     <div class="menu-drawer__header"><p>BAR CARILA</p><button id="closeMenu" type="button" aria-label="メニューを閉じる">×</button></div>
     <button id="leaveButton" class="menu-item" type="button">会話を終える</button>
     <a class="menu-item" href="/">BarCarila トップへ</a>
@@ -59,7 +61,7 @@
 
   <dialog id="historyDialog" class="history-dialog"><div class="dialog__header"><h2>今夜の会話</h2><button id="closeHistory" class="quiet-button" type="button">戻る</button></div><div class="history-dialog__body"><ol id="historyList"></ol></div></dialog>
   <dialog id="farewellDialog" class="farewell"><p id="farewellText"></p><button id="restartButton" type="button">もう一度、扉を開ける</button></dialog>
-  <script type="module" src="/carila/assets/js/carila.js"></script>
+  <script type="module" src="/carila/assets/js/carila.js?v=20261010-acceptance"></script>
 <div role="navigation" aria-label="サイトポリシー" style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap;padding:14px 8px;font-size:12px;line-height:1.8"><a href="https://carilaworks.com/privacy/">Privacy</a> · <a href="https://carilaworks.com/terms/">Terms</a> · <a href="https://carilaworks.com/contact/">Contact</a></div></body>
 </html>
 

@@ -1,5 +1,5 @@
 import { UI_CONFIG } from './config/ui-config.js';
-import { SessionMemory } from './memory/session-memory.js';
+import { SessionMemory } from './memory/session-memory.js?v=20261010-acceptance';
 import { formatCarilaText } from './text-format.js';
 
 const memory = new SessionMemory();
@@ -14,6 +14,9 @@ let voiceStarting = false;
 let voiceEvents = null;
 let voiceAssistantTranscript = '';
 let voiceSessionTimer = null;
+let voiceConnectTimer = null;
+let voiceStartGeneration = 0;
+let voiceRequestAbort = null;
 const handledVoiceInputItems = new Set();
 
 document.querySelector('.scene').style.setProperty('--scene-image', `url("${UI_CONFIG.imagePath}")`);
@@ -28,7 +31,9 @@ for (const label of UI_CONFIG.starters) {
 }
 
 function showLatest() {
-  const [guest, carila] = memory.lastExchange;
+  const history = memory.history();
+  const guest = history.findLast((message) => message.role === 'user');
+  const carila = history.findLast((message) => message.role === 'assistant');
   if (guest?.role === 'user') {
     elements.userTurn.hidden = false;
     elements.userTurn.querySelector('p').textContent = guest.content;
@@ -100,6 +105,7 @@ function resizeComposer() {
 function toggleMenu(open) {
   elements.menuDrawer.classList.toggle('is-open', open);
   elements.menuDrawer.setAttribute('aria-hidden', String(!open));
+  elements.menuDrawer.inert = !open;
   elements.menuButton.setAttribute('aria-expanded', String(open));
   elements.menuButton.setAttribute('aria-label', open ? 'メニューを閉じる' : 'メニューを開く');
   elements.menuOverlay.hidden = !open;
@@ -124,12 +130,19 @@ function setVoiceUi(state, detail = '') {
 }
 
 function stopVoice(detail = '') {
+  voiceStartGeneration += 1;
+  if (voiceConnectTimer) clearTimeout(voiceConnectTimer);
+  voiceConnectTimer = null;
+  voiceRequestAbort?.abort();
+  voiceRequestAbort = null;
   if (voiceSessionTimer) clearTimeout(voiceSessionTimer);
   voiceSessionTimer = null;
   if (voiceStream) {
     for (const track of voiceStream.getTracks()) track.stop();
   }
-  if (voicePeer) voicePeer.close();
+  const peer = voicePeer;
+  voicePeer = null;
+  if (peer) peer.close();
   if (voiceAudio) {
     voiceAudio.pause();
     voiceAudio.srcObject = null;
@@ -153,6 +166,8 @@ async function startVoice() {
   }
 
   voiceStarting = true;
+  const generation = ++voiceStartGeneration;
+  voiceConnectTimer = setTimeout(() => stopVoice('音声の接続に時間がかかっています。もう一度お試しください。'), 30_000);
   setVoiceUi('connecting');
   bar.classList.add('is-conversing');
   elements.starters.hidden = false;
@@ -161,10 +176,15 @@ async function startVoice() {
   elements.voiceTranscript.hidden = false;
 
   try {
-    voiceStream = await navigator.mediaDevices.getUserMedia({
+    const stream = await navigator.mediaDevices.getUserMedia({
       audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
     });
 
+    if (generation !== voiceStartGeneration) {
+      for (const track of stream.getTracks()) track.stop();
+      return;
+    }
+    voiceStream = stream;
     const peer = new RTCPeerConnection();
     voicePeer = peer;
     voiceAudio = document.createElement('audio');
@@ -175,15 +195,16 @@ async function startVoice() {
 
     peer.ontrack = (event) => {
       const [stream] = event.streams;
-      if (stream) voiceAudio.srcObject = stream;
+      if (peer === voicePeer && stream && voiceAudio) voiceAudio.srcObject = stream;
     };
 
     peer.onconnectionstatechange = () => {
       if (peer !== voicePeer) return;
       if (peer.connectionState === 'connected') {
         voiceStarting = false;
-        if (voiceSessionTimer) clearTimeout(voiceSessionTimer);
-        voiceSessionTimer = setTimeout(() => {
+        if (voiceConnectTimer) clearTimeout(voiceConnectTimer);
+        voiceConnectTimer = null;
+        if (!voiceSessionTimer) voiceSessionTimer = setTimeout(() => {
           stopVoice('試用中の音声会話は1回5分までです。またお話しください。');
         }, VOICE_SESSION_MAX_MS);
         setVoiceUi('active');
@@ -199,6 +220,7 @@ async function startVoice() {
       requestInitialVoiceGreeting(events);
     });
     events.addEventListener('message', (event) => {
+      if (peer !== voicePeer) return;
       try {
         const data = JSON.parse(event.data);
         if (data.type === 'input_audio_buffer.speech_started') elements.voiceStatus.textContent = '聞いています…';
@@ -233,7 +255,10 @@ async function startVoice() {
           }
         }
         if (data.type === 'response.done') elements.voiceStatus.textContent = 'そのまま話してください。';
-        if (data.type === 'error') console.error('Carila realtime event error', data.error || data);
+        if (data.type === 'error') {
+          console.error('Carila realtime event error', data.error || data);
+          stopVoice('音声会話でエラーが発生しました。もう一度お試しください。');
+        }
       } catch {}
     });
 
@@ -241,10 +266,13 @@ async function startVoice() {
     const offer = await peer.createOffer();
     await peer.setLocalDescription(offer);
 
+    if (generation !== voiceStartGeneration) return;
+    voiceRequestAbort = new AbortController();
     const response = await fetch('/api/carila-realtime-session', {
       method: 'POST',
       headers: { 'content-type': 'application/sdp' },
       body: offer.sdp,
+      signal: voiceRequestAbort.signal,
     });
     const answerSdp = await response.text();
     if (!response.ok) {
@@ -254,16 +282,21 @@ async function startVoice() {
       error.code = code;
       throw error;
     }
+    if (generation !== voiceStartGeneration) return;
     await peer.setRemoteDescription({ type: 'answer', sdp: answerSdp });
   } catch (error) {
+    if (generation !== voiceStartGeneration) return;
     console.error('Carila realtime voice failed', error);
     stopVoice(error?.code === 'CARILA_TRIAL_LIMIT_REACHED'
       ? '本日の音声会話の試用回数に達しました。また明日お越しください。'
-      : '音声会話を開始できませんでした。マイク許可と接続設定をご確認ください。');
+      : error?.code === 'CARILA_USAGE_GUARD_UNAVAILABLE'
+        ? '音声会話は一時的に利用できません。時間をおいてお試しください。'
+        : '音声会話を開始できませんでした。マイク許可と接続設定をご確認ください。');
   }
 }
 
 function setBusy(busy) {
+  elements.voiceButton.disabled = busy;
   document.querySelector('.counter').setAttribute('aria-busy', String(busy));
   if (!isVoiceActive() && !voiceStarting) {
     elements.sendButton.disabled = busy; elements.messageInput.disabled = busy;
@@ -279,12 +312,14 @@ async function send(rawMessage) {
   elements.starters.hidden = true; elements.sceneCaption.hidden = true; elements.messageInput.value = ''; resizeComposer();
   let failureMessage = '';
   try {
-    const response = await fetch(UI_CONFIG.apiPath, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ messages: memory.conversation() }) });
+    const response = await fetch(UI_CONFIG.apiPath, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ messages: memory.conversation() }), signal: AbortSignal.timeout(30_000) });
     const data = await response.json();
     if (!response.ok || typeof data.reply !== 'string') {
       failureMessage = data?.code === 'CARILA_TRIAL_LIMIT_REACHED'
-        ? '本日のCarilaとの会話はここまでです。また明日お越しください。'
-        : '';
+        ? '本日のCarilaとの会話はここまでです。日本時間の午前0時に再開できます。'
+        : data?.code === 'CARILA_USAGE_GUARD_UNAVAILABLE'
+          ? '会話は一時的に利用できません。時間をおいてお試しください。'
+          : '';
       throw new Error(data.requestId || data.code || 'chat unavailable');
     }
     memory.add('assistant', data.reply); showLatest();
@@ -312,8 +347,9 @@ elements.historyButton.addEventListener('click', () => {
   elements.historyDialog.showModal();
 });
 elements.closeHistory.addEventListener('click', () => elements.historyDialog.close());
-elements.leaveButton.addEventListener('click', () => { toggleMenu(false); if (isVoiceActive()) stopVoice(); elements.farewellText.textContent = UI_CONFIG.farewell; elements.farewellDialog.showModal(); });
+elements.leaveButton.addEventListener('click', () => { toggleMenu(false); stopVoice(); elements.farewellText.textContent = UI_CONFIG.farewell; elements.farewellDialog.showModal(); });
 elements.restartButton.addEventListener('click', () => location.reload());
 window.addEventListener('pagehide', () => stopVoice());
+window.addEventListener('keydown', (event) => { if (event.key === 'Escape') toggleMenu(false); });
 resizeComposer();
 setVoiceUi('idle');

@@ -1,0 +1,375 @@
+{
+  "total": 1500,
+  "base": 400,
+  "expansion": 1100,
+  "uniqueKeys": 1500,
+  "aliasKeys": 2786,
+  "missing": {
+    "nameJa": 388,
+    "recipe": 400,
+    "glass": 1500,
+    "garnish": 1500,
+    "imageQuery": 400,
+    "category": 400,
+    "drinkKind": 400
+  },
+  "categories": {
+    "(base: absent)": 400,
+    "cocktail": 1100
+  },
+  "errors": 0,
+  "reviewCount": 49,
+  "findings": [
+    {
+      "kind": "unit-review",
+      "batch": "B17",
+      "name": "Sherry Cobbler",
+      "detail": "Orange Slices: 2",
+      "severity": "review"
+    },
+    {
+      "kind": "unit-review",
+      "batch": "B19",
+      "name": "Calvados Sour",
+      "detail": "Egg White: optional",
+      "severity": "review"
+    },
+    {
+      "kind": "unit-review",
+      "batch": "B19",
+      "name": "Port Cobbler",
+      "detail": "Orange Slices: 2",
+      "severity": "review"
+    },
+    {
+      "kind": "shared-recipe",
+      "batch": "B20",
+      "name": "Mexican Firing Squad",
+      "detail": "Mexican Firing Squad Special",
+      "severity": "review"
+    },
+    {
+      "kind": "unit-review",
+      "batch": "B21",
+      "name": "Bloodhound",
+      "detail": "Strawberries: 2-3",
+      "severity": "review"
+    },
+    {
+      "kind": "unit-review",
+      "batch": "B21",
+      "name": "Cooperstown",
+      "detail": "Mint Leaves: 2-3",
+      "severity": "review"
+    },
+    {
+      "kind": "unit-review",
+      "batch": "B21",
+      "name": "Dubonnet Cocktail",
+      "detail": "Lemon Twist: 1",
+      "severity": "review"
+    },
+    {
+      "kind": "shared-recipe",
+      "batch": "B21",
+      "name": "Savoy Tango",
+      "detail": "Warday’s Cocktail",
+      "severity": "review"
+    },
+    {
+      "kind": "unit-review",
+      "batch": "B22",
+      "name": "Cafe Brulot",
+      "detail": "Orange Peel: 1 strip",
+      "severity": "review"
+    },
+    {
+      "kind": "unit-review",
+      "batch": "B22",
+      "name": "Cafe Brulot",
+      "detail": "Cloves: 3",
+      "severity": "review"
+    },
+    {
+      "kind": "amount-review",
+      "batch": "B23",
+      "name": "Spaghett",
+      "detail": "Lager Beer: 300ml",
+      "severity": "review"
+    },
+    {
+      "kind": "amount-review",
+      "batch": "B23",
+      "name": "Chelada",
+      "detail": "Mexican Lager: 330ml",
+      "severity": "review"
+    },
+    {
+      "kind": "volume-review",
+      "batch": "B23",
+      "name": "Chelada",
+      "detail": "360ml",
+      "severity": "review"
+    },
+    {
+      "kind": "shared-recipe",
+      "batch": "B24",
+      "name": "Astoria Cocktail",
+      "detail": "Marguerite",
+      "severity": "review"
+    },
+    {
+      "kind": "shared-recipe",
+      "batch": "B25",
+      "name": "RAC Cocktail",
+      "detail": "Astoria Cocktail",
+      "severity": "review"
+    },
+    {
+      "kind": "shared-recipe",
+      "batch": "B25",
+      "name": "Porto Tonico",
+      "detail": "White Port and Tonic",
+      "severity": "review"
+    },
+    {
+      "kind": "unit-review",
+      "batch": "B27",
+      "name": "Duppy Cocktail",
+      "detail": "Cloves: 2",
+      "severity": "review"
+    },
+    {
+      "kind": "shared-recipe",
+      "batch": "B28",
+      "name": "Judge Jr.",
+      "detail": "Hasty Cocktail",
+      "severity": "review"
+    },
+    {
+      "kind": "shared-recipe",
+      "batch": "B29",
+      "name": "Reform Cocktail",
+      "detail": "Nineteen Twenty",
+      "severity": "review"
+    },
+    {
+      "kind": "unit-review",
+      "batch": "B30",
+      "name": "Picante de la Casa",
+      "detail": "Coriander Leaves: 6",
+      "severity": "review"
+    },
+    {
+      "kind": "unit-review",
+      "batch": "B30",
+      "name": "Tomatini",
+      "detail": "Fresh Tomato: 2 chunks",
+      "severity": "review"
+    },
+    {
+      "kind": "unit-review",
+      "batch": "B30",
+      "name": "Green Park",
+      "detail": "Basil Leaves: 6",
+      "severity": "review"
+    },
+    {
+      "kind": "amount-review",
+      "batch": "B31",
+      "name": "Boilermaker",
+      "detail": "Beer: 330ml",
+      "severity": "review"
+    },
+    {
+      "kind": "volume-review",
+      "batch": "B31",
+      "name": "Boilermaker",
+      "detail": "375ml",
+      "severity": "review"
+    },
+    {
+      "kind": "alias-collision",
+      "batch": "B32",
+      "name": "Casino Cocktail",
+      "detail": "カジノ => casino",
+      "severity": "review"
+    },
+    {
+      "kind": "shared-recipe",
+      "batch": "B33",
+      "name": "Jack Kearns Cocktail No. 2",
+      "detail": "Jack Kearns Cocktail No. 1",
+      "severity": "review"
+    },
+    {
+      "kind": "unit-review",
+      "batch": "B34",
+      "name": "Lemon Pie Cocktail",
+      "detail": "Lemonade: 1 bottle",
+      "severity": "review"
+    },
+    {
+      "kind": "shared-recipe",
+      "batch": "B34",
+      "name": "Lone Tree Cocktail",
+      "detail": "Reform Cocktail",
+      "severity": "review"
+    },
+    {
+      "kind": "unit-review",
+      "batch": "B34",
+      "name": "Mr. Manhattan Cocktail",
+      "detail": "Sugar: 1 lump",
+      "severity": "review"
+    },
+    {
+      "kind": "unit-review",
+      "batch": "B35",
+      "name": "New York Cocktail",
+      "detail": "Sugar: 1 lump",
+      "severity": "review"
+    },
+    {
+      "kind": "shared-recipe",
+      "batch": "B35",
+      "name": "Odd McIntyre Cocktail",
+      "detail": "Hoop La Cocktail",
+      "severity": "review"
+    },
+    {
+      "kind": "unit-review",
+      "batch": "B35",
+      "name": "Opal Cocktail",
+      "detail": "Sugar: small amount",
+      "severity": "review"
+    },
+    {
+      "kind": "unit-review",
+      "batch": "B35",
+      "name": "Pauline Cocktail",
+      "detail": "Nutmeg: small amount",
+      "severity": "review"
+    },
+    {
+      "kind": "shared-recipe",
+      "batch": "B36",
+      "name": "Poker Cocktail",
+      "detail": "Little Princess Cocktail",
+      "severity": "review"
+    },
+    {
+      "kind": "alias-collision",
+      "batch": "B36",
+      "name": "Princess Mary Cocktail",
+      "detail": "プリンセス・メアリー => princessmary",
+      "severity": "review"
+    },
+    {
+      "kind": "shared-recipe",
+      "batch": "B36",
+      "name": "R.A.G. Special Cocktail",
+      "detail": "Lone Tree Cocktail",
+      "severity": "review"
+    },
+    {
+      "kind": "unit-review",
+      "batch": "B36",
+      "name": "Raspberry Cocktail",
+      "detail": "Fresh raspberries: 6",
+      "severity": "review"
+    },
+    {
+      "kind": "unit-review",
+      "batch": "B37",
+      "name": "September Morn Cocktail",
+      "detail": "Lime Juice: 1/2 lime",
+      "severity": "review"
+    },
+    {
+      "kind": "unit-review",
+      "batch": "B37",
+      "name": "Soda Cocktail",
+      "detail": "Sugar Cube: 1",
+      "severity": "review"
+    },
+    {
+      "kind": "unit-review",
+      "batch": "B37",
+      "name": "Some Moth Cocktail",
+      "detail": "Pearl Onion: 1",
+      "severity": "review"
+    },
+    {
+      "kind": "unit-review",
+      "batch": "B38",
+      "name": "Toddy's Cocktail",
+      "detail": "Sugar: 1 lump",
+      "severity": "review"
+    },
+    {
+      "kind": "unit-review",
+      "batch": "B38",
+      "name": "Toddy's Cocktail",
+      "detail": "Water: small amount",
+      "severity": "review"
+    },
+    {
+      "kind": "shared-recipe",
+      "batch": "B38",
+      "name": "Trinity Cocktail",
+      "detail": "Polo Cocktail No. 1",
+      "severity": "review"
+    },
+    {
+      "kind": "shared-recipe",
+      "batch": "B38",
+      "name": "Velocity Cocktail",
+      "detail": "Homestead Cocktail",
+      "severity": "review"
+    },
+    {
+      "kind": "unit-review",
+      "batch": "B39",
+      "name": "Westbrook Cocktail",
+      "detail": "Castor Sugar: small amount",
+      "severity": "review"
+    },
+    {
+      "kind": "unit-review",
+      "batch": "B40",
+      "name": "Daiquiri Old-Fashioned",
+      "detail": "Sugar: 1 lump",
+      "severity": "review"
+    },
+    {
+      "kind": "shared-recipe",
+      "batch": "B40",
+      "name": "Duchess",
+      "detail": "Duchess Cocktail",
+      "severity": "review"
+    },
+    {
+      "kind": "unit-review",
+      "batch": "B40",
+      "name": "Eastern Sin",
+      "detail": "Pineapple: 1 chunk",
+      "severity": "review"
+    },
+    {
+      "kind": "unit-review",
+      "batch": "B41",
+      "name": "IBA Tiki",
+      "detail": "Ginger Slice: 1 pc",
+      "severity": "review"
+    }
+  ],
+  "limitations": [
+    "Repository embedded master only; deployed D1 contents were not read.",
+    "Base400 is rarity/identity data, not a complete recipe dataset.",
+    "No externally verified recipe correctness or semantic Japanese-English match.",
+    "Shared recipes and alias collisions require contextual review; no automatic merge.",
+    "Image queries are not image URLs; remote availability not verified.",
+    "No stored slug/id or affiliate SKU per drink: runtime/generated fields cannot be audited as persisted fields."
+  ]
+}

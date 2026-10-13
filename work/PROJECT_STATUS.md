@@ -1,62 +1,56 @@
 # PROJECT_STATUS
-
-最終更新: 2026-10-10
-現在のbranch: `main`
-最新main: `da04be9fb806fae4913a07dfcfe963bae15ae216`（PR #123 Merge後のstatus同期時点）
+更新: 2026-10-10 — BAR CARILA残件Acceptance / 品質監査
+開始main: `4168265bb86997325fcf726fac88dcf1b029bef4`
+作業branch: `audit/bar-carila-acceptance-20261010`
+最終PR / CI / merged SHA: このbranchのGitHub PRとChecksを正本とする。開始SHAをlatest mainとして再利用しない。
 
 ## 現在地
-- Cloudflare D1 Freeの日次rows readは2026-10-09に上限へ到達し、BAR CARILAのrequest-time master確認が主因と特定済み。
-- PR #121で静的/非chat requestのB09〜B41 batch確認stormを停止、PR #122で`/api/chat`内の固定master DDL/seed/COUNTもread-only runtime gateで除去済み。既知酒推薦はindexed point lookupのみ維持する。
-- `drink_images` は永続cacheとしてD1継続。Cloudflare Cache HIT時はD1 0、MISS時のみpoint lookupする。
-- ドリンクマスター1500杯到達済み。自動拡張停止済み。Open Recommendation方針を維持する。
-- `/carila`のテキスト会話とRealtime / WebRTC音声会話は実装済み。PR #106以降のiPhone実機確認（日本語・挨拶・voice・配置・割り込み）は継続課題。
-- Bartender Carilaの正式な無料/有料境界、価格、Stripe等は未確定。過去の月額1,000円案は仮説として保持し、確定仕様にはしない。
-- PR #123「Add provisional usage limits for Bartender Carila trial」はMerge済み。課金前の無制限API消費を避ける暫定Trialコストガードがmainへ入った。
+- GitHub connectorでRepository metadata/main/branch/Open PR/実コードを再取得。旧statusのSHAは陳腐化。
+- PR #121/#122/#123はmerged確認済み。TrialとD1軽量化を維持し、残った`/api/drink-meta`初期化経路もread-only化。
+- Production公開なし。Controlテスト版更新とiPhone Acceptanceが次。Stripe、価格、正式無料/有料境界は未確定。
+- 詳細: `evals/ACCEPTANCE.md`。残件: `docs/UNRESOLVED.md`。再現監査: `scripts/audit-drink-master.mjs` / `docs/drink-master-audit-20261010.json`。
 
-## PR #123の変更
-- `docs/CARILA_SERVICE_PLAN.md` を追加し、サービス/収益化方針を未確定事項として永続化。
-- `/api/carila-chat` に匿名ブラウザID単位の20 user turn / 日の上限を追加。
-- `/api/carila-realtime-session` に匿名ブラウザID単位の2 session / 日の上限を追加。
-- 日次リセットはAsia/Tokyo 00:00。既存D1 `DRINK_DB` に小さな専用 `carila_usage_daily` tableを遅延作成して使用する。
-- raw IPは保存せず、HttpOnly / Secure / SameSite=Lax cookieのランダムIDで日次usageを識別する。
-- 上限到達時はAnthropic/OpenAIへ送信せずHTTP 429。usage guard自体が使えない場合はfail-openせずCarila会話を503で保護する。
-- 音声は通常UIで1 session最大5分に設定。
-- `/api/chat`のお酒提案、Known Master、検索、Amazon/Rakuten導線は今回の上限対象外。
-- 初回CIで既存の安全な履歴表示/IME挙動を誤って巻き戻したことを検知。mainの`createTextNode`履歴表示、`replaceChildren`、IME composing guard、pagehide stop等を復元してから再検証した。
+## 修正
+1. Trial: method/body検証をcounter前へ移動。malformed cookieを安全に更新。table準備をDB binding別に管理。atomic UPSERT/JST日付キーを維持。
+2. 会話: API失敗再送・音声からtextへの切替で連続roleをAPI payloadだけ正規化。直近39件/各4000文字。全画面履歴は保持。送信直後のユーザー発言を表示。
+3. 音声: 30秒接続timeout/abort、遅れたマイク許可cleanup、旧peerイベント無効化、pagehide/終了中cancel、error停止。5分timerを重複connectedで延長しない。text送信中voice開始を抑制。
+4. D1: chatに加えmetadataも固定master DDL/seed/COUNTを抑止。indexed point lookupとdrink_images永続cacheを維持。
+5. Security: 通常BAR推薦/recipe/history/log/message/search fallbackをescape。native shareのデータ入りonclick廃止。assets/APIへnosniff/referrer/frame protections、限定CSP、microphone self policy。
+6. UX: 暫定上限/JST0時reset、Enter改行/Ctrl・Command+Enter送信を表示。premium見出しを会話へ。メニュー名、閉じたCarila drawer inert、voice target44px/説明色、asset cache-busting。
+7. Assets: manifest MIME明示。欠落assetにHTML200を返すSPA fallback停止。Previewで配信確認必要。
 
-## D1影響
-- 2026-10-09に解消したmaster query stormは再導入しない。`carila_usage_daily` は1500杯master確認とは独立した1行単位の日次counter。
-- Trial会話1 requestにつきusage counterのpoint write/readが発生するためD1消費は0ではないが、上限自体が20 text + 2 voice session / browser / dayであり、以前の数万query stormとは構造が異なる。
-- 将来アカウント/課金基盤を導入する際はusage ledgerの保存先も再評価する。
+## 検証実結果
+- Baseline npm test: 240/240 PASS。修正suite: 255/255 PASS（実SQLite quota/日付境界/fail-closed、UI lifecycle/IME、安全表示、metadata point lookup）。
+- validate:drink-master-v1.9 PASS。Wrangler deploy --dry-run PASS（upload/deployなし）。JS syntax / diff whitespace PASS。
+- Production実操作: Carila初回表示、連続2回日本語text、会話log、Negroni検索、Amazon/Rakuten導線。実text2回、実voice upstream0回。
+- Production HTTP: main/Carila/icons/CSS/JS/manifest200、health200、未知API404。欠落PNGはHTML200、manifestはoctet-streamだったため修正。metadata curl timeout。更新済codeの公開PASSとは扱わない。
+- consoleでcloud extension由来metadata errorを観測、アプリerrorと分離。
+- local Wrangler devはuv_interface_addresses環境エラーで起動不可。test/dry-run成功、更新後実ブラウザ/asset routingはPreview確認。
 
-## 検証
-- GitHub connectorでRepository、現行Realtime worker、UI、tests、D1 bindingを確認して実装。
-- `test/carila-realtime.test.mjs` にD1 usage mock、2 session許可→3回目429、upstreamが2回しか呼ばれないこと、5分UI cap、default limitsの回帰テストを追加。
-- CI run #841: 240 tests中239 PASS / 1 FAIL。原因は今回の全ファイル置換で既存safe history renderingを失ったこと。機能側のTrial testはPASS。
-- 修正後 CI run #842: `npm test` SUCCESS、`npm run validate:drink-master-v1.9` SUCCESS。
-- 最終status更新後 CI run #843: `npm test` SUCCESS、`npm run validate:drink-master-v1.9` SUCCESS。
-- PR #123 Merge commit: `f1992d38eb87407194480ad3877fc2bd685b4317`。
-- Merge後のPROJECT_STATUS同期commit: `da04be9fb806fae4913a07dfcfe963bae15ae216`。
-- local git cloneによるtest実行は実行環境DNSで`github.com`をresolveできず失敗。この経路のみの失敗で、GitHub connector/Actionsで検証を完了。
+## 1500杯品質
+- 400基礎 + 1100拡張 = 1500 unique canonical key、hard structural error0。
+- 要確認49 findings: alias衝突2、同じ材料分量signature15、単位候補27、分量候補3、合計量候補2。49 proven defectsではない。
+- base400は完全なrecipe集ではない。明示glass/garnishは1500件で欠落。canonical日本語map未登録をlive日本語表示欠落と同一視しない。
+- 外部照合前に同名別recipe/別名同一drinkを統合・削除しない。全recipe正解性PASSとは判定しない。
 
-## ブロッカー / 制約
-- Production公開はRepositoryから行わない。CARILA WORKS Controlからユーザーが更新する。
-- アカウント未導入のため、cookie削除/別ブラウザまで防ぐ強固なanti-abuseではない。現段階は一般利用での無制限消費を抑えるコストガード。
-- Realtimeの5分停止は通常UI側。正式課金前には音声時間のサーバー側厳密制御を再設計する。
+## 旧PR
+#12は1 ahead / 433 behind。menu/長文composer/formatter/testsはmainに存在し、旧PNG参照とRealtime/Trial以前のUIで陳腐化。内容確認後、未Mergeのままclosed。branchは保持。
 
 ## 次
-1. CARILA WORKS Controlからテスト版更新後、iPhoneでテキスト上限・音声2回/日・5分停止・既存音声UXをAcceptance。
-2. 問題なければユーザー操作で公開版更新。
-3. Bartender Carilaの価値、無料/有料境界、価格、課金方式を別作業で詰める。
-4. BAR D1軽量化はProduction反映後の翌reset実測も継続確認する。
-5. 1500杯マスター品質の横断監査は別作業として保持する。
+1. GitHubで監査PRのCI/mergedとlatest main確認。
+2. ユーザーがControlでテスト版更新。
+3. Previewで会話/検索/推薦/metadata応答、manifest MIME、404、security headers確認。
+4. iPhoneで実マイク、voice、日本語挨拶、speaker、割り込み、transcript、5分終了、再開始、背景移行、keyboard/狭幅UI確認。
+5. 確認後、ユーザーがControl公開版更新。D1は翌reset実測も継続。
 
 ## DELTA
-DEPENDENCY DELTA: NONE
-ROUTE DELTA: `/api/carila-chat` と `/api/carila-realtime-session` にTrial usage guard追加。`/api/chat`は既存read-only master D1 wrapperを維持。
-ACTIONS DELTA: Draft中skip、Ready時に既存最終CIのみ。
-D1 DELTA: `carila_usage_daily` を追加。master seed/DDL/COUNT stormは再導入しない。
-LEGACY CLEANUP: NONE。
+DEPENDENCY NONE / ACTIONS既存CIのみ / ROUTE・DNS・PRODUCTION公開なし / D1新schemaなし（PR123 usage維持、metadata maintenance除去） / PRICE・STRIPE NONE。
 
-## Handoff
-Bartender Carilaはテキスト/Realtime音声とも実装済みだが、サービス/課金仕様は未確定。課金設計を先に固定せず、公開試用中のAPI原価だけを暫定上限で保護する。Trial値は料金プランの確定無料枠ではない。PR #123はCI成功後mainへMerge済み。Production公開はCARILA WORKS Controlのみ。Open Recommendation + Known Master方針は維持する。
+## 開始時の不存在文書
+CARILA_WORKS_PLAYBOOK.md、docs/REQUIREMENTS.md、docs/UNRESOLVED.md、docs/INTERACTION_CONTRACT.md、evals/ACCEPTANCE.md、work/PROJECT_CHECKLIST.mdは開始時不存在。UNRESOLVED/ACCEPTANCEのみ本監査で新設。共通規約があると仮定していない。
+
+## GitHub最終検証
+PR #124: https://github.com/Carila96/bar-carila/pull/124
+Code head: `ac23b890d16196c0847296075af852af3c1e1002`。
+既存CI run #844 / 38054155814: SUCCESS。npm ci / npm test / validate:drink-master-v1.9の全step成功。
+この追記は文書のみでcode変更なし。Merge状態とlatest mainはPRのmerged / main refを取得して確認する。Preview/Productionを自動更新しない。
